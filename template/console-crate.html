@@ -28,11 +28,8 @@
         <h1>{CRATE_NAME}</h1>
         <code id="console"><span id="cursor"> </span></code>
     </center>
-    <script>
+    <script type="text/js-worker">
         function exec_base64_wasm(wasm) {
-            const con       = document.getElementById("console");
-            const cursor    = document.getElementById("cursor");
-
             var memory;
 
             // References:
@@ -97,7 +94,7 @@
                 }
 
                 if (text !== "") {
-                    con.insertBefore(document.createTextNode(text), cursor);
+                    self.postMessage({ kind: "console", text });
                 }
 
                 dv.setUint32(nwritten_ptr, nwritten, true);
@@ -118,7 +115,8 @@
 
             function proc_exit(code) {
                 // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-                throw { call: "proc_exit", code };
+                self.postMessage({ kind: "proc_exit", code });
+                throw "exit";
             }
 
             function proc_raise                 () { return ERRNO_NOTCAPABLE; }
@@ -198,22 +196,42 @@
                     m.exports.main();
                     proc_exit(0);
                 } catch (e) {
-                    if ("call" in e) {
-                        switch (e.call) {
-                            case "proc_exit":
-                                var exit = document.createElement("span");
-                                exit.textContent = `\nprocess exited with code ${e.code}`;
-                                exit.style.color = "#888";
-                                con.insertBefore(exit, cursor);
-                                con.removeChild(cursor);
-                                break;
-                        }
-                    } else {
+                    if (e !== "exit") {
                         throw e;
                     }
+                } finally {
+                    self.close();
                 }
             });
         }
         exec_base64_wasm({BASE64_WASM32});
+    </script>
+    <script>
+        const con       = document.getElementById("console");
+        const cursor    = document.getElementById("cursor");
+
+        // spawn web worker
+        const blob = new Blob(Array.prototype.map.call(document.querySelectorAll('script[type=\'text\/js-worker\']'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
+        document.worker = new Worker(window.URL.createObjectURL(blob));
+        document.worker.onmessage = function(e) {
+            e = e.data;
+            switch (e.kind) {
+                case "console":
+                    con.insertBefore(document.createTextNode(e.text), cursor);
+                    break;
+                case "proc_exit":
+                    var exit = document.createElement("span");
+                    exit.textContent = `\nprocess exited with code ${e.code}`;
+                    exit.style.color = "#888";
+                    con.insertBefore(exit, cursor);
+                    con.removeChild(cursor);
+                    break;
+                default:
+                    console.error("unexpected event kind", e.kind);
+                    debugger;
+                    break;
+            }
+        };
+        document.worker.postMessage({"kind": "init"});
     </script>
 </body></html>
