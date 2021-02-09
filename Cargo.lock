@@ -22,11 +22,11 @@ dependencies = [
 
 [[package]]
 name = "goodbye-world"
-version = "0.0.0-git"
+version = "0.0.0"
 
 [[package]]
 name = "hello-world"
-version = "0.0.0-git"
+version = "0.0.0"
 
 [[package]]
 name = "mmrbi"
