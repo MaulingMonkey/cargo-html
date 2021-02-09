@@ -27,3 +27,9 @@ path                    = "src/_cargo_html.rs"
 [dependencies]
 mmrbi                   = { version = "0.0.14", features = ["serde", "toml"] }
 base64                  = "0.13"
+
+[profile.release]
+debug                   = 0
+lto                     = true
+opt-level               = "z"
+panic                   = "abort"
