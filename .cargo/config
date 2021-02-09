@@ -1,0 +1,2 @@
+[alias]
+html = "run -p cargo-html -- html"

@@ -1,0 +1,163 @@
+{
+    "version": "2.0.0",
+    "problemMatcher": "$rustc",
+    "tasks": [
+        // entry points
+        {
+            "label":            "default-build",
+            "dependsOrder":     "sequence",
+            "dependsOn":        [ "fetch", "check", "test", "build", "doc" ],
+            "group":            { "kind": "build", "isDefault": true }
+        },
+
+
+
+        // fetch
+        {
+            "label":            "fetch",
+            "dependsOn":        [
+                "cargo fetch",
+            ]
+        },
+        {
+            "label":            "cargo fetch",
+            "command":          "cargo fetch",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "fetch", "reveal": "always" },
+        },
+
+
+
+        // check
+        {
+            "label":            "check",
+            "command":          "cargo c --frozen --all-targets",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "check", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "check", "source": "check" },
+        },
+
+
+
+        // test
+        {
+            "label":            "test",
+            "command":          "cargo t --frozen",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "test", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "test", "source": "test" },
+        },
+
+
+
+        // build
+        {
+            "label":            "build",
+            "command":          "cargo b --frozen --all-targets",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "build", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "build", "source": "build" },
+        },
+
+
+
+        // doc
+        {
+            "label":            "doc",
+            "command":          "cargo +nightly doc --frozen --no-deps || cargo doc --frozen --no-deps",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
+        },
+
+
+
+        // help
+        {
+            "label":            "help",
+            "command":          "cargo +nightly doc --frozen --no-deps --open || cargo doc --frozen --no-deps --open",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
+        },
+
+
+
+        // cargo-html
+        {
+            "label":            "cargo build --package cargo-html --bin cargo-html",
+            "command":          "cargo build --package cargo-html --bin cargo-html",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo build --package cargo-html --bin cargo-html --release",
+            "command":          "cargo build --package cargo-html --bin cargo-html --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "build & open local documentation (cargo-html)",
+            "windows":          { "command": "start \"\"    \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
+            "linux":            { "command": "xdg-open      \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
+            "osx":              { "command": "open          \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
+            "type":             "shell",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
+            "dependsOn":        [ "doc" ],
+        },
+        {
+            "label":            "open repository (cargo-html)",
+            "windows":          { "command": "start \"\"    \"https://github.com/MaulingMonkey/cargo-html\"" },
+            "linux":            { "command": "xdg-open      \"https://github.com/MaulingMonkey/cargo-html\"" },
+            "osx":              { "command": "open          \"https://github.com/MaulingMonkey/cargo-html\"" },
+            "type":             "shell",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
+        },
+        {
+            "label":            "open documentation (cargo-html)",
+            "windows":          { "command": "start \"\"    \"https://docs.rs/cargo-html\"" },
+            "linux":            { "command": "xdg-open      \"https://docs.rs/cargo-html\"" },
+            "osx":              { "command": "open          \"https://docs.rs/cargo-html\"" },
+            "type":             "shell",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
+        },
+
+
+
+        // goodbye-world
+        {
+            "label":            "cargo html --bin goodbye-world",
+            "command":          "cargo html --bin goodbye-world",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo html --bin goodbye-world --release",
+            "command":          "cargo html --bin goodbye-world --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+
+
+
+        // hello-world
+        {
+            "label":            "cargo html --bin hello-world",
+            "command":          "cargo html --bin hello-world",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo html --bin hello-world --release",
+            "command":          "cargo html --bin hello-world --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+    ]
+}

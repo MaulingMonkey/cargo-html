@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "matklad.rust-analyzer",
+        "ms-vscode.cpptools",
+        "msjsdiag.debugger-for-chrome",
+    ]
+}

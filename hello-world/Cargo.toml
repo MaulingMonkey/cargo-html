@@ -1,0 +1,12 @@
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name                    = "hello-world"
+version                 = "0.0.0-git"
+authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
+edition                 = "2018"
+publish                 = false
+
+[[bin]]
+name                    = "hello-world"
+path                    = "hello-world.rs"

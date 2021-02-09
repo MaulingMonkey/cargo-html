@@ -1,0 +1,72 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // hello-world
+        {
+            "name":                     "hello-world • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html --bin hello-world",
+            "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/hello-world.html",
+        },
+        {
+            "name":                     "hello-world • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html --bin hello-world --release",
+            "url":                      "${workspaceFolder}/target/wasm32-wasi/release/hello-world.html",
+        },
+
+
+
+        // goodbye-world
+        {
+            "name":                     "goodbye-world • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html --bin goodbye-world",
+            "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/goodbye-world.html",
+        },
+        {
+            "name":                     "goodbye-world • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html --bin goodbye-world --release",
+            "url":                      "${workspaceFolder}/target/wasm32-wasi/release/goodbye-world.html",
+        },
+
+
+
+        // cargo-html
+        {
+            "name":                     "cargo-html • debug",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build --package cargo-html --bin cargo-html",
+            "program":                  "${workspaceFolder}/target/debug/cargo-html",
+            "cwd":                      "${workspaceFolder}",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/target/debug/cargo-html.exe",
+                "enableDebugHeap":          true,
+            }
+        },
+        {
+            "name":                     "cargo-html • release",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build --package cargo-html --bin cargo-html --release",
+            "program":                  "${workspaceFolder}/target/release/cargo-html",
+            "cwd":                      "${workspaceFolder}",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/target/release/cargo-html.exe",
+                "enableDebugHeap":          false,
+            }
+        },
+    ]
+}

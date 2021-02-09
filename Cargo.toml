@@ -1,0 +1,29 @@
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+    ".",
+    "goodbye-world",
+    "hello-world",
+]
+
+[package]
+name                    = "cargo-html"
+version                 = "0.0.0-git"
+authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
+edition                 = "2018"
+repository              = "https://github.com/MaulingMonkey/cargo-html"
+documentation           = "https://docs.rs/cargo-html"
+license                 = "Apache-2.0 OR MIT"
+readme                  = "Readme.md"
+description             = "create HTML files embedding WASM from rust programs"
+keywords                = ["wasm", "html"]
+categories              = ["development-tools::cargo-plugins", "wasm", "web-programming"] # https://crates.io/category_slugs
+
+[[bin]]
+name                    = "cargo-html"
+path                    = "src/_cargo_html.rs"
+
+[dependencies]
+mmrbi                   = { version = "0.0.14", features = ["serde", "toml"] }
+base64                  = "0.13"
