@@ -28,9 +28,21 @@
         <h1>{CRATE_NAME}</h1>
         <code id="console"><span id="cursor"> </span></code>
     </center>
-    <script type="text/js-worker">
-        function exec_base64_wasm(wasm) {
+    <script data-js-worker="true">
+        const ATOMIC_STDIN_FILLED   = 0;
+        const ATOMIC_STDIN_CONSUMED = 1;
+        const ATOMIC_COUNT = 2;
+
+        const STDIN_BITS = 10;
+        const STDIN_COUNT = (1 << STDIN_BITS);
+        const STDIN_MASK = STDIN_COUNT-1;
+
+        function exec_base64_wasm(data, wasm) {
             var memory;
+
+            const {atomic_sab, stdin_sab} = data;
+            const atomic    = new Int32Array(atomic_sab);
+            const stdin     = new Uint8Array(stdin_sab);
 
             // References:
             // https://docs.rs/wasi-types/0.1.5/src/wasi_types/lib.rs.html
@@ -41,32 +53,83 @@
             const ERRNO_BADF        = 8;
             const ERRNO_NOTCAPABLE  = 76;
 
-            function args_get                   () { return ERRNO_NOTCAPABLE; }
-            function args_sizes_get             () { return ERRNO_NOTCAPABLE; }
-            function environ_get                () { return ERRNO_NOTCAPABLE; }
-            function environ_sizes_get          () { return ERRNO_NOTCAPABLE; }
-            function clock_res_get              () { return ERRNO_NOTCAPABLE; }
-            function clock_time_get             () { return ERRNO_NOTCAPABLE; }
-            function fd_advise                  () { return ERRNO_NOTCAPABLE; }
-            function fd_allocate                () { return ERRNO_NOTCAPABLE; }
-            function fd_close                   () { return ERRNO_NOTCAPABLE; }
-            function fd_datasync                () { return ERRNO_NOTCAPABLE; }
-            function fd_fdstat_get              () { return ERRNO_NOTCAPABLE; }
-            function fd_fdstat_set_flags        () { return ERRNO_NOTCAPABLE; }
-            function fd_fdstat_set_rights       () { return ERRNO_NOTCAPABLE; }
-            function fd_filestat_get            () { return ERRNO_NOTCAPABLE; }
-            function fd_filestat_set_size       () { return ERRNO_NOTCAPABLE; }
-            function fd_filestat_set_times      () { return ERRNO_NOTCAPABLE; }
-            function fd_pread                   () { return ERRNO_NOTCAPABLE; }
-            function fd_prestat_get             () { return ERRNO_NOTCAPABLE; }
-            function fd_prestat_dir_name        () { return ERRNO_NOTCAPABLE; }
-            function fd_pwrite                  () { return ERRNO_NOTCAPABLE; }
-            function fd_read                    () { return ERRNO_NOTCAPABLE; }
-            function fd_readdir                 () { return ERRNO_NOTCAPABLE; }
-            function fd_renumber                () { return ERRNO_NOTCAPABLE; }
-            function fd_seek                    () { return ERRNO_NOTCAPABLE; }
-            function fd_sync                    () { return ERRNO_NOTCAPABLE; }
-            function fd_tell                    () { return ERRNO_NOTCAPABLE; }
+            function nyi() {
+                //debugger;
+                return ERRNO_NOTCAPABLE;
+            }
+
+            function args_get                   () { return nyi(); }
+            function args_sizes_get             () { return nyi(); }
+            function environ_get                () { return nyi(); }
+            function environ_sizes_get          () { return nyi(); }
+            function clock_res_get              () { return nyi(); }
+            function clock_time_get             () { return nyi(); }
+            function fd_advise                  () { return nyi(); }
+            function fd_allocate                () { return nyi(); }
+            function fd_close                   () { return nyi(); }
+            function fd_datasync                () { return nyi(); }
+            function fd_fdstat_get              () { return nyi(); }
+            function fd_fdstat_set_flags        () { return nyi(); }
+            function fd_fdstat_set_rights       () { return nyi(); }
+            function fd_filestat_get            () { return nyi(); }
+            function fd_filestat_set_size       () { return nyi(); }
+            function fd_filestat_set_times      () { return nyi(); }
+            function fd_pread                   () { return nyi(); }
+            function fd_prestat_get             () { return nyi(); }
+            function fd_prestat_dir_name        () { return nyi(); }
+            function fd_pwrite                  () { return nyi(); }
+
+            function fd_read(fd, iovec_array_ptr, iovec_array_len, nread_ptr) {
+                // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
+
+                var dv = new DataView(memory.buffer);
+                var nread = 0;
+                var errno = ERRNO_SUCCESS;
+
+                for (var iovec_idx = 0; iovec_idx < iovec_array_len; ++iovec_idx) {
+                    var buf_ptr = dv.getUint32(iovec_array_ptr + (8 * iovec_idx) + 0, true);
+                    var buf_len = dv.getUint32(iovec_array_ptr + (8 * iovec_idx) + 4, true);
+                    if (buf_len <= 0) { continue; }
+
+                    switch (fd) {
+                        case 0: // stdin
+                            for (;;) {
+                                var consumed    = Atomics.load(atomic, ATOMIC_STDIN_CONSUMED);
+
+                                //Atomics.wait(atomic, ATOMIC_STDIN_FILLED, consumed); // XXX: this... hangs in Chrome for some reason
+                                while (Atomics.wait(atomic, ATOMIC_STDIN_FILLED, consumed, 10) !== "not-equal") {} // this does tho
+
+                                var filled      = Atomics.load(atomic, ATOMIC_STDIN_FILLED);
+                                var available   = (filled-consumed)|0; // available *to read*
+                                console.assert(available > 0);
+                                var n = Math.min(available, buf_len);
+
+                                for (var i=0; i<n; ++i) {
+                                    var b = stdin[(i+consumed)&STDIN_MASK];
+                                    self.postMessage({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
+                                    dv.setUint8(buf_ptr+i, b);
+                                }
+                                Atomics.store(atomic, ATOMIC_STDIN_CONSUMED, (consumed+n)|0);
+
+                                nread += n;
+                                break;
+                            }
+                            break;
+                        default:
+                            errno = ERRNO_BADF;
+                            break;
+                    }
+                }
+
+                dv.setUint32(nread_ptr, nread, true);
+                return errno;
+            }
+
+            function fd_readdir                 () { return nyi(); }
+            function fd_renumber                () { return nyi(); }
+            function fd_seek                    () { return nyi(); }
+            function fd_sync                    () { return nyi(); }
+            function fd_tell                    () { return nyi(); }
 
             function fd_write(fd, ciovec_array_ptr, ciovec_array_len, nwritten_ptr) {
                 // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
@@ -101,17 +164,17 @@
                 return errno;
             }
 
-            function path_create_directory      () { return ERRNO_NOTCAPABLE; }
-            function path_filestats_get         () { return ERRNO_NOTCAPABLE; }
-            function path_filestat_set_times    () { return ERRNO_NOTCAPABLE; }
-            function path_link                  () { return ERRNO_NOTCAPABLE; }
-            function path_open                  () { return ERRNO_NOTCAPABLE; }
-            function path_readlink              () { return ERRNO_NOTCAPABLE; }
-            function path_remove_directory      () { return ERRNO_NOTCAPABLE; }
-            function path_rename                () { return ERRNO_NOTCAPABLE; }
-            function path_symlink               () { return ERRNO_NOTCAPABLE; }
-            function path_unlink_file           () { return ERRNO_NOTCAPABLE; }
-            function poll_oneoff                () { return ERRNO_NOTCAPABLE; }
+            function path_create_directory      () { return nyi(); }
+            function path_filestats_get         () { return nyi(); }
+            function path_filestat_set_times    () { return nyi(); }
+            function path_link                  () { return nyi(); }
+            function path_open                  () { return nyi(); }
+            function path_readlink              () { return nyi(); }
+            function path_remove_directory      () { return nyi(); }
+            function path_rename                () { return nyi(); }
+            function path_symlink               () { return nyi(); }
+            function path_unlink_file           () { return nyi(); }
+            function poll_oneoff                () { return nyi(); }
 
             function proc_exit(code) {
                 // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
@@ -119,12 +182,12 @@
                 throw "exit";
             }
 
-            function proc_raise                 () { return ERRNO_NOTCAPABLE; }
-            function sched_yield                () { return ERRNO_NOTCAPABLE; }
-            function random_get                 () { return ERRNO_NOTCAPABLE; }
-            function sock_recv                  () { return ERRNO_NOTCAPABLE; }
-            function sock_send                  () { return ERRNO_NOTCAPABLE; }
-            function sock_shutdown              () { return ERRNO_NOTCAPABLE; }
+            function proc_raise                 () { return nyi(); }
+            function sched_yield                () { return nyi(); }
+            function random_get                 () { return nyi(); }
+            function sock_recv                  () { return nyi(); }
+            function sock_send                  () { return nyi(); }
+            function sock_shutdown              () { return nyi(); }
 
             const imports = {
                 wasi_snapshot_preview1: {
@@ -197,6 +260,8 @@
                     proc_exit(0);
                 } catch (e) {
                     if (e !== "exit") {
+                        console.error(e);
+                        debugger;
                         throw e;
                     }
                 } finally {
@@ -204,14 +269,33 @@
                 }
             });
         }
-        exec_base64_wasm({BASE64_WASM32});
+
+        function worker() {
+            self.onmessage = function(e) {
+                switch (e.data.kind) {
+                    case "init":
+                        exec_base64_wasm(e.data, {BASE64_WASM32});
+                        break;
+                    default:
+                        console.error("unexpected event kind", e.kind);
+                        debugger;
+                        break;
+                }
+            };
+        }
     </script>
+    <script data-js-worker="true" type="text/js-worker-only">worker();</script>
     <script>
         const con       = document.getElementById("console");
         const cursor    = document.getElementById("cursor");
 
+        const atomic_sab    = new SharedArrayBuffer(4 * ATOMIC_COUNT);
+        const atomic        = new Int32Array(atomic_sab);
+        const stdin_sab     = new SharedArrayBuffer(STDIN_COUNT);
+        const stdin         = new Uint8Array(stdin_sab);
+
         // spawn web worker
-        const blob = new Blob(Array.prototype.map.call(document.querySelectorAll('script[type=\'text\/js-worker\']'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
+        const blob = new Blob(Array.prototype.map.call(document.querySelectorAll('script[data-js-worker=\'true\']'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
         document.worker = new Worker(window.URL.createObjectURL(blob));
         document.worker.onmessage = function(e) {
             e = e.data;
@@ -232,6 +316,36 @@
                     break;
             }
         };
-        document.worker.postMessage({"kind": "init"});
+        document.worker.postMessage({
+            kind:       "init",
+            atomic_sab,
+            stdin_sab,
+        });
+
+        var stdin_buffer = [];
+        document.addEventListener("keypress", function(e) {
+            var chars = e.char || String.fromCharCode(e.charCode);
+            if (chars == "\r") { chars = "\n"; }
+            var chars = new TextEncoder().encode(chars);
+            for (var i=0; i<chars.length; ++i) {
+                stdin_buffer.push(chars[i]);
+            }
+        });
+
+        setInterval(function(){
+            if (stdin_buffer.length === 0) return;
+
+            var filled      = Atomics.load(atomic, ATOMIC_STDIN_FILLED);
+            var consumed    = Atomics.load(atomic, ATOMIC_STDIN_CONSUMED);
+            var available   = STDIN_COUNT - ((filled-consumed)|0); // available *to write*
+
+            var n = Math.min(available, stdin_buffer.length);
+            for (var i=0; i<n; ++i) {
+                stdin[(i+filled)&STDIN_MASK] = stdin_buffer[i];
+            }
+            stdin_buffer.splice(0, n);
+            filled = (filled+n)|0;
+            Atomics.store(atomic, ATOMIC_STDIN_FILLED, filled);
+        }, 0);
     </script>
 </body></html>
