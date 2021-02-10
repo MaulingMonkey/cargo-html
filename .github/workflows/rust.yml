@@ -20,4 +20,6 @@ jobs:
         rustc -V
         cargo -V
     - name: Test
-      run: cargo test --all-features
+      run: |
+        tsc --build script/tsconfig.json
+        cargo test --all-features
