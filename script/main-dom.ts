@@ -1,29 +1,3 @@
-interface ConsoleEventData {
-    kind:   "console";
-    text:   string;
-}
-
-interface ProcExitEventData {
-    kind:   "proc_exit";
-    code:   number;
-}
-
-interface OtherEventData {
-    kind:   "_other";
-}
-
-type WorkerToDomData = ConsoleEventData | ProcExitEventData | OtherEventData
-
-interface WorkerToDomMessage extends MessageEvent {
-    readonly data: WorkerToDomData;
-}
-
-
-
-function dom2work(data: DomToWorkerData) {
-    main_dom_worker.postMessage(data);
-}
-
 var main_dom_worker : Worker;
 function main_dom() {
     const con       = requireElementById("console");
@@ -37,7 +11,7 @@ function main_dom() {
     // spawn web worker
     const blob = new Blob(<BlobPart[]>Array.prototype.map.call(document.querySelectorAll('script:not([data-js-worker=\'false\'])'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
     main_dom_worker = new Worker(window.URL.createObjectURL(blob));
-    main_dom_worker.onmessage = function(e: WorkerToDomMessage) {
+    main_dom_worker.onmessage = function(e: work2dom.Event) {
         switch (e.data.kind) {
             case "console":
                 con.insertBefore(document.createTextNode(e.data.text), cursor);
@@ -55,7 +29,7 @@ function main_dom() {
                 break;
         }
     };
-    dom2work({
+    dom2work.post({
         kind: "init",
         atomic_sab,
         stdin_sab,

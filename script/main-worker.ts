@@ -1,21 +1,5 @@
-interface InitEventData {
-    kind: "init";
-    atomic_sab: SharedArrayBuffer,
-    stdin_sab:  SharedArrayBuffer,
-}
-
-interface OtherEventData {
-    kind: "_other";
-}
-
-type DomToWorkerData = InitEventData | OtherEventData;
-
-interface WorkerMessageEvent extends MessageEvent {
-    readonly data: DomToWorkerData;
-}
-
 function main_worker() {
-    self.onmessage = function(e: WorkerMessageEvent) {
+    self.onmessage = function(e: dom2work.Event) {
         switch (e.data.kind) {
             case "init":
                 exec_base64_wasm(e.data, "{BASE64_WASM32}");

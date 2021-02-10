@@ -42,12 +42,6 @@ function exec_base64_wasm(data: any, wasm: string) {
         return ERRNO_NOTCAPABLE;
     }
 
-    function work2dom(message: WorkerToDomData) {
-        // https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/postMessage not
-        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-        (self as any).postMessage(message);
-    }
-
     function args_get                   (): Errno { return nyi(); }
     function args_sizes_get             (): Errno { return nyi(); }
     function environ_get                (): Errno { return nyi(); }
@@ -92,7 +86,7 @@ function exec_base64_wasm(data: any, wasm: string) {
 
                         for (var i=0; i<n; ++i) {
                             var b = stdin[(i+consumed)&STDIN_MASK] as u8;
-                            work2dom({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
+                            work2dom.post({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
                             write_u8(buf_ptr, i, b);
                         }
                         Atomics.store(atomic, ATOMIC_STDIN_CONSUMED, (consumed+n)|0);
@@ -142,7 +136,7 @@ function exec_base64_wasm(data: any, wasm: string) {
         }
 
         if (text !== "") {
-            work2dom({ kind: "console", text });
+            work2dom.post({ kind: "console", text });
         }
 
         write_usize(nwritten_ptr, 0, nwritten as usize);
@@ -163,7 +157,7 @@ function exec_base64_wasm(data: any, wasm: string) {
 
     function proc_exit(code: number): never {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-        work2dom({ kind: "proc_exit", code });
+        work2dom.post({ kind: "proc_exit", code });
         throw "exit";
     }
 
