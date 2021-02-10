@@ -324,7 +324,7 @@
             var stdin_buffer = [];
             document.addEventListener("keypress", function(e) {
                 var chars = e.char || String.fromCharCode(e.charCode);
-                if (chars == "\r") { chars = "\n"; }
+                if (chars === "\r") { chars = "\n"; }
                 var chars = new TextEncoder().encode(chars);
                 for (var i=0; i<chars.length; ++i) {
                     stdin_buffer.push(chars[i]);
