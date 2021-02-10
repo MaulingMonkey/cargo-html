@@ -133,16 +133,16 @@
 
         // goodbye-world
         {
-            "label":            "cargo html --bin goodbye-world",
-            "command":          "cargo html --bin goodbye-world",
+            "label":            "cargo html -p goodbye-world",
+            "command":          "cargo html -p goodbye-world",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
             "dependsOn":        [ "build-tsc" ],
         },
         {
-            "label":            "cargo html --bin goodbye-world --release",
-            "command":          "cargo html --bin goodbye-world --release",
+            "label":            "cargo html -p goodbye-world --release",
+            "command":          "cargo html -p goodbye-world --release",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
@@ -153,16 +153,16 @@
 
         // hello-world
         {
-            "label":            "cargo html --bin hello-world",
-            "command":          "cargo html --bin hello-world",
+            "label":            "cargo html -p hello-world",
+            "command":          "cargo html -p hello-world",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
             "dependsOn":        [ "build-tsc" ],
         },
         {
-            "label":            "cargo html --bin hello-world --release",
-            "command":          "cargo html --bin hello-world --release",
+            "label":            "cargo html -p hello-world --release",
+            "command":          "cargo html -p hello-world --release",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },

@@ -27,6 +27,7 @@ path                    = "src/_cargo_html.rs"
 [dependencies]
 mmrbi                   = { version = "0.0.14", features = ["serde", "toml"] }
 base64                  = "0.13"
+cargo_metadata          = "0.12"
 
 [profile.release]
 debug                   = 0

@@ -6,14 +6,14 @@
             "name":                     "hello-world • debug",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html --bin hello-world",
+            "preLaunchTask":            "cargo html -p hello-world",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/hello-world.html",
         },
         {
             "name":                     "hello-world • release",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html --bin hello-world --release",
+            "preLaunchTask":            "cargo html -p hello-world --release",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/release/hello-world.html",
         },
 
@@ -24,14 +24,14 @@
             "name":                     "goodbye-world • debug",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html --bin goodbye-world",
+            "preLaunchTask":            "cargo html -p goodbye-world",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/goodbye-world.html",
         },
         {
             "name":                     "goodbye-world • release",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html --bin goodbye-world --release",
+            "preLaunchTask":            "cargo html -p goodbye-world --release",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/release/goodbye-world.html",
         },
 

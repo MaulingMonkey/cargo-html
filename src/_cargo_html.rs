@@ -13,6 +13,18 @@ fn main() {
     let _cargo  = args.next();
     let _html   = args.next();
 
+    let mut metadata : cargo_metadata::Metadata = cargo_metadata::MetadataCommand::new().exec().unwrap_or_else(|err| fatal!("failed to run/parse `cargo metadata`: {}", err));
+    let workspace_members = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
+    metadata.packages.retain(|pkg| workspace_members.contains(&pkg.id));
+
+    let mut die = false;
+    let mut workspace = false;
+    let mut packages = BTreeSet::new();
+
+    let mut bins = false;
+    let mut examples = false;
+    let mut all_targets = false;
+
     let mut targets  = BTreeSet::<(TargetType, String)>::new();
     let mut configs  = BTreeSet::<Config>::new();
     while let Some(arg) = args.next() {
@@ -35,16 +47,103 @@ fn main() {
                     fatal!("expected a example name after `{}`", arg);
                 }
             },
-            "--debug"   => { if !configs.insert(Config::Debug)   { warning!("{} specified multiple times", arg); } },
-            "--release" => { if !configs.insert(Config::Release) { warning!("{} specified multiple times", arg); } },
-            other       => fatal!("unexpected argument `{}`", other),
+            "-p" | "--package" => {
+                if let Some(pkg) = args.next() {
+                    let package = metadata.packages.iter().find(|p| p.name == pkg);
+                    if !packages.insert(pkg.clone()) {
+                        warning!("package `{}` specified multiple times", pkg);
+                    } else if package.is_none() {
+                        error!("no such package `{}` in workspace", pkg);
+                        die = true;
+                    }
+                } else {
+                    fatal!("expected a package name after `{}`", arg);
+                }
+            },
+            "--debug"       => { if !configs.insert(Config::Debug)   { warning!("{} specified multiple times", arg); } },
+            "--release"     => { if !configs.insert(Config::Release) { warning!("{} specified multiple times", arg); } },
+            "--workspace"   => { if workspace   { warning!("{} specified multiple times", arg); } else { workspace      = true; } },
+            "--bins"        => { if bins        { warning!("{} specified multiple times", arg); } else { bins           = true; } },
+            "--examples"    => { if examples    { warning!("{} specified multiple times", arg); } else { examples       = true; } },
+            "--all-targets" => { if all_targets { warning!("{} specified multiple times", arg); } else { all_targets    = true; } },
+            // TODO: --exclude
+            // TODO: features?
+            other           => fatal!("unexpected argument `{}`", other),
+        }
+    }
+
+    if die {
+        std::process::exit(1); // earlier errors
+    }
+
+    // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
+    let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
+
+    if workspace {
+        cmd.arg("--workspace");
+    } else {
+        for pkg in packages.iter() { cmd.arg("--package").arg(pkg); }
+    }
+
+    if all_targets  { cmd.arg("--all-targets"); }
+    if bins         { cmd.arg("--bins"); }
+    if examples     { cmd.arg("--examples"); }
+
+    bins        |= all_targets;
+    examples    |= all_targets;
+
+    for (ty, target) in targets.iter() {
+        match ty {
+            TargetType::Bin     => { if !bins       { cmd.arg("--bin")      .arg(target); } },
+            TargetType::Example => { if !examples   { cmd.arg("--example")  .arg(target); } },
         }
     }
 
     // defaults
 
+    if workspace {
+        for package in metadata.packages.iter() {
+            packages.insert(package.name.clone());
+        }
+    } else if packages.is_empty() {
+        // neither --workspace nor any --package s specified
+        if let Some(root) = metadata.root_package() {
+            packages.insert(root.name.clone());
+        } else {
+            // TODO: support workspace default members?
+            for package in metadata.packages.iter() {
+                packages.insert(package.name.clone());
+            }
+        }
+    }
+
+    if targets.is_empty() && !bins && !examples {
+        bins = true;
+        // `cargo build` doesn't build examples by default?
+    }
+
+    if bins || examples {
+        for pkg in metadata.packages.iter() {
+            if !packages.contains(&pkg.name) { continue; }
+            for target in pkg.targets.iter() {
+                for crate_type in target.crate_types.iter() {
+                    match crate_type.as_str() {
+                        "bin"       if bins     => drop(targets.insert((TargetType::Bin,     target.name.clone()))),
+                        "example"   if examples => drop(targets.insert((TargetType::Example, target.name.clone()))),
+                        //"test"      => ...,
+                        //"bench"     => ...,
+                        //"lib"       => ...,
+                        //"rlib"      => ...,
+                        //"dylib"     => ...,
+                        _other => {},
+                    }
+                }
+            }
+        }
+    }
+
     if targets.is_empty() {
-        fatal!("currently you must specify at least one `--bin` or `--example`");
+        fatal!("no selected packages contain any bin/example targets for `cargo html` to build");
     }
 
     if configs.is_empty() {
@@ -54,18 +153,11 @@ fn main() {
     println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
 
     for config in configs.iter().copied() {
-        let mut cmd = Command::parse("cargo build --target=wasm32-wasi --workspace").unwrap();
+        let mut cmd = cmd.clone();
+
         match config {
             Config::Debug   => {},
             Config::Release => drop(cmd.arg("--release")),
-        }
-
-        for (ty, target) in targets.iter() {
-            match ty {
-                TargetType::Bin     => drop(cmd.arg("--bin")),
-                TargetType::Example => drop(cmd.arg("--example")),
-            }
-            cmd.arg(target);
         }
 
         status!("Running", "{:?}", cmd);

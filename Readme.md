@@ -16,7 +16,7 @@ cargo install cargo-html
 
 cargo new hello-world
 cd hello-world
-cargo html --bin hello-world
+cargo html
 start "" target/wasm32-wasi/debug/hello-world.html
 ```
 
