@@ -59,6 +59,14 @@ function exec_base64_wasm(data: any, wasm: string) {
     function slice(ptr: ptr, start: usize, end: usize): DataView { return new DataView(memory.buffer, ptr+start, end-start); }
     function slice8(ptr: ptr, start: usize, end: usize): Uint8Array { return new Uint8Array(memory.buffer, ptr+start, end-start); }
 
+    function sleep_ms(ms: number) {
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+    }
+
+    function sleep_ns(ns: number) {
+        sleep_ms(ns / 1000 / 1000);
+    }
+
     function nyi(): Errno {
         debugger;
         return ERRNO_NOTCAPABLE;
@@ -225,10 +233,7 @@ function exec_base64_wasm(data: any, wasm: string) {
                 switch (u_u_clock_id) {
                     case CLOCKID_REALTIME:
                     case CLOCKID_MONOTONIC:
-                        // wasi timestamps are in nanoseconds
-                        // Atomics.wait is in milliseconds
-                        let ms = u_u_clock_timeout / 1000 / 1000;
-                        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+                        sleep_ns(u_u_clock_timeout);
 
                         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-struct
                         write_u64_pair( out_events, 32 * out_nevents +  0, userdata);
@@ -260,7 +265,7 @@ function exec_base64_wasm(data: any, wasm: string) {
     function sched_yield(): Errno {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-sched_yield---errno
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0.0001);
+        sleep_ns(1);
         return ERRNO_SUCCESS;
     }
 
