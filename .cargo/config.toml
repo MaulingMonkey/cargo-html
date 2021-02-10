@@ -1,2 +1,5 @@
 [alias]
 html = "run -p cargo-html -- html"
+
+[target.'cfg(windows)']
+rustflags = ["-C", "target-feature=+crt-static"]
