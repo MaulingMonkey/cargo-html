@@ -6,7 +6,7 @@
         {
             "label":            "default-build",
             "dependsOrder":     "sequence",
-            "dependsOn":        [ "fetch", "build-tsc", "check", "test", "build", "doc" ],
+            "dependsOn":        [ "build" ],
             "group":            { "kind": "build", "isDefault": true }
         },
 
@@ -28,43 +28,10 @@
 
 
 
-        // build-tsc
-        {
-            "label":            "build-tsc",
-            "command":          "tsc --build script/tsconfig.json",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "build-tsc", "reveal": "always" },
-            "problemMatcher":   { "base": "$tsc", "owner": "build-tsc", "source": "build-tsc" },
-        },
-
-
-
-        // check
-        {
-            "label":            "check",
-            "command":          "cargo c --frozen --all-targets",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "check", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "check", "source": "check" },
-        },
-
-
-
-        // test
-        {
-            "label":            "test",
-            "command":          "cargo t --frozen",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "test", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "test", "source": "test" },
-        },
-
-
-
         // build
         {
             "label":            "build",
-            "command":          "cargo b --frozen --all-targets",
+            "command":          "cargo b",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "build", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "build", "source": "build" },
@@ -75,7 +42,7 @@
         // doc
         {
             "label":            "doc",
-            "command":          "cargo +nightly doc --frozen --no-deps || cargo doc --frozen --no-deps",
+            "command":          "cargo d",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
@@ -86,31 +53,28 @@
         // help
         {
             "label":            "help",
-            "command":          "cargo +nightly doc --frozen --no-deps --open || cargo doc --frozen --no-deps --open",
+            "command":          "cargo d --open",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
-            "dependsOn":        [ "build-tsc" ],
         },
 
 
 
         // cargo-html
         {
-            "label":            "cargo build --package cargo-html --bin cargo-html",
-            "command":          "cargo build --package cargo-html --bin cargo-html",
+            "label":            "cargo b --package cargo-html --bin cargo-html",
+            "command":          "cargo b --package cargo-html --bin cargo-html",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
         {
-            "label":            "cargo build --package cargo-html --bin cargo-html --release",
-            "command":          "cargo build --package cargo-html --bin cargo-html --release",
+            "label":            "cargo b --package cargo-html --bin cargo-html --release",
+            "command":          "cargo b --package cargo-html --bin cargo-html --release",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "open repository (cargo-html)",
@@ -138,7 +102,6 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "cargo html -p goodbye-world --release",
@@ -146,7 +109,6 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
 
 
@@ -158,7 +120,6 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "cargo html -p hello-world --release",
@@ -166,7 +127,6 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-            "dependsOn":        [ "build-tsc" ],
         },
     ]
 }

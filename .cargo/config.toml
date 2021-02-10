@@ -1,5 +1,9 @@
 [alias]
-html = "run -p cargo-html -- html"
+html    = "r -p cargo-html -- html"
+b       = "run -p xtask -- build"
+c       = "run -p xtask -- check"
+d       = "run -p xtask -- doc"
+r       = "run -p xtask -- run"
 
 [target.'cfg(windows)']
 rustflags = ["-C", "target-feature=+crt-static"]

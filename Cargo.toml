@@ -5,6 +5,7 @@ members = [
     ".",
     "goodbye-world",
     "hello-world",
+    "xtask",
 ]
 
 [package]
