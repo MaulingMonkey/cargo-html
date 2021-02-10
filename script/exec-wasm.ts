@@ -7,6 +7,7 @@ function exec_base64_wasm(data: any, wasm: string) {
     type u8     = number & { _not_real: "u8"; }
     type u16    = number & { _not_real: "u16"; }
     type u32    = number & { _not_real: "u32"; }
+    type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of precision
     type usize  = number & { _not_real: "usize"; }
 
     const {atomic_sab, stdin_sab} = data;
@@ -20,6 +21,7 @@ function exec_base64_wasm(data: any, wasm: string) {
 
     // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#27
     const ERRNO_SUCCESS     = <Errno>0;
+    const ERRNO_2BIG        = <Errno>1;
     const ERRNO_BADF        = <Errno>8;
     const ERRNO_NOTCAPABLE  = <Errno>76;
 
@@ -29,16 +31,36 @@ function exec_base64_wasm(data: any, wasm: string) {
     function read_usize(ptr: ptr, offset: number): usize    { return read_u32(  ptr, offset) as any; }
     function read_ptr(  ptr: ptr, offset: number): ptr      { return read_usize(ptr, offset) as any; }
 
+    // XXX: `number` only guarantees 52-bit precision, so this is pretty bogus
+    function read_u64_approx(  ptr: ptr, offset: number): u64 {
+        let dv = new DataView(memory.buffer);
+        let lo = dv.getUint32(ptr + offset + 0, true);
+        let hi = dv.getUint32(ptr + offset + 4, true);
+        return (hi * 0x100000000 + lo) as u64;
+    }
+
+    function read_u64_pair(  ptr: ptr, offset: number): [u32, u32] {
+        let dv = new DataView(memory.buffer);
+        let lo = dv.getUint32(ptr + offset + 0, true) as u32;
+        let hi = dv.getUint32(ptr + offset + 4, true) as u32;
+        return [lo, hi];
+    }
+
     function write_u8(      ptr: ptr, offset: number, value: u8     ) { new DataView(memory.buffer).setUint8( ptr + offset, value      ); }
     function write_u16(     ptr: ptr, offset: number, value: u16    ) { new DataView(memory.buffer).setUint16(ptr + offset, value, true); }
     function write_u32(     ptr: ptr, offset: number, value: u32    ) { new DataView(memory.buffer).setUint32(ptr + offset, value, true); }
     function write_usize(   ptr: ptr, offset: number, value: usize  ) { write_u32(  ptr, offset, value as any); }
     function write_ptr(     ptr: ptr, offset: number, value: ptr    ) { write_usize(ptr, offset, value as any); }
+    function write_u64_pair(ptr: ptr, offset: number, [lo, hi]: [u32, u32]) {
+        write_u32(ptr, offset+0, lo);
+        write_u32(ptr, offset+4, hi);
+    }
 
     function slice(ptr: ptr, start: usize, end: usize): DataView { return new DataView(memory.buffer, ptr+start, end-start); }
+    function slice8(ptr: ptr, start: usize, end: usize): Uint8Array { return new Uint8Array(memory.buffer, ptr+start, end-start); }
 
     function nyi(): Errno {
-        //debugger;
+        debugger;
         return ERRNO_NOTCAPABLE;
     }
 
@@ -153,7 +175,79 @@ function exec_base64_wasm(data: any, wasm: string) {
     function path_rename                (): Errno { return nyi(); }
     function path_symlink               (): Errno { return nyi(); }
     function path_unlink_file           (): Errno { return nyi(); }
-    function poll_oneoff                (): Errno { return nyi(); }
+
+    function poll_oneoff(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-poll_oneoffin-constpointersubscription-out-pointerevent-nsubscriptions-size---errno-size
+        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1892
+
+        let out_nevents = 0;
+        write_usize(out_nevents_ptr, 0, out_nevents as usize);
+
+        if (in_nsubs == 0) { return ERRNO_SUCCESS; }
+        if (in_nsubs > 1) { nyi(); return ERRNO_2BIG; }
+
+        for (var sub=0; sub<in_nsubs; ++sub) {
+            let sub_base = (in_subs + 48 * sub) as ptr;
+
+            let userdata        = read_u64_pair(sub_base, 0);
+
+            let u_tag           = read_u8( sub_base, 8);
+            type Eventtype = u8;
+            const EVENTTYPE_CLOCK       = <Eventtype>0;
+            const EVENTTYPE_FD_READ     = <Eventtype>1;
+            const EVENTTYPE_FD_WRITE    = <Eventtype>2;
+            if (u_tag !== EVENTTYPE_CLOCK) {
+                return nyi();
+            }
+            // 7 bytes of padding
+
+            let u_u_clock_id    = read_u32(sub_base, 16);
+            type Clockid = u32;
+            const CLOCKID_REALTIME              = <Clockid>0; // The clock measuring real time. Time value zero corresponds with 1970-01-01T00:00:00Z.
+            const CLOCKID_MONOTONIC             = <Clockid>1; // The store-wide monotonic clock, which is defined as a clock measuring real time, whose value cannot be adjusted and which cannot have negative clock jumps. The epoch of this clock is undefined. The absolute time value of this clock therefore has no meaning.
+            const CLOCKID_PROCESS_CPUTIME_ID    = <Clockid>2;
+            const CLOCKID_THREAD_CPUTIME_ID     = <Clockid>3;
+            // 4 bytes of padding
+
+            let u_u_clock_timeout   = read_u64_approx(sub_base, 24);
+            let u_u_clock_precision = read_u64_approx(sub_base, 32);
+
+            let u_u_clock_flags     = read_u16(sub_base, 40);
+            const SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME  = <u16>0x1;
+            console.assert(u_u_clock_flags === 0, "u_u_clock_flags !== 0 not yet supported");
+
+            let abs = (u_u_clock_flags & SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME) !== 0;
+            // 6 bytes of padding
+
+            if (abs) {
+                return nyi();
+            } else {
+                switch (u_u_clock_id) {
+                    case CLOCKID_REALTIME:
+                    case CLOCKID_MONOTONIC:
+                        // wasi timestamps are in nanoseconds
+                        // Atomics.wait is in milliseconds
+                        let ms = u_u_clock_timeout / 1000 / 1000;
+                        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-struct
+                        write_u64_pair( out_events, 32 * out_nevents +  0, userdata);
+                        write_u32(      out_events, 32 * out_nevents +  8, 0 as u32); // error
+                        write_u8(       out_events, 32 * out_nevents + 10, u_tag); // type
+                        // fd_readwrite can be skipped for clocks
+
+                        out_nevents += 1;
+                        write_usize(out_nevents_ptr, 0, out_nevents as usize);
+                        break;
+                    default:
+                        return nyi();
+                }
+            }
+        }
+
+        write_usize(out_nevents_ptr, 0, in_nsubs);
+        return ERRNO_SUCCESS;
+    }
 
     function proc_exit(code: number): never {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
@@ -162,8 +256,27 @@ function exec_base64_wasm(data: any, wasm: string) {
     }
 
     function proc_raise                 (): Errno { return nyi(); }
-    function sched_yield                (): Errno { return nyi(); }
-    function random_get                 (): Errno { return nyi(); }
+
+    function sched_yield(): Errno {
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-sched_yield---errno
+        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0.0001);
+        return ERRNO_SUCCESS;
+    }
+
+    function random_get(buf: ptr, len: usize): Errno {
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-random_getbuf-pointeru8-buf_len-size---errno
+        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1914
+        if ("crypto" in self) {
+            self.crypto.getRandomValues(slice8(buf, 0 as usize, len));
+        } else {
+            for (var i=0; i<len; ++i) {
+                write_u8(buf, i, (0xFF & Math.floor(Math.random()*0x100)) as u8);
+            }
+        }
+        return ERRNO_SUCCESS;
+    }
+
     function sock_recv                  (): Errno { return nyi(); }
     function sock_send                  (): Errno { return nyi(); }
     function sock_shutdown              (): Errno { return nyi(); }
