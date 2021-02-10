@@ -74,7 +74,7 @@ fn main() {
 
     println!("\u{001B}[30;102m                            Bundling HTML pages                             \u{001B}[0m");
 
-    let script_placeholder  = "{BASE64_WASM32}";
+    let script_placeholder  = "\"{BASE64_WASM32}\"";
 
     for config in configs.iter().copied() {
         let target_dir = Path::new("target").join("wasm32-wasi").join(config.as_str());
@@ -83,7 +83,8 @@ fn main() {
                 TargetType::Bin     => target_dir.clone(),
                 TargetType::Example => target_dir.join("examples"),
             };
-            let template_html = include_str!("../template/console-crate.html").replace("{CONFIG}", config.as_str()).replace("{CRATE_NAME}", &target);
+            let template_js   = concat!("<script>\n", include_str!("../template/script.js"), "\n</script>");
+            let template_html = include_str!("../template/console-crate.html").replace("{CONFIG}", config.as_str()).replace("{CRATE_NAME}", &target).replace("<script src=\"script.js\"></script>", template_js);
             let script_placeholder_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
             let target_wasm = target_dir.join(format!("{}.wasm", target));

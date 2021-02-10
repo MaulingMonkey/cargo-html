@@ -6,7 +6,7 @@
         {
             "label":            "default-build",
             "dependsOrder":     "sequence",
-            "dependsOn":        [ "fetch", "check", "test", "build", "doc" ],
+            "dependsOn":        [ "fetch", "build-tsc", "check", "test", "build", "doc" ],
             "group":            { "kind": "build", "isDefault": true }
         },
 
@@ -24,6 +24,17 @@
             "command":          "cargo fetch",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "fetch", "reveal": "always" },
+        },
+
+
+
+        // build-tsc
+        {
+            "label":            "build-tsc",
+            "command":          "tsc --build script/tsconfig.json",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "build-tsc", "reveal": "always" },
+            "problemMatcher":   { "base": "$tsc", "owner": "build-tsc", "source": "build-tsc" },
         },
 
 
@@ -79,6 +90,7 @@
             "type":             "shell",
             "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
+            "dependsOn":        [ "build-tsc" ],
         },
 
 
@@ -90,6 +102,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "cargo build --package cargo-html --bin cargo-html --release",
@@ -97,15 +110,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
-        },
-        {
-            "label":            "build & open local documentation (cargo-html)",
-            "windows":          { "command": "start \"\"    \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
-            "linux":            { "command": "xdg-open      \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
-            "osx":              { "command": "open          \"${workspaceFolder}\\target\\doc\\cargo_html\\index.html\"" },
-            "type":             "shell",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
-            "dependsOn":        [ "doc" ],
+            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "open repository (cargo-html)",
@@ -133,6 +138,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "cargo html --bin goodbye-world --release",
@@ -140,6 +146,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+            "dependsOn":        [ "build-tsc" ],
         },
 
 
@@ -151,6 +158,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+            "dependsOn":        [ "build-tsc" ],
         },
         {
             "label":            "cargo html --bin hello-world --release",
@@ -158,6 +166,7 @@
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+            "dependsOn":        [ "build-tsc" ],
         },
     ]
 }

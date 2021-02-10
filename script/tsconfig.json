@@ -1,0 +1,13 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        //"strict":           true,
+        //"sourceMap":        true,
+        "outFile":          "../template/script.js",
+        "module":           "none",
+        "target":           "es2017",
+        "removeComments":   true,
+        "inlineSources":    true,
+        "inlineSourceMap":  true,
+    }
+}
