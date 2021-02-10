@@ -78,7 +78,11 @@ fn main() {
 
     for config in configs.iter().copied() {
         let target_dir = Path::new("target").join("wasm32-wasi").join(config.as_str());
-        for (_ty, target) in targets.iter() {
+        for (ty, target) in targets.iter() {
+            let target_dir = match ty {
+                TargetType::Bin     => target_dir.clone(),
+                TargetType::Example => target_dir.join("examples"),
+            };
             let template_html = include_str!("../template/console-crate.html").replace("{CONFIG}", config.as_str()).replace("{CRATE_NAME}", &target);
             let script_placeholder_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
