@@ -95,10 +95,7 @@
                         case 0: // stdin
                             for (;;) {
                                 var consumed    = Atomics.load(atomic, ATOMIC_STDIN_CONSUMED);
-
-                                //Atomics.wait(atomic, ATOMIC_STDIN_FILLED, consumed); // XXX: this... hangs in Chrome for some reason
-                                while (Atomics.wait(atomic, ATOMIC_STDIN_FILLED, consumed, 10) !== "not-equal") {} // this does tho
-
+                                while (Atomics.wait(atomic, ATOMIC_STDIN_FILLED, consumed) !== "ok") {}
                                 var filled      = Atomics.load(atomic, ATOMIC_STDIN_FILLED);
                                 var available   = (filled-consumed)|0; // available *to read*
                                 console.assert(available > 0);
@@ -345,6 +342,7 @@
                 stdin_buffer.splice(0, n);
                 filled = (filled+n)|0;
                 Atomics.store(atomic, ATOMIC_STDIN_FILLED, filled);
+                Atomics.notify(atomic, ATOMIC_STDIN_FILLED);
             }, 0);
         }
     </script>
