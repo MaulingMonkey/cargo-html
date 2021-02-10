@@ -28,7 +28,7 @@
         <h1>{CRATE_NAME}</h1>
         <code id="console"><span id="cursor"> </span></code>
     </center>
-    <script data-js-worker="true">
+    <script>
         const ATOMIC_STDIN_FILLED   = 0;
         const ATOMIC_STDIN_CONSUMED = 1;
         const ATOMIC_COUNT = 2;
@@ -283,69 +283,71 @@
                 }
             };
         }
+
+        function main() {
+            const con       = document.getElementById("console");
+            const cursor    = document.getElementById("cursor");
+
+            const atomic_sab    = new SharedArrayBuffer(4 * ATOMIC_COUNT);
+            const atomic        = new Int32Array(atomic_sab);
+            const stdin_sab     = new SharedArrayBuffer(STDIN_COUNT);
+            const stdin         = new Uint8Array(stdin_sab);
+
+            // spawn web worker
+            const blob = new Blob(Array.prototype.map.call(document.querySelectorAll('script:not([data-js-worker=\'false\'])'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
+            document.worker = new Worker(window.URL.createObjectURL(blob));
+            document.worker.onmessage = function(e) {
+                e = e.data;
+                switch (e.kind) {
+                    case "console":
+                        con.insertBefore(document.createTextNode(e.text), cursor);
+                        break;
+                    case "proc_exit":
+                        var exit = document.createElement("span");
+                        exit.textContent = `\nprocess exited with code ${e.code}`;
+                        exit.style.color = "#888";
+                        con.insertBefore(exit, cursor);
+                        con.removeChild(cursor);
+                        break;
+                    default:
+                        console.error("unexpected event kind", e.kind);
+                        debugger;
+                        break;
+                }
+            };
+            document.worker.postMessage({
+                kind:       "init",
+                atomic_sab,
+                stdin_sab,
+            });
+
+            var stdin_buffer = [];
+            document.addEventListener("keypress", function(e) {
+                var chars = e.char || String.fromCharCode(e.charCode);
+                if (chars == "\r") { chars = "\n"; }
+                var chars = new TextEncoder().encode(chars);
+                for (var i=0; i<chars.length; ++i) {
+                    stdin_buffer.push(chars[i]);
+                }
+            });
+
+            setInterval(function(){
+                if (stdin_buffer.length === 0) return;
+
+                var filled      = Atomics.load(atomic, ATOMIC_STDIN_FILLED);
+                var consumed    = Atomics.load(atomic, ATOMIC_STDIN_CONSUMED);
+                var available   = STDIN_COUNT - ((filled-consumed)|0); // available *to write*
+
+                var n = Math.min(available, stdin_buffer.length);
+                for (var i=0; i<n; ++i) {
+                    stdin[(i+filled)&STDIN_MASK] = stdin_buffer[i];
+                }
+                stdin_buffer.splice(0, n);
+                filled = (filled+n)|0;
+                Atomics.store(atomic, ATOMIC_STDIN_FILLED, filled);
+            }, 0);
+        }
     </script>
     <script data-js-worker="true" type="text/js-worker-only">worker();</script>
-    <script>
-        const con       = document.getElementById("console");
-        const cursor    = document.getElementById("cursor");
-
-        const atomic_sab    = new SharedArrayBuffer(4 * ATOMIC_COUNT);
-        const atomic        = new Int32Array(atomic_sab);
-        const stdin_sab     = new SharedArrayBuffer(STDIN_COUNT);
-        const stdin         = new Uint8Array(stdin_sab);
-
-        // spawn web worker
-        const blob = new Blob(Array.prototype.map.call(document.querySelectorAll('script[data-js-worker=\'true\']'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
-        document.worker = new Worker(window.URL.createObjectURL(blob));
-        document.worker.onmessage = function(e) {
-            e = e.data;
-            switch (e.kind) {
-                case "console":
-                    con.insertBefore(document.createTextNode(e.text), cursor);
-                    break;
-                case "proc_exit":
-                    var exit = document.createElement("span");
-                    exit.textContent = `\nprocess exited with code ${e.code}`;
-                    exit.style.color = "#888";
-                    con.insertBefore(exit, cursor);
-                    con.removeChild(cursor);
-                    break;
-                default:
-                    console.error("unexpected event kind", e.kind);
-                    debugger;
-                    break;
-            }
-        };
-        document.worker.postMessage({
-            kind:       "init",
-            atomic_sab,
-            stdin_sab,
-        });
-
-        var stdin_buffer = [];
-        document.addEventListener("keypress", function(e) {
-            var chars = e.char || String.fromCharCode(e.charCode);
-            if (chars == "\r") { chars = "\n"; }
-            var chars = new TextEncoder().encode(chars);
-            for (var i=0; i<chars.length; ++i) {
-                stdin_buffer.push(chars[i]);
-            }
-        });
-
-        setInterval(function(){
-            if (stdin_buffer.length === 0) return;
-
-            var filled      = Atomics.load(atomic, ATOMIC_STDIN_FILLED);
-            var consumed    = Atomics.load(atomic, ATOMIC_STDIN_CONSUMED);
-            var available   = STDIN_COUNT - ((filled-consumed)|0); // available *to write*
-
-            var n = Math.min(available, stdin_buffer.length);
-            for (var i=0; i<n; ++i) {
-                stdin[(i+filled)&STDIN_MASK] = stdin_buffer[i];
-            }
-            stdin_buffer.splice(0, n);
-            filled = (filled+n)|0;
-            Atomics.store(atomic, ATOMIC_STDIN_FILLED, filled);
-        }, 0);
-    </script>
+    <script data-js-worker="false">main();</script>
 </body></html>
