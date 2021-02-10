@@ -9,7 +9,7 @@ members = [
 
 [package]
 name                    = "cargo-html"
-version                 = "0.0.0-git"
+version                 = "0.1.1"
 authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
 edition                 = "2018"
 repository              = "https://github.com/MaulingMonkey/cargo-html"
