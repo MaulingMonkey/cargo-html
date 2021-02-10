@@ -19,7 +19,7 @@ function main_dom() {
             case "proc_exit":
                 var exit = document.createElement("span");
                 exit.textContent = `\nprocess exited with code ${e.data.code}`;
-                exit.style.color = "#888";
+                exit.style.color = e.data.code == 0 ? "#888" : "#C44";
                 con.insertBefore(exit, cursor);
                 con.removeChild(cursor);
                 break;
