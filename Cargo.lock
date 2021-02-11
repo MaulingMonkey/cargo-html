@@ -59,9 +59,9 @@ checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
 name = "mmrbi"
-version = "0.0.14"
+version = "0.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "963be6c45a84962d29d5a2ca0bacb225fed5b4a6a5e4b05b5cb6c627ec2dcf60"
+checksum = "80d43451d366fa7ea4e4d109bab99597e4bbfcc0bee67985a4f81ac19dba2db8"
 dependencies = [
  "alphanumeric-sort",
  "serde",

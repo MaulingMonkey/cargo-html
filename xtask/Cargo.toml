@@ -7,7 +7,7 @@ edition                 = "2018"
 publish                 = false
 
 [dependencies]
-mmrbi                   = "0.0.14"
+mmrbi                   = "0.0.15"
 
 [[bin]]
 name                    = "xtask"
