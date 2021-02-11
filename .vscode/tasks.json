@@ -42,7 +42,7 @@
         // doc
         {
             "label":            "doc",
-            "command":          "cargo d",
+            "command":          "cargo d --no-deps -p cargo-html",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
@@ -53,7 +53,7 @@
         // help
         {
             "label":            "help",
-            "command":          "cargo d --open",
+            "command":          "cargo d --no-deps -p cargo-html --open",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
             "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
