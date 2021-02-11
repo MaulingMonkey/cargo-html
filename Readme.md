@@ -26,6 +26,40 @@ start "" target/wasm32-wasi/debug/hello-world.html
 ```
 
 
+<h2 name="examples">Examples</h2>
+
+### rust-mini-games
+
+* as mentioned on HN: https://news.ycombinator.com/item?id=26089539
+* upstream: https://github.com/Syn-Nine/rust-mini-games
+* patches:  https://github.com/MaulingMonkey/rust-mini-games
+
+| Game | Issues |
+| ---- | ------ |
+| [asylum](https://maulingmonkey.com/rust-mini-games/asylum.html)
+| [guess](https://maulingmonkey.com/rust-mini-games/guess.html)
+| [knights](https://maulingmonkey.com/rust-mini-games/knights.html) | [#6](https://github.com/MaulingMonkey/cargo-html/issues/6) File I/O not implemented (panic on exit)
+| [lord](https://maulingmonkey.com/rust-mini-games/lord.html)       | [#7](https://github.com/MaulingMonkey/cargo-html/issues/7) Colors not supported (some terminal escape garbage)
+| [rps](https://maulingmonkey.com/rust-mini-games/rps.html)
+| [tictactoe](https://maulingmonkey.com/rust-mini-games/tictactoe.html)
+
+To reproduce the `gh-pages` of my fork of that repository from scratch:
+```sh
+# init
+cargo install cargo-html
+git clone --branch cargo-html-demo https://github.com/MaulingMonkey/rust-mini-games
+cd rust-mini-games
+
+# build
+cargo html --release
+robocopy /S target/wasm32-wasi/release . *.html
+
+# create branch
+git checkout -b gh-pages
+git add -A .
+git commit -m "Updated examples"
+```
+
 
 <h2 name="license">License</h2>
 
