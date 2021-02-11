@@ -37,6 +37,24 @@
 
 
 
+        // wasm-bindgen-world
+        {
+            "name":                     "wasm-bindgen-world • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world",
+            "url":                      "${workspaceFolder}/target/wasm32-unknown-unknown/debug/wasm_bindgen_world.html",
+        },
+        {
+            "name":                     "wasm-bindgen-world • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
+            "url":                      "${workspaceFolder}/target/wasm32-unknown-unknown/release/wasm_bindgen_world.html",
+        },
+
+
+
         // cargo-html
         {
             "name":                     "cargo-html • debug",

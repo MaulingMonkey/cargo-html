@@ -14,10 +14,8 @@ pub fn start() {
     let mut hm = HashMap::new();
     hm.insert("foo", "bar");
     hm.insert("a", "b");
-    println!("{:?}", hm);
+    //println!("{:?}", hm);
 
     std::thread::yield_now();
-    std::thread::sleep(std::time::Duration::from_secs(1));
     alert("Hello, world!");
-    wasm_bindgen::throw_str("Hello, world!");
 }

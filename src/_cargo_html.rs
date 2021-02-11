@@ -11,6 +11,7 @@ use std::path::Path;
 trait PackageExt {
     fn is_html(&self) -> bool;
     fn is_wasi(&self) -> bool;
+    fn is_wasm_pack(&self) -> bool;
 }
 
 impl PackageExt for cargo_metadata::Package {
@@ -20,6 +21,10 @@ impl PackageExt for cargo_metadata::Package {
 
     fn is_wasi(&self) -> bool {
         self.is_html() && self.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "bin" || ct == "example"))
+    }
+
+    fn is_wasm_pack(&self) -> bool {
+        self.is_html() && self.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "cdylib")) && self.dependencies.iter().any(|d| d.name == "wasm-bindgen")
     }
 }
 
@@ -114,25 +119,25 @@ fn main() {
     }
 
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
-    let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
+    let mut cargo_build_wasi = Command::parse("cargo build --target=wasm32-wasi").unwrap();
 
     for pkg in metadata.packages.iter() {
         if packages.contains(&pkg.name) && pkg.is_wasi() {
-            cmd.arg("--package").arg(&pkg.name);
+            cargo_build_wasi.arg("--package").arg(&pkg.name);
         }
     }
 
-    if all_targets  { cmd.arg("--all-targets"); }
-    if bins         { cmd.arg("--bins"); }
-    if examples     { cmd.arg("--examples"); }
+    if all_targets  { cargo_build_wasi.arg("--all-targets"); }
+    if bins         { cargo_build_wasi.arg("--bins"); }
+    if examples     { cargo_build_wasi.arg("--examples"); }
 
     bins        |= all_targets;
     examples    |= all_targets;
 
     for (ty, target) in targets.iter() {
         match ty {
-            TargetType::Bin     => { if !bins       { cmd.arg("--bin")      .arg(target); } },
-            TargetType::Example => { if !examples   { cmd.arg("--example")  .arg(target); } },
+            TargetType::Bin     => { if !bins       { cargo_build_wasi.arg("--bin")      .arg(target); } },
+            TargetType::Example => { if !examples   { cargo_build_wasi.arg("--example")  .arg(target); } },
         }
     }
 
@@ -163,26 +168,62 @@ fn main() {
         }
     }
 
-    if targets.is_empty() {
-        fatal!("no selected packages contain any bin/example targets for `cargo html` to build");
-    }
+    let mut any_built = false;
 
     if configs.is_empty() {
         configs.insert(Config::Debug);
     }
 
-    println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
+    let pkg_filter = |p: &cargo_metadata::Package| packages.contains(&p.name) && p.is_wasi();
+    if metadata.packages.iter().any(pkg_filter) {
+        println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
 
-    for config in configs.iter().copied() {
-        let mut cmd = cmd.clone();
+        for config in configs.iter().copied() {
+            let mut cmd = cargo_build_wasi.clone();
 
-        match config {
-            Config::Debug   => {},
-            Config::Release => drop(cmd.arg("--release")),
+            match config {
+                Config::Debug   => {},
+                Config::Release => drop(cmd.arg("--release")),
+            }
+
+            status!("Running", "{:?}", cmd);
+            cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
+            any_built = true;
         }
+    }
 
-        status!("Running", "{:?}", cmd);
-        cmd.status0().unwrap_or_else(|err| fatal!("{:?} failed: {}", cmd, err));
+    let pkg_filter = |p: &cargo_metadata::Package| packages.contains(&p.name) && p.is_wasm_pack();
+    if metadata.packages.iter().any(pkg_filter) {
+        println!("\u{001B}[30;102m                         Building wasm-pack targets                         \u{001B}[0m");
+
+        for config in configs.iter().copied() {
+            let mut cmd = Command::new("wasm-pack");
+            cmd.arg("build");
+            cmd.arg("--no-typescript"); // *.d.ts defs are pointless for bundled HTML files
+            cmd.arg("--target").arg("no-modules");
+            cmd.arg("--out-dir").arg(metadata.workspace_root.join("target").join("wasm32-unknown-unknown").join(config.as_str()).join("pkg"));
+            match config {
+                Config::Debug   => drop(cmd.arg("--dev")),
+                Config::Release => drop(cmd.arg("--release")),
+            }
+
+            for pkg in metadata.packages.iter() {
+                if !pkg.is_wasm_pack() { continue; }
+
+                let mut dir = pkg.manifest_path.clone();
+                dir.pop();
+
+                let mut cmd = cmd.clone();
+                cmd.current_dir(dir);
+                status!("Running", "{}", cmd);
+                cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
+                any_built = true;
+            }
+        }
+    }
+
+    if !any_built {
+        fatal!("no selected packages contain any bin/example targets for `cargo html` to build");
     }
 
     println!("\u{001B}[30;102m                            Bundling HTML pages                             \u{001B}[0m");
@@ -197,8 +238,11 @@ fn main() {
                 TargetType::Example => target_dir.join("examples"),
             };
             let template_js   = concat!("<script>\n", include_str!("../template/script.js"), "\n</script>");
-            let template_html = include_str!("../template/console-crate.html").replace("{CONFIG}", config.as_str()).replace("{CRATE_NAME}", &target).replace("<script src=\"script.js\"></script>", template_js);
-            let script_placeholder_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
+            let template_html = include_str!("../template/console-crate.html")
+                .replace("{CONFIG}", config.as_str())
+                .replace("{CRATE_NAME}", &target)
+                .replace("<script src=\"script.js\"></script>", template_js);
+            let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
             let target_wasm = target_dir.join(format!("{}.wasm", target));
             let target_wasm = std::fs::read(&target_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", target_wasm.display(), err));
@@ -207,9 +251,36 @@ fn main() {
             let target_html = target_dir.join(format!("{}.html", target));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
-                write!(o, "{}", &template_html[..script_placeholder_idx])?;
+                write!(o, "{}", &template_html[..base64_wasm32_idx])?;
                 write!(o, "{:?}", target_wasm)?;
-                write!(o, "{}", &template_html[(script_placeholder_idx + script_placeholder.len())..])?;
+                write!(o, "{}", &template_html[(base64_wasm32_idx + script_placeholder.len())..])?;
+                Ok(())
+            }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
+        }
+
+        let target_dir  = Path::new("target").join("wasm32-unknown-unknown").join(config.as_str());
+        let pkg_dir     = Path::new("target").join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
+        for pkg in metadata.packages.iter().filter(|p| packages.contains(&p.name) && p.is_wasm_pack()) {
+            let lib_name = pkg.name.replace("-", "_");
+            let package_js = pkg_dir.join(format!("{}.js", lib_name));
+            let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
+            let template_html = include_str!("../template/wasm-pack.html")
+                .replace("{CONFIG}", config.as_str())
+                .replace("{CRATE_NAME}", &pkg.name)
+                .replace("{PACKAGE_JS}", &package_js);
+            let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
+
+            let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
+            //let wasm = target_dir.join(format!("{}.wasm", lib_name));
+            let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
+            let wasm = base64::encode(&wasm[..]);
+
+            let target_html = target_dir.join(format!("{}.html", lib_name));
+            status!("Generating", "{}", target_html.display());
+            mmrbi::fs::write_if_modified_with(target_html, |o| {
+                write!(o, "{}", &template_html[..base64_wasm32_idx])?;
+                write!(o, "{:?}", wasm)?;
+                write!(o, "{}", &template_html[(base64_wasm32_idx + script_placeholder.len())..])?;
                 Ok(())
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }

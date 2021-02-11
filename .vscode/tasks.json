@@ -128,5 +128,23 @@
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
+
+
+
+        // wasm-bindgen-world
+        {
+            "label":            "cargo html -p wasm-bindgen-world",
+            "command":          "cargo html -p wasm-bindgen-world",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo html -p wasm-bindgen-world --release",
+            "command":          "cargo html -p wasm-bindgen-world --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
     ]
 }
