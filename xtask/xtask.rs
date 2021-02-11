@@ -37,9 +37,9 @@ fn build(args: Args) {
        exec("cargo build --frozen --workspace --exclude xtask --all-targets");
        exec("cargo test  --frozen --workspace --exclude xtask --all-targets");
        if has_nightly() {
-           exec("cargo +nightly doc");
+           exec("cargo +nightly doc --no-deps -p cargo-html");
        } else {
-           exec("cargo doc");
+           exec("cargo doc --no-deps -p cargo-html");
        }
 
        // release
