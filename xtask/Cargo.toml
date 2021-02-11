@@ -5,6 +5,7 @@ name                    = "xtask"
 version                 = "0.0.0"
 edition                 = "2018"
 publish                 = false
+metadata.html           = false
 
 [dependencies]
 mmrbi                   = "0.0.15"

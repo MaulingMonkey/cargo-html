@@ -6,6 +6,9 @@ members = [
     "examples/*",
     "xtask",
 ]
+default-members = [
+    "."
+]
 
 [package]
 name                    = "cargo-html"
@@ -19,6 +22,7 @@ readme                  = "Readme.md"
 description             = "create HTML files embedding WASM from rust programs"
 keywords                = ["wasm", "html"]
 categories              = ["development-tools::cargo-plugins", "wasm", "web-programming"] # https://crates.io/category_slugs
+metadata.html           = false
 
 [[bin]]
 name                    = "cargo-html"

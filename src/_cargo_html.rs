@@ -8,6 +8,16 @@ use std::path::Path;
 
 
 
+trait PackageExt {
+    fn is_html(&self) -> bool;
+}
+
+impl PackageExt for cargo_metadata::Package {
+    fn is_html(&self) -> bool {
+        self.metadata.get("html").map_or(true, |html| html != false)
+    }
+}
+
 fn main() {
     let mut args = std::env::args();
     let _cargo  = args.next();
@@ -76,14 +86,32 @@ fn main() {
         std::process::exit(1); // earlier errors
     }
 
+    // defaults
+
+    if workspace {
+        for package in metadata.packages.iter().filter(|p| p.is_html()) {
+            packages.insert(package.name.clone());
+        }
+    } else if packages.is_empty() {
+        // neither --workspace nor any --package s specified
+        if let Some(root) = metadata.root_package() {
+            if root.is_html() {
+                packages.insert(root.name.clone());
+            }
+        }
+        if packages.is_empty() {
+            // no root, or root isn't an HTML project
+            // TODO: support workspace default members?
+            for package in metadata.packages.iter().filter(|p| p.is_html()) {
+                packages.insert(package.name.clone());
+            }
+        }
+    }
+
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
     let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
 
-    if workspace {
-        cmd.arg("--workspace");
-    } else {
-        for pkg in packages.iter() { cmd.arg("--package").arg(pkg); }
-    }
+    for pkg in packages.iter() { cmd.arg("--package").arg(pkg); }
 
     if all_targets  { cmd.arg("--all-targets"); }
     if bins         { cmd.arg("--bins"); }
@@ -99,23 +127,7 @@ fn main() {
         }
     }
 
-    // defaults
-
-    if workspace {
-        for package in metadata.packages.iter() {
-            packages.insert(package.name.clone());
-        }
-    } else if packages.is_empty() {
-        // neither --workspace nor any --package s specified
-        if let Some(root) = metadata.root_package() {
-            packages.insert(root.name.clone());
-        } else {
-            // TODO: support workspace default members?
-            for package in metadata.packages.iter() {
-                packages.insert(package.name.clone());
-            }
-        }
-    }
+    // match to cmd defaults
 
     if targets.is_empty() && !bins && !examples {
         bins = true;
