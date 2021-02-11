@@ -1,0 +1,15 @@
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name                    = "wasm-bindgen-world"
+version                 = "0.0.0"
+authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
+edition                 = "2018"
+publish                 = false
+
+[lib]
+path                    = "wasm-bindgen-world.rs"
+crate-type              = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen            = "0.2.70"
