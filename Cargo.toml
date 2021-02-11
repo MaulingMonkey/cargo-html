@@ -23,6 +23,13 @@ description             = "create self-contained HTML programs"
 keywords                = ["wasm", "html"]
 categories              = ["development-tools::cargo-plugins", "wasm", "web-programming"] # https://crates.io/category_slugs
 metadata.html           = false
+include = [
+    "src",
+    "template",
+    "Cargo.*",
+    "LICENSE*",
+    "*.md",
+]
 
 [[bin]]
 name                    = "cargo-html"
