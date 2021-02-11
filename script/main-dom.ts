@@ -4,7 +4,14 @@ function main_dom() {
     const eInput    = requireElementById("console-input");
     const eCursor   = requireElementById("console-cursor");
 
-    const stdin = new io.SharedCircularBuffer(8192);
+    const stdin = (function(): io.SharedCircularBuffer | undefined {
+        try {
+            return new io.SharedCircularBuffer(8192);
+        } catch (e) {
+            // FF: No SharedArrayBuffer support?
+            return undefined;
+        }
+    })();
 
     // spawn web worker
     const blob = new Blob(<BlobPart[]>Array.prototype.map.call(document.querySelectorAll('script:not([data-js-worker=\'false\'])'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
@@ -29,7 +36,7 @@ function main_dom() {
     };
     dom2work.post({
         kind: "init",
-        stdin: stdin.sab,
+        stdin: (stdin !== undefined) ? stdin.sab : undefined,
     });
 
     type Mode = "raw" | "linebuffered";
@@ -45,7 +52,9 @@ function main_dom() {
                     case "\t":
                         // should've already been handled by keydown event
                     default:
-                        stdin.write_all(text);
+                        if (stdin !== undefined) {
+                            stdin.write_all(text);
+                        }
                         break;
                 }
                 break;
@@ -75,12 +84,12 @@ function main_dom() {
         switch (mode) {
             case "raw":
                 switch (key) {
-                    case "Backspace":   stdin.write_all("\x08"); break;
-                    case "Enter":       stdin.write_all("\n"); break;
-                    case "NumpadEnter": stdin.write_all("\n"); break;
-                    case "Tab":         stdin.write_all("\t"); break;
-                    case "Esc":         stdin.write_all("\x1B"); break;
-                    case "Escape":      stdin.write_all("\x1B"); break;
+                    case "Backspace":   if (stdin !== undefined) { stdin.write_all("\x08"); } break;
+                    case "Enter":       if (stdin !== undefined) { stdin.write_all("\n");   } break;
+                    case "NumpadEnter": if (stdin !== undefined) { stdin.write_all("\n");   } break;
+                    case "Tab":         if (stdin !== undefined) { stdin.write_all("\t");   } break;
+                    case "Esc":         if (stdin !== undefined) { stdin.write_all("\x1B"); } break;
+                    case "Escape":      if (stdin !== undefined) { stdin.write_all("\x1B"); } break;
                     default:            return; // process no further
                 }
                 break;
@@ -96,7 +105,9 @@ function main_dom() {
                     case "NumpadEnter":
                         var buffer = (eInput.textContent || "") + "\n";
                         eInput.textContent = "";
-                        stdin.write_all(buffer);
+                        if (stdin !== undefined) {
+                            stdin.write_all(buffer);
+                        }
                         break;
                     case "Tab":     eInput.textContent = (eInput.textContent || "") + "\t"; break;
                     case "Esc":     eInput.textContent = (eInput.textContent || "") + "\x1B"; break;

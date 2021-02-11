@@ -10,7 +10,10 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of precision
     type usize  = number & { _not_real: "usize"; }
 
-    const stdin = new io.SharedCircularBuffer(init.stdin);
+    const stdin = (function(): io.SharedCircularBuffer | undefined {
+        if (init.stdin === undefined) return undefined;
+        return new io.SharedCircularBuffer(init.stdin);
+    })();
 
     // References:
     // https://docs.rs/wasi-types/0.1.5/src/wasi_types/lib.rs.html
@@ -122,18 +125,20 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
 
             switch (fd) {
                 case 0: // stdin
-                    let read = stdin.try_read(buf_len);
-                    for (var i=0; i<read.length; ++i) {
-                        var b = read[i] as u8;
-                        work2dom.post({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
-                        write_u8(buf_ptr, i, b);
+                    if (stdin !== undefined) {
+                        let read = stdin.try_read(buf_len);
+                        for (var i=0; i<read.length; ++i) {
+                            var b = read[i] as u8;
+                            work2dom.post({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
+                            write_u8(buf_ptr, i, b);
+                        }
+                        nread += read.length;
+                        if (read.length < buf_len) {
+                            write_usize(nread_ptr, 0, nread as usize);
+                            return errno;
+                        }
+                        break;
                     }
-                    nread += read.length;
-                    if (read.length < buf_len) {
-                        write_usize(nread_ptr, 0, nread as usize);
-                        return errno;
-                    }
-                    break;
                 default:
                     errno = ERRNO_BADF;
                     break;

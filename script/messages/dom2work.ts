@@ -1,7 +1,7 @@
 namespace dom2work {
     export interface Init {
         kind:   "init";
-        stdin:  SharedArrayBuffer,
+        stdin:  SharedArrayBuffer | undefined,
     }
 
     interface Other {
