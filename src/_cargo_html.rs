@@ -10,11 +10,16 @@ use std::path::Path;
 
 trait PackageExt {
     fn is_html(&self) -> bool;
+    fn is_wasi(&self) -> bool;
 }
 
 impl PackageExt for cargo_metadata::Package {
     fn is_html(&self) -> bool {
         self.metadata.get("html").map_or(true, |html| html != false)
+    }
+
+    fn is_wasi(&self) -> bool {
+        self.is_html() && self.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "bin" || ct == "example"))
     }
 }
 
@@ -111,7 +116,11 @@ fn main() {
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
     let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
 
-    for pkg in packages.iter() { cmd.arg("--package").arg(pkg); }
+    for pkg in metadata.packages.iter() {
+        if packages.contains(&pkg.name) && pkg.is_wasi() {
+            cmd.arg("--package").arg(&pkg.name);
+        }
+    }
 
     if all_targets  { cmd.arg("--all-targets"); }
     if bins         { cmd.arg("--bins"); }
