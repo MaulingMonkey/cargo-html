@@ -3,7 +3,6 @@ function main_dom() {
     const eCon      = requireElementById("console");
     const eCursor   = requireElementById("cursor");
 
-    const conio = new io.SharedCircularBuffer(8192);
     const stdin = new io.SharedCircularBuffer(8192);
 
     // spawn web worker
@@ -29,7 +28,6 @@ function main_dom() {
     };
     dom2work.post({
         kind: "init",
-        conio: conio.sab,
         stdin: stdin.sab,
     });
 

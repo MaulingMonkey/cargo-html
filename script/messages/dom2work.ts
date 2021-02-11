@@ -1,7 +1,6 @@
 namespace dom2work {
     export interface Init {
         kind:   "init";
-        conio:  SharedArrayBuffer,
         stdin:  SharedArrayBuffer,
     }
 

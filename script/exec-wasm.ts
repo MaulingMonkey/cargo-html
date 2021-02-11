@@ -10,7 +10,6 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of precision
     type usize  = number & { _not_real: "usize"; }
 
-    const conio = new io.SharedCircularBuffer(init.conio);
     const stdin = new io.SharedCircularBuffer(init.stdin);
 
     // References:
