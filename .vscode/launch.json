@@ -3,54 +3,96 @@
     "configurations": [
         // hello-world
         {
-            "name":                     "hello-world • debug",
+            "name":                     "hello-world • chrome • debug",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p hello-world",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/hello-world.html",
         },
         {
-            "name":                     "hello-world • release",
+            "name":                     "hello-world • chrome • release",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p hello-world --release",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/release/hello-world.html",
+        },
+        {
+            "name":                     "hello-world • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p hello-world",
+            "file":                     "${workspaceFolder}/target/wasm32-wasi/debug/hello-world.html",
+        },
+        {
+            "name":                     "hello-world • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p hello-world --release",
+            "file":                     "${workspaceFolder}/target/wasm32-wasi/release/hello-world.html",
         },
 
 
 
         // goodbye-world
         {
-            "name":                     "goodbye-world • debug",
+            "name":                     "goodbye-world • chrome • debug",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p goodbye-world",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/debug/goodbye-world.html",
         },
         {
-            "name":                     "goodbye-world • release",
+            "name":                     "goodbye-world • chrome • release",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p goodbye-world --release",
             "url":                      "${workspaceFolder}/target/wasm32-wasi/release/goodbye-world.html",
+        },
+        {
+            "name":                     "goodbye-world • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p goodbye-world",
+            "file":                     "${workspaceFolder}/target/wasm32-wasi/debug/goodbye-world.html",
+        },
+        {
+            "name":                     "goodbye-world • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p goodbye-world --release",
+            "file":                     "${workspaceFolder}/target/wasm32-wasi/release/goodbye-world.html",
         },
 
 
 
         // wasm-bindgen-world
         {
-            "name":                     "wasm-bindgen-world • debug",
+            "name":                     "wasm-bindgen-world • chrome • debug",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world",
             "url":                      "${workspaceFolder}/target/wasm32-unknown-unknown/debug/wasm_bindgen_world.html",
         },
         {
-            "name":                     "wasm-bindgen-world • release",
+            "name":                     "wasm-bindgen-world • chrome • release",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
             "url":                      "${workspaceFolder}/target/wasm32-unknown-unknown/release/wasm_bindgen_world.html",
+        },
+        {
+            "name":                     "wasm-bindgen-world • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world",
+            "file":                     "${workspaceFolder}/target/wasm32-unknown-unknown/debug/wasm_bindgen_world.html",
+        },
+        {
+            "name":                     "wasm-bindgen-world • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
+            "file":                     "${workspaceFolder}/target/wasm32-unknown-unknown/release/wasm_bindgen_world.html",
         },
 
 

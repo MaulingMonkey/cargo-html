@@ -1,5 +1,6 @@
 {
     "recommendations": [
+        "firefox-devtools.vscode-firefox-debug",
         "matklad.rust-analyzer",
         "ms-vscode.cpptools",
         "msjsdiag.debugger-for-chrome",
