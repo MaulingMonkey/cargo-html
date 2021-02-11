@@ -18,15 +18,28 @@
             100%    { opacity: 60%; }
         }
 
-        #cursor {
+        #console-input {
+            opacity:            70%;
+            text-decoration:    underline;
+        }
+
+        #console-cursor {
             animation:      blink 800ms step-start infinite;
-            border-bottom:  3px solid #FFF;
+        }
+
+        .noselect { /* https://stackoverflow.com/a/4407335 */
+            -webkit-touch-callout:  none; /* iOS Safari */
+            -webkit-user-select:    none; /* Safari */
+            -khtml-user-select:     none; /* Konqueror HTML */
+            -moz-user-select:       none; /* Old versions of Firefox */
+            -ms-user-select:        none; /* Internet Explorer, Old versions of Edge */
+            user-select:            none; /* Chrome, Edge, Opera, FireFox */
         }
     </style>
 </head><body>
     <center>
         <h1>{CRATE_NAME}</h1>
-        <code id="console"><span id="cursor"> </span></code>
+        <code id="console"><span id="console-input"></span><span id="console-cursor" class="noselect">█</span></code>
     </center>
     <script src="script.js"></script>
     <script data-js-worker="true" type="text/js-worker-only">
