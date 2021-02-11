@@ -3,8 +3,7 @@
 [workspace]
 members = [
     ".",
-    "goodbye-world",
-    "hello-world",
+    "examples/*",
     "xtask",
 ]
 
