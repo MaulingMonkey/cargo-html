@@ -1,4 +1,4 @@
-# cargo-html - create HTML files embedding WASM from rust programs
+# `cargo html` - create self-contained HTML programs
 
 [![GitHub](https://img.shields.io/github/stars/MaulingMonkey/cargo-html.svg?label=GitHub&style=social)](https://github.com/MaulingMonkey/cargo-html)
 [![crates.io](https://img.shields.io/crates/v/cargo-html.svg)](https://crates.io/crates/cargo-html)
@@ -8,15 +8,20 @@
 [![Build Status](https://github.com/MaulingMonkey/cargo-html/workflows/Rust/badge.svg)](https://github.com/MaulingMonkey/cargo-html/actions?query=workflow%3Arust)
 
 
-
 <h2 name="quickstart">Quickstart</h2>
 
 ```sh
+# install
 cargo install cargo-html
 
+# create a project
 cargo new hello-world
 cd hello-world
+
+# build a project
 cargo html
+
+# view/run said project in the browser
 start "" target/wasm32-wasi/debug/hello-world.html
 ```
 
