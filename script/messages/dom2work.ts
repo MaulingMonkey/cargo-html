@@ -1,8 +1,8 @@
 namespace dom2work {
-    interface Init {
-        kind: "init";
-        atomic_sab: SharedArrayBuffer,
-        stdin_sab:  SharedArrayBuffer,
+    export interface Init {
+        kind:   "init";
+        conio:  SharedArrayBuffer,
+        stdin:  SharedArrayBuffer,
     }
 
     interface Other {
