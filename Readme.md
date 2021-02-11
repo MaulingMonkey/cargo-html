@@ -8,6 +8,15 @@
 [![Build Status](https://github.com/MaulingMonkey/cargo-html/workflows/Rust/badge.svg)](https://github.com/MaulingMonkey/cargo-html/actions?query=workflow%3Arust)
 
 
+Want to run basic console programs in the browser?<br>
+Too lazy to configure CORS properly to fetch/share WASM?<br>
+Hate firing up a webserver when you'd rather just double click an HTML file?<br>
+Easily confused by advanced concepts such as "I have multiple files"?<br>
+
+`cargo html` solves all of this, by generating .html files which embed and encode their javascript, WASM, and WASI implementations directly into said HTML.  No CORS, no `--allow-file-access-from-files` flags, no [sidecar files](https://en.wikipedia.org/wiki/Sidecar_file), 100% self contained.
+
+
+
 <h2 name="quickstart">Quickstart</h2>
 
 ```sh
