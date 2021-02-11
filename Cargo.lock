@@ -20,7 +20,7 @@ checksum = "099e596ef14349721d9016f6b80dd3419ea1bf289ab9b44df8e4dfd3a005d5d9"
 
 [[package]]
 name = "cargo-html"
-version = "0.0.0-git"
+version = "0.1.2"
 dependencies = [
  "base64",
  "cargo_metadata",
