@@ -1,8 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        //"strict":           true,
-        //"sourceMap":        true,
+        "strict":           true,
         "outFile":          "../template/script.js",
         "module":           "none",
         "target":           "es2017",

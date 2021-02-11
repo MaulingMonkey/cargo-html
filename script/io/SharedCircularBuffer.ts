@@ -46,7 +46,9 @@ namespace io {
                             setTimeout(() => {
                                 let to_write = this.write_overflow;
                                 this.write_overflow = undefined;
-                                this.write_all(to_write);
+                                if (to_write !== undefined) {
+                                    this.write_all(to_write);
+                                }
                             }, 0);
                         }
 
