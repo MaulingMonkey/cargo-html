@@ -58,7 +58,25 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     function slice8(ptr: ptr, start: usize, end: usize): Uint8Array { return new Uint8Array(memory.buffer, ptr+start, end-start); }
 
     function sleep_ms(ms: number) {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+        try {
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+        } catch (e) {
+            // FF: No SharedArrayBuffer?  Fallback on busy looping (eww...)
+            var min = Date.now();
+            var max = Date.now();
+            for (;;) {
+                var now = Date.now();
+                max = Math.max(now, max);
+                if (now < max) {
+                    // time reversed, remove time elapsed so far and reset min/max
+                    ms -= (max-min);
+                    min = max = now;
+                }
+                if ((now - min) >= ms) {
+                    break;
+                }
+            }
+        }
     }
 
     function sleep_ns(ns: number) {
