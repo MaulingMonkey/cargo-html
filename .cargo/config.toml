@@ -1,9 +1,10 @@
 [alias]
-html    = "run --manifest-path xtask/Cargo.toml -p xtask -- run -p cargo-html -- html --manifest-path examples/Cargo.toml"
-b       = "run --manifest-path xtask/Cargo.toml -p xtask -- build"
-c       = "run --manifest-path xtask/Cargo.toml -p xtask -- check"
-d       = "run --manifest-path xtask/Cargo.toml -p xtask -- doc"
-r       = "run --manifest-path xtask/Cargo.toml -p xtask -- run"
+html    = "xtask run -p cargo-html -- html --manifest-path examples/Cargo.toml"
+b       = "xtask build"
+c       = "xtask check"
+d       = "xtask doc"
+r       = "xtask run"
+xtask   = "run --manifest-path xtask/Cargo.toml -p xtask --"
 
 [target.'cfg(windows)']
 rustflags = ["-C", "target-feature=+crt-static"]

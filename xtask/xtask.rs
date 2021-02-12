@@ -11,6 +11,7 @@ fn main() {
     match &*cmd {
         "b" | "build"   => build(args),
         "c" | "check"   => check(args),
+        "clean"         => clean(args),
         "d" | "doc"     => doc(args),
         "r" | "run"     => run(args),
         other           => fatal!("unrecognized subcommand `{}`", other),
@@ -64,6 +65,13 @@ fn doc(args: Args) {
 fn check(_args: Args) {
     pre_build();
     exec("cargo check --workspace --all-targets");
+}
+
+fn clean(_args: Args) {
+    exec("cargo clean");
+    exec("cargo clean --manifest-path examples/Cargo.toml");
+    // we can't clean ourselves while running, so spawn an extra term
+    exec("cmd /C start \"cargo clean xtask\" /MIN cmd /C \"ping localhost -n 2 >NUL 2>NUL && cargo clean --manifest-path xtask/Cargo.toml\"");
 }
 
 fn run(args: Args) {
