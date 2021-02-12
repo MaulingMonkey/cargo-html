@@ -19,5 +19,11 @@ jobs:
       run: |
         rustc -V
         cargo -V
+    - name: Dependencies
+      run: |
+        rustup target add wasm32-wasi
+        rustup target add wasm32-unknown-unknown
+        cargo install wasm-pack
+        cargo install cargo-web
     - name: Build
       run: cargo b
