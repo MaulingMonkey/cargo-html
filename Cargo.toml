@@ -1,15 +1,5 @@
 # https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-    ".",
-    "examples/*",
-    "xtask",
-]
-default-members = [
-    "."
-]
-
 [package]
 name                    = "cargo-html"
 version                 = "0.0.0-git"
@@ -39,9 +29,3 @@ path                    = "src/_cargo_html.rs"
 mmrbi                   = { version = "0.0.15", features = ["serde", "toml"] }
 base64                  = "0.13"
 cargo_metadata          = "0.12"
-
-[profile.release]
-debug                   = 0
-lto                     = true
-opt-level               = "z"
-panic                   = "abort"

@@ -25,17 +25,19 @@ fn build(args: Args) {
     let mut args = args.peekable();
     if args.peek().is_some() {
         let mut cmd = Command::new("cargo");
-        cmd.arg("build").args(args);
+        cmd.arg("build");
+        cmd.args(args);
         status!("Running", "{}", cmd);
         std::process::exit(cmd.status().ok().and_then(|s| s.code()).unwrap_or(1));
     } else {
        // common
        exec("cargo fetch");
+       exec("cargo fetch --manifest-path examples/Cargo.toml");
 
        // debug
-       exec("cargo check --frozen --workspace --exclude xtask");
-       exec("cargo build --frozen --workspace --exclude xtask --all-targets");
-       exec("cargo test  --frozen --workspace --exclude xtask --all-targets");
+       exec("cargo check --frozen --workspace");
+       exec("cargo build --frozen --workspace --all-targets");
+       exec("cargo test  --frozen --workspace --all-targets");
        if has_nightly() {
            exec("cargo +nightly doc --no-deps -p cargo-html");
        } else {
@@ -43,8 +45,8 @@ fn build(args: Args) {
        }
 
        // release
-       exec("cargo build --frozen --workspace --exclude xtask --all-targets --release");
-       exec("cargo test  --frozen --workspace --exclude xtask --all-targets --release");
+       exec("cargo build --frozen --workspace --all-targets --release");
+       exec("cargo test  --frozen --workspace --all-targets --release");
     }
 }
 
@@ -60,7 +62,7 @@ fn doc(args: Args) {
 
 fn check(_args: Args) {
     pre_build();
-    exec("cargo check --workspace --exclude xtask --all-targets");
+    exec("cargo check --workspace --all-targets");
 }
 
 fn run(args: Args) {

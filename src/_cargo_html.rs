@@ -4,7 +4,7 @@ use mmrbi::*;
 
 use std::collections::BTreeSet;
 use std::io::Write;
-use std::path::Path;
+use std::path::PathBuf;
 
 
 
@@ -33,11 +33,6 @@ fn main() {
     let _cargo  = args.next();
     let _html   = args.next();
 
-    let mut metadata : cargo_metadata::Metadata = cargo_metadata::MetadataCommand::new().exec().unwrap_or_else(|err| fatal!("failed to run/parse `cargo metadata`: {}", err));
-    let workspace_members = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
-    metadata.packages.retain(|pkg| workspace_members.contains(&pkg.id));
-
-    let mut die = false;
     let mut workspace = false;
     let mut packages = BTreeSet::new();
 
@@ -45,6 +40,7 @@ fn main() {
     let mut examples = false;
     let mut all_targets = false;
 
+    let mut manifest_path = None;
     let mut targets  = BTreeSet::<(TargetType, String)>::new();
     let mut configs  = BTreeSet::<Config>::new();
     while let Some(arg) = args.next() {
@@ -69,15 +65,21 @@ fn main() {
             },
             "-p" | "--package" => {
                 if let Some(pkg) = args.next() {
-                    let package = metadata.packages.iter().find(|p| p.name == pkg);
                     if !packages.insert(pkg.clone()) {
                         warning!("package `{}` specified multiple times", pkg);
-                    } else if package.is_none() {
-                        error!("no such package `{}` in workspace", pkg);
-                        die = true;
                     }
                 } else {
                     fatal!("expected a package name after `{}`", arg);
+                }
+            },
+            "--manifest-path" => {
+                if let Some(path) = args.next() {
+                    if manifest_path.is_some() {
+                        warning!("--manifest-path specified multiple times");
+                    }
+                    manifest_path = Some(PathBuf::from(path));
+                } else {
+                    fatal!("expected a path after `{}`", arg);
                 }
             },
             "--debug"       => { if !configs.insert(Config::Debug)   { warning!("{} specified multiple times", arg); } },
@@ -92,8 +94,18 @@ fn main() {
         }
     }
 
-    if die {
-        std::process::exit(1); // earlier errors
+    let mut metadata = cargo_metadata::MetadataCommand::new();
+    if let Some(manifest_path) = manifest_path.as_ref() {
+        metadata.manifest_path(manifest_path);
+    }
+    let mut metadata : cargo_metadata::Metadata = metadata.exec().unwrap_or_else(|err| fatal!("failed to run/parse `cargo metadata`: {}", err));
+    let workspace_members = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
+    metadata.packages.retain(|pkg| workspace_members.contains(&pkg.id));
+
+    for pkg in packages.iter() {
+        if !metadata.packages.iter().any(|p| p.name == *pkg) {
+            fatal!("no such package `{}` in workspace", pkg);
+        }
     }
 
     // defaults
@@ -120,6 +132,9 @@ fn main() {
 
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
     let mut cargo_build_wasi = Command::parse("cargo build --target=wasm32-wasi").unwrap();
+    if let Some(manifest_path) = manifest_path.as_ref() {
+        cargo_build_wasi.arg("--manifest-path").arg(manifest_path);
+    }
 
     for pkg in metadata.packages.iter() {
         if packages.contains(&pkg.name) && pkg.is_wasi() {
@@ -174,6 +189,8 @@ fn main() {
         configs.insert(Config::Debug);
     }
 
+    let target_dir = metadata.workspace_root.join("target");
+
     let pkg_filter = |p: &cargo_metadata::Package| packages.contains(&p.name) && p.is_wasi();
     if metadata.packages.iter().any(pkg_filter) {
         println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
@@ -201,7 +218,7 @@ fn main() {
             cmd.arg("build");
             cmd.arg("--no-typescript"); // *.d.ts defs are pointless for bundled HTML files
             cmd.arg("--target").arg("no-modules");
-            cmd.arg("--out-dir").arg(metadata.workspace_root.join("target").join("wasm32-unknown-unknown").join(config.as_str()).join("pkg"));
+            cmd.arg("--out-dir").arg(target_dir.join("wasm32-unknown-unknown").join(config.as_str()).join("pkg"));
             match config {
                 Config::Debug   => drop(cmd.arg("--dev")),
                 Config::Release => drop(cmd.arg("--release")),
@@ -215,7 +232,7 @@ fn main() {
 
                 let mut cmd = cmd.clone();
                 cmd.current_dir(dir);
-                status!("Running", "{}", cmd);
+                status!("Running", "{} for `{}`", cmd, pkg.name);
                 cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
                 any_built = true;
             }
@@ -231,11 +248,11 @@ fn main() {
     let script_placeholder  = "\"{BASE64_WASM32}\"";
 
     for config in configs.iter().copied() {
-        let target_dir = Path::new("target").join("wasm32-wasi").join(config.as_str());
+        let target_arch_config_dir = target_dir.join("wasm32-wasi").join(config.as_str());
         for (ty, target) in targets.iter() {
-            let target_dir = match ty {
-                TargetType::Bin     => target_dir.clone(),
-                TargetType::Example => target_dir.join("examples"),
+            let target_arch_config_dir = match ty {
+                TargetType::Bin     => target_arch_config_dir.clone(),
+                TargetType::Example => target_arch_config_dir.join("examples"),
             };
             let template_js   = concat!("<script>\n", include_str!("../template/script.js"), "\n</script>");
             let template_html = include_str!("../template/console-crate.html")
@@ -244,11 +261,11 @@ fn main() {
                 .replace("<script src=\"script.js\"></script>", template_js);
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
-            let target_wasm = target_dir.join(format!("{}.wasm", target));
+            let target_wasm = target_arch_config_dir.join(format!("{}.wasm", target));
             let target_wasm = std::fs::read(&target_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", target_wasm.display(), err));
             let target_wasm = base64::encode(&target_wasm[..]);
 
-            let target_html = target_dir.join(format!("{}.html", target));
+            let target_html = target_arch_config_dir.join(format!("{}.html", target));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
                 write!(o, "{}", &template_html[..base64_wasm32_idx])?;
@@ -258,8 +275,8 @@ fn main() {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
 
-        let target_dir  = Path::new("target").join("wasm32-unknown-unknown").join(config.as_str());
-        let pkg_dir     = Path::new("target").join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
+        let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
+        let pkg_dir                 = target_arch_config_dir.join("pkg");
         for pkg in metadata.packages.iter().filter(|p| packages.contains(&p.name) && p.is_wasm_pack()) {
             let lib_name = pkg.name.replace("-", "_");
             let package_js = pkg_dir.join(format!("{}.js", lib_name));
@@ -271,11 +288,11 @@ fn main() {
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
             let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
-            //let wasm = target_dir.join(format!("{}.wasm", lib_name));
+            //let wasm = target_arch_config_dir.join(format!("{}.wasm", lib_name));
             let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
             let wasm = base64::encode(&wasm[..]);
 
-            let target_html = target_dir.join(format!("{}.html", lib_name));
+            let target_html = target_arch_config_dir.join(format!("{}.html", lib_name));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
                 write!(o, "{}", &template_html[..base64_wasm32_idx])?;
