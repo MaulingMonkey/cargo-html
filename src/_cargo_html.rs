@@ -29,6 +29,12 @@ impl PackageExt for cargo_metadata::Package {
 }
 
 fn main() {
+    let rustup = Rustup::default().or_die();
+    if let Some(toolchain) = rustup.toolchains().active() {
+        toolchain.targets().add("wasm32-wasi").or_die();
+        toolchain.targets().add("wasm32-unknown-unknown").or_die();
+    }
+
     let mut args = std::env::args();
     let _cargo  = args.next();
     let _html   = args.next();
