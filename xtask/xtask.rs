@@ -43,6 +43,7 @@ fn build(args: Args) {
        } else {
            exec("cargo doc --no-deps -p cargo-html");
        }
+       exec("cargo html");
 
        // release
        exec("cargo build --frozen --workspace --all-targets --release");
