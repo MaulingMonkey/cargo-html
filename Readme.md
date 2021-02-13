@@ -76,13 +76,14 @@ git commit -m "Updated examples"
 Requires
 [wasm](https://caniuse.com/wasm),
 [async-functions](https://caniuse.com/async-functions),
+[promises](https://caniuse.com/promises),
 and being generally awesome.
 
 | Browser               | Supported Version |
 | -----------------     | ----------------- |
-| Chrome                | ✔️ 16+
+| Chrome                | ✔️ 57+
 | Chrome for Android    | ✔️ 88+
-| Firefox               | ✔️ 52+
+| Firefox               | ✔️ 53+
 | Firefox for Android   | ✔ 83+
 | Opera                 | ✔ 44+
 | Opera Mobile          | ✔ 59+
