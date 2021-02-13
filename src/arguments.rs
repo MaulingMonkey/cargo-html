@@ -28,6 +28,7 @@ pub(crate) struct Arguments {
 pub(crate) enum Subcommand {
     Build,
     HelpGeneric, // NOTE: "help build" uses Subcommand::Build
+    InstallBuildTools,
 }
 
 impl Default for Subcommand {
@@ -62,8 +63,9 @@ impl Arguments {
 
         while let Some(arg) = args.next() {
             match &*arg {
-                "build" if subcommand.is_none() => subcommand = Some(Subcommand::Build),
-                "help"  if subcommand.is_none() => o.help = true,
+                "build"                 if subcommand.is_none() => subcommand = Some(Subcommand::Build),
+                "install-build-tools"   if subcommand.is_none() => subcommand = Some(Subcommand::InstallBuildTools),
+                "help"                  if subcommand.is_none() => o.help = true,
                 "--help" => o.help = true,
                 "--bin" => {
                     if let Some(bin) = args.next() {

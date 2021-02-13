@@ -12,19 +12,30 @@ use std::io::Write;
 
 
 fn main() {
-    let mut args = Arguments::parse_args();
-
+    let args = Arguments::parse_args();
     match args.subcommand {
-        Subcommand::HelpGeneric => {
-            print!("{}", include_str!("_usage.txt"));
-            return;
-        },
-        _ if args.help => {
-            print!("{}", include_str!("_usage.txt"));
-            return;
-        },
-        Subcommand::Build => {},
+        _ if args.help                  => help(args),
+        Subcommand::HelpGeneric         => help(args),
+        Subcommand::Build               => build(args),
+        Subcommand::InstallBuildTools   => install_build_tools(args),
     }
+}
+
+fn help(args: Arguments) {
+    assert!(args.help || args.subcommand == Subcommand::HelpGeneric);
+
+    print!("{}", include_str!("_usage.txt"));
+}
+
+fn install_build_tools(args: Arguments) {
+    assert!(args.subcommand == Subcommand::InstallBuildTools);
+
+    tools::install_toolchains();
+    let _ = tools::find_install_wasm_opt();
+}
+
+fn build(mut args: Arguments) {
+    assert!(args.subcommand == Subcommand::Build);
 
     let mut metadata = cargo_metadata::MetadataCommand::new();
     if let Some(manifest_path) = args.manifest_path.as_ref() {

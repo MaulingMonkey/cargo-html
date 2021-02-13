@@ -4,6 +4,7 @@ Usage:  cargo html [subcommand] [...args...]
 cargo html                      Shorthand for `cargo html build` (see bellow)
 cargo html help                 Display this usage / help text
 cargo html --help               Display this usage / help text
+cargo html install-build-tools  Install WASM target(s), wasm-pack, wasm-opt, etc.
 
 
 cargo html       [build options]
