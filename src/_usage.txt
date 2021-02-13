@@ -1,0 +1,27 @@
+
+Usage:  cargo html [subcommand] [...args...]
+
+cargo html                      Shorthand for `cargo html build` (see bellow)
+cargo html help                 Display this usage / help text
+cargo html --help               Display this usage / help text
+
+
+cargo html       [build options]
+cargo html build [build options]
+
+    Build this package or workspace into HTML file(s)
+
+    Target Selection:
+        --bin           <name>                  Build a specific bin
+        --bins                                  Build all binaries (default)
+        --example       <name>                  Build a specific example
+        --examples                              Build all examples
+        --all-targets                           Build all binaries & examples
+        --package       <name>                  Build a specific package
+        -p              <name>                  Build a specific package
+        --workspace                             Build all packages
+        --manifest-path <path/to/Cargo.toml>    Build a specific workspace
+
+    Configurations:
+        --debug     Build debug binaries (default)
+        --release   Build release binaries

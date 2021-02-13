@@ -38,6 +38,9 @@ fn main() {
     let _cargo  = args.next();
     let _html   = args.next();
 
+    let mut subcommand : Option<&'static str> = None;
+    let mut help = false;
+
     let mut workspace = false;
     let mut packages = BTreeSet::new();
 
@@ -50,6 +53,9 @@ fn main() {
     let mut configs  = BTreeSet::<Config>::new();
     while let Some(arg) = args.next() {
         match &*arg {
+            "build" if subcommand.is_none() => subcommand = Some("build"),
+            "help"  if subcommand.is_none() => help = true,
+            "--help" => help = true,
             "--bin" => {
                 if let Some(bin) = args.next() {
                     if !targets.insert((TargetType::Bin, bin.clone())) {
@@ -95,8 +101,20 @@ fn main() {
             "--all-targets" => { if all_targets { warning!("{} specified multiple times", arg); } else { all_targets    = true; } },
             // TODO: --exclude
             // TODO: features?
-            other           => fatal!("unexpected argument `{}`", other),
+            flag if flag.starts_with("-")   => fatal!("unexpected flag `{}`", flag),
+            command if subcommand.is_none() => fatal!("unexpected subcommand `{}`", command),
+            other                           => fatal!("unexpected argument `{}`", other),
         }
+    }
+
+    if help {
+        print!("{}", include_str!("_usage.txt"));
+        return;
+    }
+
+    match subcommand {
+        Some("build") | None => {},
+        Some(other) => fatal!("unrecognized subcommand `{}`", other),
     }
 
     let mut metadata = cargo_metadata::MetadataCommand::new();
