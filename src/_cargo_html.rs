@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
 
 use mmrbi::*;
-use ::wasm_pack;
 
 use std::collections::BTreeSet;
 use std::io::Write;
@@ -36,16 +35,25 @@ fn main() {
         toolchain.targets().add("wasm32-unknown-unknown").or_die();
     }
 
-    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/cache/fn.get_wasm_pack_cache.html
-    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.find_wasm_opt.html
-    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.run.html
-    let cache = wasm_pack::cache::get_wasm_pack_cache().unwrap_or_else(|err| fatal!("unable to get wasm-pack cache: {}", err));
-    let wasm_opt = match wasm_pack::wasm_opt::find_wasm_opt(&cache, true).unwrap_or_else(|err| fatal!("unable to find wasm-opt: {}", err)) {
-        wasm_pack::install::Status::Found(f)                => f,
-        wasm_pack::install::Status::CannotInstall           => fatal!("cannot install `wasm-opt`"),
-        wasm_pack::install::Status::PlatformNotSupported    => fatal!("platform not supported for `wasm-opt`"),
+    let wasm_opt = {
+        // https://docs.rs/wasm-pack/0.9.1/wasm_pack/cache/fn.get_wasm_pack_cache.html
+        // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.find_wasm_opt.html
+        // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.run.html
+    
+        let vers = "version_90";
+        let target = if cfg!(windows) {
+            "x86-windows"
+        } else if cfg!(target_os = "linux") {
+            "x86-linux"
+        } else {
+            fatal!("pre-built wasm-opt binaries (required by `cargo html`) are currently only available for windows and linux hosts");
+        };
+
+        let cache = binary_install::Cache::new("wasm-pack").unwrap_or_else(|err| fatal!("unable to get wasm-pack cache: {}", err)); // reuse wasm-pack's binary cache
+        let url = format!("https://github.com/WebAssembly/binaryen/releases/download/{vers}/binaryen-{vers}-{target}.tar.gz", vers = vers, target = target);
+        let download = cache.download(true, "wasm-opt", &["wasm-opt"], &url).unwrap_or_else(|err| fatal!("error downloading wasm-opt: {}", err)).unwrap();
+        download.binary("wasm-opt").unwrap_or_else(|err| fatal!("error getting wasm-opt binary from download: {}", err))
     };
-    let wasm_opt = wasm_opt.binary("wasm-opt").unwrap_or_else(|err| fatal!("unable to find binary `wasm-opt` in package `wasm-opt`: {}", err));
 
     let mut args = std::env::args();
     let _cargo  = args.next();

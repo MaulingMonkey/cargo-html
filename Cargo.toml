@@ -29,4 +29,4 @@ path                    = "src/_cargo_html.rs"
 mmrbi                   = { version = "0.0.15", features = ["serde", "toml"] }
 base64                  = "0.13"
 cargo_metadata          = "0.12"
-wasm-pack               = "0.9.1"
+binary-install          = "0.0.2"
