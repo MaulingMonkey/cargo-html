@@ -63,15 +63,15 @@
 
         // cargo-html
         {
-            "label":            "cargo b --package cargo-html --bin cargo-html",
-            "command":          "cargo b --package cargo-html --bin cargo-html",
+            "label":            "cargo b --bin cargo-html",
+            "command":          "cargo b --bin cargo-html",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
-            "label":            "cargo b --package cargo-html --bin cargo-html --release",
-            "command":          "cargo b --package cargo-html --bin cargo-html --release",
+            "label":            "cargo b --bin cargo-html --release",
+            "command":          "cargo b --bin cargo-html --release",
             "type":             "shell",
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },

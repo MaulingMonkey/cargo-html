@@ -103,8 +103,9 @@
             "type":                     "cppdbg",
             "request":                  "launch",
             "internalConsoleOptions":   "openOnSessionStart",
-            "preLaunchTask":            "cargo b --package cargo-html --bin cargo-html",
+            "preLaunchTask":            "cargo b --bin cargo-html",
             "program":                  "${workspaceFolder}/target/debug/cargo-html",
+            "args":                     ["html", "--manifest-path", "examples/Cargo.toml", "--bin", "hello-world"],
             "cwd":                      "${workspaceFolder}",
             "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
             "windows": {
@@ -118,8 +119,9 @@
             "type":                     "cppdbg",
             "request":                  "launch",
             "internalConsoleOptions":   "openOnSessionStart",
-            "preLaunchTask":            "cargo b --package cargo-html --bin cargo-html --release",
+            "preLaunchTask":            "cargo b --bin cargo-html --release",
             "program":                  "${workspaceFolder}/target/release/cargo-html",
+            "args":                     ["html", "--manifest-path", "examples/Cargo.toml", "--bin", "hello-world"],
             "cwd":                      "${workspaceFolder}",
             "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
             "windows": {
