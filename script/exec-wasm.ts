@@ -10,15 +10,12 @@ function exec_base64_wasm(wasm: string) {
                 exports.asyncify_stop_unwind();
             } else {
                 proc_exit(0);
-                self.close();
             }
         } catch (e) {
             if (e !== "exit") {
                 console.error(e);
                 debugger;
                 throw e;
-            } else {
-                self.close();
             }
         }
     }
