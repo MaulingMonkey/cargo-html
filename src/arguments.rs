@@ -19,7 +19,7 @@ pub(crate) struct Arguments {
     // target(s) selection
     pub bins:           bool,
     pub examples:       bool,
-    pub all_targets:    bool, // XXX: remove?
+    pub cdylibs:        bool,
     pub targets:        BTreeSet<(TargetType, String)>,
     pub configs:        BTreeSet<Config>,
 }
@@ -38,6 +38,7 @@ impl Default for Subcommand {
 pub(crate) enum TargetType {
     Bin,
     Example,
+    Cdylib,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -56,6 +57,7 @@ impl Arguments {
         let _cargo  = args.next();
         let _html   = args.next();
 
+        let mut all_targets = false;
         let mut subcommand : Option<Subcommand> = None;
 
         while let Some(arg) = args.next() {
@@ -81,6 +83,15 @@ impl Arguments {
                         fatal!("expected a example name after `{}`", arg);
                     }
                 },
+                "--cdylib" => {
+                    if let Some(cdylib) = args.next() {
+                        if !o.targets.insert((TargetType::Cdylib, cdylib.clone())) {
+                            warning!("cdylib `{}` specified multiple times", cdylib);
+                        }
+                    } else {
+                        fatal!("expected a cdylib name after `{}`", arg);
+                    }
+                },
                 "-p" | "--package" => {
                     if let Some(pkg) = args.next() {
                         if !o.packages.insert(pkg.clone()) {
@@ -102,10 +113,11 @@ impl Arguments {
                 },
                 "--debug"       => { if !o.configs.insert(Config::Debug)   { warning!("{} specified multiple times", arg); } },
                 "--release"     => { if !o.configs.insert(Config::Release) { warning!("{} specified multiple times", arg); } },
-                "--workspace"   => { if o.workspace   { warning!("{} specified multiple times", arg); } else { o.workspace      = true; } },
-                "--bins"        => { if o.bins        { warning!("{} specified multiple times", arg); } else { o.bins           = true; } },
-                "--examples"    => { if o.examples    { warning!("{} specified multiple times", arg); } else { o.examples       = true; } },
-                "--all-targets" => { if o.all_targets { warning!("{} specified multiple times", arg); } else { o.all_targets    = true; } },
+                "--workspace"   => { if o.workspace { warning!("{} specified multiple times", arg); } else { o.workspace    = true; } },
+                "--bins"        => { if o.bins      { warning!("{} specified multiple times", arg); } else { o.bins         = true; } },
+                "--examples"    => { if o.examples  { warning!("{} specified multiple times", arg); } else { o.examples     = true; } },
+                "--cdylibs"     => { if o.cdylibs   { warning!("{} specified multiple times", arg); } else { o.cdylibs      = true; } },
+                "--all-targets" => { if all_targets { warning!("{} specified multiple times", arg); } else { all_targets    = true; } },
                 // TODO: --exclude
                 // TODO: features?
                 flag if flag.starts_with("-")   => fatal!("unexpected flag `{}`",       flag),
@@ -118,6 +130,17 @@ impl Arguments {
 
         if o.configs.is_empty() {
             o.configs.insert(Config::Debug);
+        }
+
+        if all_targets {
+            o.bins      = true;
+            o.examples  = true;
+            o.cdylibs   = true;
+        }
+
+        if !o.bins && !o.examples && !o.cdylibs && o.targets.is_empty() {
+            o.bins      = true;
+            o.cdylibs   = true;
         }
 
         o

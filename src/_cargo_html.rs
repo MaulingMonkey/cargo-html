@@ -90,42 +90,34 @@ fn main() {
         }
     }
 
-    if args.all_targets { cargo_build_wasi.arg("--all-targets"); }
     if args.bins        { cargo_build_wasi.arg("--bins"); }
     if args.examples    { cargo_build_wasi.arg("--examples"); }
-
-    args.bins       |= args.all_targets;
-    args.examples   |= args.all_targets;
+    // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
 
     for (ty, target) in args.targets.iter() {
         match ty {
             TargetType::Bin     => { if !args.bins      { cargo_build_wasi.arg("--bin")      .arg(target); } },
             TargetType::Example => { if !args.examples  { cargo_build_wasi.arg("--example")  .arg(target); } },
+            TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s wasm32-wasi builds
         }
     }
 
     // match to cmd defaults
 
-    if args.targets.is_empty() && !args.bins && !args.examples {
-        args.bins = true;
-        // `cargo build` doesn't build examples by default?
-    }
-
-    if args.bins || args.examples {
-        for pkg in metadata.packages.iter() {
-            if !args.packages.contains(&pkg.name) { continue; }
-            for target in pkg.targets.iter() {
-                for crate_type in target.crate_types.iter() {
-                    match crate_type.as_str() {
-                        "bin"       if args.bins     => drop(args.targets.insert((TargetType::Bin,     target.name.clone()))),
-                        "example"   if args.examples => drop(args.targets.insert((TargetType::Example, target.name.clone()))),
-                        //"test"      => ...,
-                        //"bench"     => ...,
-                        //"lib"       => ...,
-                        //"rlib"      => ...,
-                        //"dylib"     => ...,
-                        _other => {},
-                    }
+    for pkg in metadata.packages.iter() {
+        if !args.packages.contains(&pkg.name) { continue; }
+        for target in pkg.targets.iter() {
+            for crate_type in target.crate_types.iter() {
+                match crate_type.as_str() {
+                    "bin"       if args.bins     => drop(args.targets.insert((TargetType::Bin,     target.name.clone()))),
+                    "example"   if args.examples => drop(args.targets.insert((TargetType::Example, target.name.clone()))),
+                    "cdylib"    if args.cdylibs  => drop(args.targets.insert((TargetType::Cdylib,  target.name.clone()))),
+                    //"test"      => ...,
+                    //"bench"     => ...,
+                    //"lib"       => ...,
+                    //"rlib"      => ...,
+                    //"dylib"     => ...,
+                    _other      => {},
                 }
             }
         }
@@ -204,6 +196,7 @@ fn main() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
+                TargetType::Cdylib  => continue, // XXX?
             };
             let template_js   = concat!("<script>\n", include_str!("../template/script.js"), "\n</script>");
             let template_html = include_str!("../template/console-crate.html")
@@ -234,13 +227,18 @@ fn main() {
 
         let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
         let pkg_dir                 = target_arch_config_dir.join("pkg");
-        for pkg in metadata.packages.iter().filter(|p| args.packages.contains(&p.name) && p.is_wasm_pack()) {
-            let lib_name = pkg.name.replace("-", "_");
+        for (ty, target) in args.targets.iter() {
+            let target_arch_config_dir = match ty {
+                TargetType::Bin     => continue,
+                TargetType::Example => continue,
+                TargetType::Cdylib  => &target_arch_config_dir,
+            };
+            let lib_name = target.replace("-", "_");
             let package_js = pkg_dir.join(format!("{}.js", lib_name));
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let template_html = include_str!("../template/wasm-pack.html")
                 .replace("{CONFIG}", config.as_str())
-                .replace("{CRATE_NAME}", &pkg.name)
+                .replace("{CRATE_NAME}", target)
                 .replace("{PACKAGE_JS}", &package_js);
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 

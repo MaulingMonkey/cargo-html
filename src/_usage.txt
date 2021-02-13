@@ -12,16 +12,18 @@ cargo html build [build options]
     Build this package or workspace into HTML file(s)
 
     Target Selection:
-        --bin           <name>                  Build a specific bin
-        --bins                                  Build all binaries (default)
-        --example       <name>                  Build a specific example
-        --examples                              Build all examples
-        --all-targets                           Build all binaries & examples
-        --package       <name>                  Build a specific package
-        -p              <name>                  Build a specific package
-        --workspace                             Build all packages
-        --manifest-path <path/to/Cargo.toml>    Build a specific workspace
+        --bin           <name>          Build a specific bin
+        --bins                          Build all binaries (default)
+        --example       <name>          Build a specific example
+        --examples                      Build all examples
+        --cdylib        <name>          Build a specific cdylib
+        --cdylibs                       Build all cdylibs (default)
+        --all-targets                   Build all binaries, examples, & cdylibs
+        --package       <name>          Build a specific package
+        -p              <name>          Build a specific package
+        --workspace                     Build all packages
+        --manifest-path <Cargo.toml>    Build a specific workspace
 
     Configurations:
-        --debug     Build debug binaries (default)
-        --release   Build release binaries
+        --debug                         Build debug binaries (default)
+        --release                       Build release binaries
