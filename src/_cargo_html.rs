@@ -1,12 +1,12 @@
 #![forbid(unsafe_code)]
 
+mod arguments;  use arguments::*;
 mod tools;
 
 use mmrbi::*;
 
 use std::collections::BTreeSet;
 use std::io::Write;
-use std::path::PathBuf;
 
 
 
@@ -31,98 +31,26 @@ impl PackageExt for cargo_metadata::Package {
 }
 
 fn main() {
-    let mut args = std::env::args();
-    let _cargo  = args.next();
-    let _html   = args.next();
+    let mut args = Arguments::parse_args();
 
-    let mut subcommand : Option<&'static str> = None;
-    let mut help = false;
-
-    let mut workspace = false;
-    let mut packages = BTreeSet::new();
-
-    let mut bins = false;
-    let mut examples = false;
-    let mut all_targets = false;
-
-    let mut manifest_path = None;
-    let mut targets  = BTreeSet::<(TargetType, String)>::new();
-    let mut configs  = BTreeSet::<Config>::new();
-    while let Some(arg) = args.next() {
-        match &*arg {
-            "build" if subcommand.is_none() => subcommand = Some("build"),
-            "help"  if subcommand.is_none() => help = true,
-            "--help" => help = true,
-            "--bin" => {
-                if let Some(bin) = args.next() {
-                    if !targets.insert((TargetType::Bin, bin.clone())) {
-                        warning!("bin `{}` specified multiple times", bin);
-                    }
-                } else {
-                    fatal!("expected a bin name after `{}`", arg);
-                }
-            },
-            "--example" => {
-                if let Some(example) = args.next() {
-                    if !targets.insert((TargetType::Example, example.clone())) {
-                        warning!("example `{}` specified multiple times", example);
-                    }
-                } else {
-                    fatal!("expected a example name after `{}`", arg);
-                }
-            },
-            "-p" | "--package" => {
-                if let Some(pkg) = args.next() {
-                    if !packages.insert(pkg.clone()) {
-                        warning!("package `{}` specified multiple times", pkg);
-                    }
-                } else {
-                    fatal!("expected a package name after `{}`", arg);
-                }
-            },
-            "--manifest-path" => {
-                if let Some(path) = args.next() {
-                    if manifest_path.is_some() {
-                        warning!("--manifest-path specified multiple times");
-                    }
-                    manifest_path = Some(PathBuf::from(path));
-                } else {
-                    fatal!("expected a path after `{}`", arg);
-                }
-            },
-            "--debug"       => { if !configs.insert(Config::Debug)   { warning!("{} specified multiple times", arg); } },
-            "--release"     => { if !configs.insert(Config::Release) { warning!("{} specified multiple times", arg); } },
-            "--workspace"   => { if workspace   { warning!("{} specified multiple times", arg); } else { workspace      = true; } },
-            "--bins"        => { if bins        { warning!("{} specified multiple times", arg); } else { bins           = true; } },
-            "--examples"    => { if examples    { warning!("{} specified multiple times", arg); } else { examples       = true; } },
-            "--all-targets" => { if all_targets { warning!("{} specified multiple times", arg); } else { all_targets    = true; } },
-            // TODO: --exclude
-            // TODO: features?
-            flag if flag.starts_with("-")   => fatal!("unexpected flag `{}`", flag),
-            command if subcommand.is_none() => fatal!("unexpected subcommand `{}`", command),
-            other                           => fatal!("unexpected argument `{}`", other),
-        }
-    }
-
-    if help {
+    if args.help {
         print!("{}", include_str!("_usage.txt"));
         return;
     }
 
-    match subcommand {
-        Some("build") | None => {},
-        Some(other) => fatal!("unrecognized subcommand `{}`", other),
+    match args.subcommand {
+        Subcommand::Build => {},
     }
 
     let mut metadata = cargo_metadata::MetadataCommand::new();
-    if let Some(manifest_path) = manifest_path.as_ref() {
+    if let Some(manifest_path) = args.manifest_path.as_ref() {
         metadata.manifest_path(manifest_path);
     }
     let mut metadata : cargo_metadata::Metadata = metadata.exec().unwrap_or_else(|err| fatal!("failed to run/parse `cargo metadata`: {}", err));
     let workspace_members = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
     metadata.packages.retain(|pkg| workspace_members.contains(&pkg.id));
 
-    for pkg in packages.iter() {
+    for pkg in args.packages.iter() {
         if !metadata.packages.iter().any(|p| p.name == *pkg) {
             fatal!("no such package `{}` in workspace", pkg);
         }
@@ -130,67 +58,67 @@ fn main() {
 
     // defaults
 
-    if workspace {
+    if args.workspace {
         for package in metadata.packages.iter().filter(|p| p.is_html()) {
-            packages.insert(package.name.clone());
+            args.packages.insert(package.name.clone());
         }
-    } else if packages.is_empty() {
+    } else if args.packages.is_empty() {
         // neither --workspace nor any --package s specified
         if let Some(root) = metadata.root_package() {
             if root.is_html() {
-                packages.insert(root.name.clone());
+                args.packages.insert(root.name.clone());
             }
         }
-        if packages.is_empty() {
+        if args.packages.is_empty() {
             // no root, or root isn't an HTML project
             // TODO: support workspace default members?
             for package in metadata.packages.iter().filter(|p| p.is_html()) {
-                packages.insert(package.name.clone());
+                args.packages.insert(package.name.clone());
             }
         }
     }
 
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
     let mut cargo_build_wasi = Command::parse("cargo build --target=wasm32-wasi").unwrap();
-    if let Some(manifest_path) = manifest_path.as_ref() {
+    if let Some(manifest_path) = args.manifest_path.as_ref() {
         cargo_build_wasi.arg("--manifest-path").arg(manifest_path);
     }
 
     for pkg in metadata.packages.iter() {
-        if packages.contains(&pkg.name) && pkg.is_wasi() {
+        if args.packages.contains(&pkg.name) && pkg.is_wasi() {
             cargo_build_wasi.arg("--package").arg(&pkg.name);
         }
     }
 
-    if all_targets  { cargo_build_wasi.arg("--all-targets"); }
-    if bins         { cargo_build_wasi.arg("--bins"); }
-    if examples     { cargo_build_wasi.arg("--examples"); }
+    if args.all_targets { cargo_build_wasi.arg("--all-targets"); }
+    if args.bins        { cargo_build_wasi.arg("--bins"); }
+    if args.examples    { cargo_build_wasi.arg("--examples"); }
 
-    bins        |= all_targets;
-    examples    |= all_targets;
+    args.bins       |= args.all_targets;
+    args.examples   |= args.all_targets;
 
-    for (ty, target) in targets.iter() {
+    for (ty, target) in args.targets.iter() {
         match ty {
-            TargetType::Bin     => { if !bins       { cargo_build_wasi.arg("--bin")      .arg(target); } },
-            TargetType::Example => { if !examples   { cargo_build_wasi.arg("--example")  .arg(target); } },
+            TargetType::Bin     => { if !args.bins      { cargo_build_wasi.arg("--bin")      .arg(target); } },
+            TargetType::Example => { if !args.examples  { cargo_build_wasi.arg("--example")  .arg(target); } },
         }
     }
 
     // match to cmd defaults
 
-    if targets.is_empty() && !bins && !examples {
-        bins = true;
+    if args.targets.is_empty() && !args.bins && !args.examples {
+        args.bins = true;
         // `cargo build` doesn't build examples by default?
     }
 
-    if bins || examples {
+    if args.bins || args.examples {
         for pkg in metadata.packages.iter() {
-            if !packages.contains(&pkg.name) { continue; }
+            if !args.packages.contains(&pkg.name) { continue; }
             for target in pkg.targets.iter() {
                 for crate_type in target.crate_types.iter() {
                     match crate_type.as_str() {
-                        "bin"       if bins     => drop(targets.insert((TargetType::Bin,     target.name.clone()))),
-                        "example"   if examples => drop(targets.insert((TargetType::Example, target.name.clone()))),
+                        "bin"       if args.bins     => drop(args.targets.insert((TargetType::Bin,     target.name.clone()))),
+                        "example"   if args.examples => drop(args.targets.insert((TargetType::Example, target.name.clone()))),
                         //"test"      => ...,
                         //"bench"     => ...,
                         //"lib"       => ...,
@@ -205,10 +133,6 @@ fn main() {
 
     let mut any_built = false;
 
-    if configs.is_empty() {
-        configs.insert(Config::Debug);
-    }
-
     // Preinstall tools
 
     tools::install_toolchains();
@@ -218,11 +142,11 @@ fn main() {
 
     let target_dir = metadata.workspace_root.join("target");
 
-    let pkg_filter = |p: &cargo_metadata::Package| packages.contains(&p.name) && p.is_wasi();
+    let pkg_filter = |p: &cargo_metadata::Package| args.packages.contains(&p.name) && p.is_wasi();
     if metadata.packages.iter().any(pkg_filter) {
         println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
 
-        for config in configs.iter().copied() {
+        for config in args.configs.iter().copied() {
             let mut cmd = cargo_build_wasi.clone();
 
             match config {
@@ -236,11 +160,11 @@ fn main() {
         }
     }
 
-    let pkg_filter = |p: &cargo_metadata::Package| packages.contains(&p.name) && p.is_wasm_pack();
+    let pkg_filter = |p: &cargo_metadata::Package| args.packages.contains(&p.name) && p.is_wasm_pack();
     if metadata.packages.iter().any(pkg_filter) {
         println!("\u{001B}[30;102m                         Building wasm-pack targets                         \u{001B}[0m");
 
-        for config in configs.iter().copied() {
+        for config in args.configs.iter().copied() {
             let mut cmd = Command::new("wasm-pack");
             cmd.arg("build");
             cmd.arg("--no-typescript"); // *.d.ts defs are pointless for bundled HTML files
@@ -274,9 +198,9 @@ fn main() {
 
     let script_placeholder  = "\"{BASE64_WASM32}\"";
 
-    for config in configs.iter().copied() {
+    for config in args.configs.iter().copied() {
         let target_arch_config_dir = target_dir.join("wasm32-wasi").join(config.as_str());
-        for (ty, target) in targets.iter() {
+        for (ty, target) in args.targets.iter() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
@@ -310,7 +234,7 @@ fn main() {
 
         let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
         let pkg_dir                 = target_arch_config_dir.join("pkg");
-        for pkg in metadata.packages.iter().filter(|p| packages.contains(&p.name) && p.is_wasm_pack()) {
+        for pkg in metadata.packages.iter().filter(|p| args.packages.contains(&p.name) && p.is_wasm_pack()) {
             let lib_name = pkg.name.replace("-", "_");
             let package_js = pkg_dir.join(format!("{}.js", lib_name));
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
@@ -335,25 +259,4 @@ fn main() {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Config {
-    Debug,
-    Release,
-}
-
-impl Config {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Config::Debug   => "debug",
-            Config::Release => "release",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum TargetType {
-    Bin,
-    Example,
 }
