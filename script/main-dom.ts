@@ -1,4 +1,3 @@
-var main_dom_worker : Worker;
 function main_dom() {
     type Mode = "raw" | "linebuffered";
     const mode = function(): Mode { return "linebuffered"; }();
