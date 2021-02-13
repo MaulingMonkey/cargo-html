@@ -71,6 +71,45 @@ git commit -m "Updated examples"
 ```
 
 
+<h2>Portability</h2>
+
+Requires
+[wasm](https://caniuse.com/wasm),
+[async-functions](https://caniuse.com/async-functions),
+and being generally awesome.
+
+| Browser               | Supported Version |
+| -----------------     | ----------------- |
+| Chrome                | ✔️ 16+
+| Chrome for Android    | ✔️ 88+
+| Firefox               | ✔️ 52+
+| Firefox for Android   | ✔ 83+
+| Opera                 | ✔ 44+
+| Opera Mobile          | ✔ 59+
+| Opera Mini            | ❌ None (missing WASM, Async Functions)
+| Safari                | ✔ 11+
+| iOS Safari            | ✔ 11+
+| Edge                  | ✔️ 16+
+| IE                    | ❌ None (missing WASM, Async Functions)
+| Android Browser       | ✔ 81+
+| UC Browser for Android| ❌ None (missing WASM)
+| Samsung Internet      | ✔ 7.2+
+| QQ Browser            | ✔ 10.4+
+| Baidu Browser         | ❌ None (missing WASM, Async Functions)
+| KaiOS Browser         | ❌ None (missing WASM, Async Functions)
+
+| Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
+| ------------- | --------- | --------- | --------- | --------- | ----- |
+| Windows       | ✔️       | ✔        | ❌         | ❌       | ❌ \[...\]
+| Linux         | ✔️       | ✔        | ✔          | ✔        | ❌ \[...\]
+| OS X          | ✔        | ❌       | ❌         | ❌       | ❌ \[...\]
+
+| ?     | Legend    |
+| ----- | --------- |
+| ✔️    | Tested
+| ✔     | Should work
+| ❌    | Broken (Browsers could probably be fixed via polyfills and different codegen?)
+
 <h2 name="license">License</h2>
 
 Licensed under either of
