@@ -27,7 +27,7 @@ pub(crate) struct Arguments {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum Subcommand {
     Build,
-    // Help is treated as a sort of psuedo-subcommand and thus excluded here
+    HelpGeneric, // NOTE: "help build" uses Subcommand::Build
 }
 
 impl Default for Subcommand {
@@ -126,7 +126,7 @@ impl Arguments {
             }
         }
 
-        o.subcommand = subcommand.unwrap_or(Subcommand::Build);
+        o.subcommand = subcommand.unwrap_or(if o.help { Subcommand::HelpGeneric } else { Subcommand::Build });
 
         if o.configs.is_empty() {
             o.configs.insert(Config::Debug);

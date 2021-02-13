@@ -33,12 +33,15 @@ impl PackageExt for cargo_metadata::Package {
 fn main() {
     let mut args = Arguments::parse_args();
 
-    if args.help {
-        print!("{}", include_str!("_usage.txt"));
-        return;
-    }
-
     match args.subcommand {
+        Subcommand::HelpGeneric => {
+            print!("{}", include_str!("_usage.txt"));
+            return;
+        },
+        _ if args.help => {
+            print!("{}", include_str!("_usage.txt"));
+            return;
+        },
         Subcommand::Build => {},
     }
 
