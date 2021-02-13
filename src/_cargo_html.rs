@@ -31,9 +31,6 @@ impl PackageExt for cargo_metadata::Package {
 }
 
 fn main() {
-    tools::install_toolchains();
-    let wasm_opt = tools::find_install_wasm_opt();
-
     let mut args = std::env::args();
     let _cargo  = args.next();
     let _html   = args.next();
@@ -211,6 +208,13 @@ fn main() {
     if configs.is_empty() {
         configs.insert(Config::Debug);
     }
+
+    // Preinstall tools
+
+    tools::install_toolchains();
+    let wasm_opt = tools::find_install_wasm_opt();
+
+    // Build
 
     let target_dir = metadata.workspace_root.join("target");
 
