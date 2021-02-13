@@ -173,7 +173,7 @@ function exec_base64_wasm(wasm: string) {
 
             switch (fd) {
                 case 0: // stdin
-                    var read = await stdin_read(buf_len);
+                    var read = await stdin.read(buf_len);
                     for (var i=0; i<read.length; ++i) {
                         var b = read[i] as u8;
                         write_u8(buf_ptr, i, b);
@@ -224,7 +224,7 @@ function exec_base64_wasm(wasm: string) {
             }
         }
 
-        console_write(text);
+        con.write(text);
 
         write_usize(nwritten_ptr, 0, nwritten as usize);
         return errno;
@@ -313,7 +313,7 @@ function exec_base64_wasm(wasm: string) {
 
     function proc_exit(code: number): never {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-        console_write_proc_exit(code);
+        con.write_proc_exit(code);
         throw "exit";
     }
 

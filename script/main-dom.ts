@@ -13,7 +13,7 @@ function main_dom() {
                     case "\t":
                         // should've already been handled by keydown event
                     default:
-                        stdin_write(text);
+                        stdin.write(text);
                         break;
                 }
                 break;
@@ -25,7 +25,7 @@ function main_dom() {
                         // should've already been handled by keydown event
                         break;
                     default:
-                        eInput.textContent += text;
+                        con.input.textContent += text;
                         break;
                 }
                 break;
@@ -43,32 +43,32 @@ function main_dom() {
         switch (mode) {
             case "raw":
                 switch (key) {
-                    case "Backspace":   stdin_write("\x08");    break;
-                    case "Enter":       stdin_write("\n");      break;
-                    case "NumpadEnter": stdin_write("\n");      break;
-                    case "Tab":         stdin_write("\t");      break;
-                    case "Esc":         stdin_write("\x1B");    break;
-                    case "Escape":      stdin_write("\x1B");    break;
+                    case "Backspace":   stdin.write("\x08");    break;
+                    case "Enter":       stdin.write("\n");      break;
+                    case "NumpadEnter": stdin.write("\n");      break;
+                    case "Tab":         stdin.write("\t");      break;
+                    case "Esc":         stdin.write("\x1B");    break;
+                    case "Escape":      stdin.write("\x1B");    break;
                     default:            return; // process no further
                 }
                 break;
             case "linebuffered":
                 switch (key) {
                     case "Backspace":
-                        if (!!eInput.textContent) {
-                            eInput.textContent = eInput.textContent.substr(0, eInput.textContent.length-1);
+                        if (!!con.input.textContent) {
+                            con.input.textContent = con.input.textContent.substr(0, con.input.textContent.length-1);
                         }
                         // else TODO: some kind of alert?
                         break;
                     case "Enter":
                     case "NumpadEnter":
-                        var buffer = (eInput.textContent || "") + "\n";
-                        eInput.textContent = "";
-                        stdin_write(buffer);
+                        var buffer = (con.input.textContent || "") + "\n";
+                        con.input.textContent = "";
+                        stdin.write(buffer);
                         break;
-                    case "Tab":     eInput.textContent = (eInput.textContent || "") + "\t"; break;
-                    case "Esc":     eInput.textContent = (eInput.textContent || "") + "\x1B"; break;
-                    case "Escape":  eInput.textContent = (eInput.textContent || "") + "\x1B"; break;
+                    case "Tab":     con.input.textContent = (con.input.textContent || "") + "\t"; break;
+                    case "Esc":     con.input.textContent = (con.input.textContent || "") + "\x1B"; break;
+                    case "Escape":  con.input.textContent = (con.input.textContent || "") + "\x1B"; break;
                     default:        return; // process no further
                 }
                 break;
@@ -78,58 +78,4 @@ function main_dom() {
     });
 
     exec_base64_wasm("{BASE64_WASM32}");
-}
-
-function requireElementById(id: string): HTMLElement {
-    let el = document.getElementById(id);
-    if (!el) { throw `no such element in document: #${id}`; }
-    return el;
-}
-
-const eCon      = requireElementById("console");
-const eInput    = requireElementById("console-input");
-const eCursor   = requireElementById("console-cursor");
-
-function console_write(text: string) {
-    if (text === "") return;
-    eCon.insertBefore(document.createTextNode(text), eInput);
-}
-
-function console_write_proc_exit(code: number) {
-    var exit = document.createElement("span");
-    exit.textContent = `\nprocess exited with code ${code}`;
-    exit.style.color = code == 0 ? "#888" : "#C44";
-    eCon.insertBefore(exit, eInput);
-    eCon.removeChild(eCursor);
-}
-
-var stdin_buf           : number[] = [];
-var stdin_pending_io    : { max: number, callback: ((input: number[]) => void) }[] = [];
-
-function stdin_read(max: number): Promise<number[]> {
-    return new Promise((callback) => {
-        stdin_pending_io.push({max, callback});
-        stdin_dispatch();
-    });
-}
-
-function stdin_write(text: string) {
-    console_write(text);
-    var bytes = new TextEncoder().encode(text);
-    for (var i=0; i<bytes.length; ++i) {
-        stdin_buf.push(bytes[i]);
-    }
-    stdin_dispatch();
-}
-
-function stdin_dispatch() {
-    while (stdin_buf.length > 0 && stdin_pending_io.length > 0) {
-        const io = stdin_pending_io.shift();
-        if (io === undefined) continue;
-        const nread = Math.min(stdin_buf.length, io.max);
-        const read = stdin_buf.slice(0, nread);
-        const after = stdin_buf.slice(nread);
-        stdin_buf = after;
-        (io.callback)(read);
-    }
 }
