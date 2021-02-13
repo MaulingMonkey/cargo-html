@@ -1,9 +1,1 @@
 const PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
-
-const ATOMIC_STDIN_FILLED   = 0;
-const ATOMIC_STDIN_CONSUMED = 1;
-const ATOMIC_COUNT = 2;
-
-const STDIN_BITS = 10;
-const STDIN_COUNT = (1 << STDIN_BITS);
-const STDIN_MASK = STDIN_COUNT-1;
