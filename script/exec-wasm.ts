@@ -1,3 +1,7 @@
+const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
+// Ref: https://webassembly.github.io/spec/core/exec/runtime.html#memory-instances
+// Ref: https://github.com/WebAssembly/spec/issues/208
+
 function exec_base64_wasm(wasm: string) {
     var exports : Exports;
     var memory : WebAssembly.Memory;
@@ -21,7 +25,7 @@ function exec_base64_wasm(wasm: string) {
     }
 
     const asyncify_page_count : number = 1;
-    const asyncify_byte_count : number = asyncify_page_count * PAGE_SIZE;
+    const asyncify_byte_count : number = asyncify_page_count * WASM_PAGE_SIZE;
     var asyncify_page_idx : number;
     var asyncify_byte_idx : number;
 
@@ -423,7 +427,7 @@ function exec_base64_wasm(wasm: string) {
         memory = exports.memory;
         asyncify_page_idx = memory.grow(asyncify_page_count);
         console.assert(asyncify_page_idx !== -1);
-        asyncify_byte_idx = PAGE_SIZE * asyncify_page_idx;
+        asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;
 
         main();
     });
