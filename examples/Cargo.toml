@@ -2,7 +2,10 @@
 
 [workspace]
 members                 = ["*/"]
-exclude                 = ["target/"]
+exclude = [
+    ".cargo/",
+    "target/",
+]
 
 [profile.release]
 debug                   = 0

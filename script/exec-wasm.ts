@@ -1,5 +1,76 @@
-function exec_base64_wasm(init: dom2work.Init, wasm: string) {
+function exec_base64_wasm(wasm: string) {
+    var exports : Exports;
     var memory : WebAssembly.Memory;
+
+    function main() {
+        try {
+            (exports.main)();
+            if (unwinding) {
+                unwinding = false;
+                exports.asyncify_stop_unwind();
+            } else {
+                proc_exit(0);
+                self.close();
+            }
+        } catch (e) {
+            if (e !== "exit") {
+                console.error(e);
+                debugger;
+                throw e;
+            } else {
+                self.close();
+            }
+        }
+    }
+
+    const asyncify_page_count : number = 1;
+    const asyncify_byte_count : number = asyncify_page_count * PAGE_SIZE;
+    var asyncify_page_idx : number;
+    var asyncify_byte_idx : number;
+
+    var rewinding                   = false;
+    var unwinding                   = false;
+    var rewind_result : any         = undefined;
+    var rewind_exception : unknown  = undefined;
+
+    // https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html
+    function asyncify<R>(f: () => PromiseLike<R>, waiting: R): R {
+        if (!rewinding) {
+            f().then(
+                (result) => {
+                    rewinding           = true;
+                    rewind_result       = result;
+                    rewind_exception    = undefined;
+                    // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
+                    exports.asyncify_start_rewind(asyncify_byte_idx);
+                    main();
+                },
+                (error_reason) => {
+                    rewinding           = true;
+                    rewind_result       = undefined;
+                    rewind_exception    = error_reason === undefined ? "undefined reason" : error_reason;
+                    // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
+                    exports.asyncify_start_rewind(asyncify_byte_idx);
+                    main();
+                },
+            );
+
+            unwinding = true;
+            const ctx = new Uint32Array(memory.buffer, asyncify_byte_idx, 8);
+            ctx[0] = asyncify_byte_idx + 8;
+            ctx[1] = asyncify_byte_idx + asyncify_byte_count;
+            exports.asyncify_start_unwind(asyncify_byte_idx);
+
+            return waiting;
+        } else { // rewinding
+            rewinding = false;
+            exports.asyncify_stop_rewind();
+            if (rewind_exception !== undefined) {
+                throw rewind_exception;
+            }
+            return rewind_result;
+        };
+    }
 
     type Fd     = number & { _not_real: "fd"; }
     type Errno  = number & { _not_real: "errno"; }
@@ -10,11 +81,6 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of precision
     type usize  = number & { _not_real: "usize"; }
 
-    const stdin = (function(): io.SharedCircularBuffer | undefined {
-        if (init.stdin === undefined) return undefined;
-        return new io.SharedCircularBuffer(init.stdin);
-    })();
-
     // References:
     // https://docs.rs/wasi-types/0.1.5/src/wasi_types/lib.rs.html
     // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html
@@ -23,8 +89,11 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#27
     const ERRNO_SUCCESS     = <Errno>0;
     const ERRNO_2BIG        = <Errno>1;
+    const ERRNO_AGAIN       = <Errno>6;
     const ERRNO_BADF        = <Errno>8;
     const ERRNO_NOTCAPABLE  = <Errno>76;
+
+    const ERRNO_ASYNCIFY    = <Errno>9001; // XXX?
 
     function read_u8(   ptr: ptr, offset: number): u8       { return new DataView(memory.buffer).getUint8( ptr + offset      ) as u8; }
     function read_u16(  ptr: ptr, offset: number): u16      { return new DataView(memory.buffer).getUint16(ptr + offset, true) as u16; }
@@ -60,30 +129,12 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     function slice(ptr: ptr, start: usize, end: usize): DataView { return new DataView(memory.buffer, ptr+start, end-start); }
     function slice8(ptr: ptr, start: usize, end: usize): Uint8Array { return new Uint8Array(memory.buffer, ptr+start, end-start); }
 
-    function sleep_ms(ms: number) {
-        try {
-            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-        } catch (e) {
-            // FF: No SharedArrayBuffer?  Fallback on busy looping (eww...)
-            var min = Date.now();
-            var max = Date.now();
-            for (;;) {
-                var now = Date.now();
-                max = Math.max(now, max);
-                if (now < max) {
-                    // time reversed, remove time elapsed so far and reset min/max
-                    ms -= (max-min);
-                    min = max = now;
-                }
-                if ((now - min) >= ms) {
-                    break;
-                }
-            }
-        }
+    function sleep_ms(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(() => resolve(), ms));
     }
 
-    function sleep_ns(ns: number) {
-        sleep_ms(ns / 1000 / 1000);
+    function sleep_ns(ns: number): Promise<void> {
+        return sleep_ms(ns / 1000 / 1000);
     }
 
     function nyi(): Errno {
@@ -112,7 +163,7 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     function fd_prestat_dir_name        (): Errno { return nyi(); }
     function fd_pwrite                  (): Errno { return nyi(); }
 
-    function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno {
+    function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return asyncify(async () => {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
 
         var nread = 0;
@@ -125,20 +176,17 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
 
             switch (fd) {
                 case 0: // stdin
-                    if (stdin !== undefined) {
-                        let read = stdin.try_read(buf_len);
-                        for (var i=0; i<read.length; ++i) {
-                            var b = read[i] as u8;
-                            work2dom.post({ kind: "console", text: new TextDecoder().decode(new Uint8Array([b])) }); // XXX: local echo
-                            write_u8(buf_ptr, i, b);
-                        }
-                        nread += read.length;
-                        if (read.length < buf_len) {
-                            write_usize(nread_ptr, 0, nread as usize);
-                            return errno;
-                        }
-                        break;
+                    var read = await stdin_read(buf_len);
+                    for (var i=0; i<read.length; ++i) {
+                        var b = read[i] as u8;
+                        write_u8(buf_ptr, i, b);
                     }
+                    nread += read.length;
+                    if (read.length < buf_len) {
+                        write_usize(nread_ptr, 0, nread as usize);
+                        return errno;
+                    }
+                    break;
                 default:
                     errno = ERRNO_BADF;
                     break;
@@ -147,7 +195,7 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
 
         write_usize(nread_ptr, 0, nread as usize);
         return errno;
-    }
+    }, ERRNO_ASYNCIFY)}
 
     function fd_readdir                 (): Errno { return nyi(); }
     function fd_renumber                (): Errno { return nyi(); }
@@ -179,9 +227,7 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
             }
         }
 
-        if (text !== "") {
-            work2dom.post({ kind: "console", text });
-        }
+        console_write(text);
 
         write_usize(nwritten_ptr, 0, nwritten as usize);
         return errno;
@@ -198,7 +244,7 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
     function path_symlink               (): Errno { return nyi(); }
     function path_unlink_file           (): Errno { return nyi(); }
 
-    function poll_oneoff(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+    function poll_oneoff(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno { return asyncify(async () => {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-poll_oneoffin-constpointersubscription-out-pointerevent-nsubscriptions-size---errno-size
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1892
 
@@ -247,7 +293,7 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
                 switch (u_u_clock_id) {
                     case CLOCKID_REALTIME:
                     case CLOCKID_MONOTONIC:
-                        sleep_ns(u_u_clock_timeout);
+                        await sleep_ns(u_u_clock_timeout);
 
                         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-struct
                         write_u64_pair( out_events, 32 * out_nevents +  0, userdata);
@@ -266,22 +312,22 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
 
         write_usize(out_nevents_ptr, 0, in_nsubs);
         return ERRNO_SUCCESS;
-    }
+    }, ERRNO_ASYNCIFY)}
 
     function proc_exit(code: number): never {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-        work2dom.post({ kind: "proc_exit", code });
+        console_write_proc_exit(code);
         throw "exit";
     }
 
     function proc_raise                 (): Errno { return nyi(); }
 
-    function sched_yield(): Errno {
+    function sched_yield(): Errno { return asyncify(async () => {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-sched_yield---errno
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
-        sleep_ns(1);
+        await sleep_ms(0);
         return ERRNO_SUCCESS;
-    }
+    }, ERRNO_ASYNCIFY)}
 
     function random_get(buf: ptr, len: usize): Errno {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-random_getbuf-pointeru8-buf_len-size---errno
@@ -350,6 +396,16 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
         },
     };
 
+    interface Exports {
+        memory:                 WebAssembly.Memory,
+        main:                   () => void, // XXX: right signature?
+
+        asyncify_start_rewind:  (addr: number) => void,
+        asyncify_start_unwind:  (addr: number) => void,
+        asyncify_stop_rewind:   () => void,
+        asyncify_stop_unwind:   () => void,
+    }
+
     const binary = atob(wasm);
     const typedarray = new Uint8Array(binary.length);
     for (var i=0; i<binary.length; ++i) { typedarray[i] = binary.charCodeAt(i); }
@@ -365,18 +421,13 @@ function exec_base64_wasm(init: dom2work.Init, wasm: string) {
         }
         return WebAssembly.instantiate(m, imports);
     }).then(function (m) {
-        memory = <any>m.exports.memory;
-        try {
-            (m.exports.main as any)();
-            proc_exit(0);
-        } catch (e) {
-            if (e !== "exit") {
-                console.error(e);
-                debugger;
-                throw e;
-            }
-        } finally {
-            self.close();
-        }
+        exports = <Exports><unknown>m.exports;
+
+        memory = exports.memory;
+        asyncify_page_idx = memory.grow(asyncify_page_count);
+        console.assert(asyncify_page_idx !== -1);
+        asyncify_byte_idx = PAGE_SIZE * asyncify_page_idx;
+
+        main();
     });
 }

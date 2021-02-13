@@ -5,6 +5,3 @@ c       = "xtask check"
 d       = "xtask doc"
 r       = "xtask run"
 xtask   = "run --manifest-path xtask/Cargo.toml -p xtask --"
-
-[target.'cfg(windows)']
-rustflags = ["-C", "target-feature=+crt-static"]

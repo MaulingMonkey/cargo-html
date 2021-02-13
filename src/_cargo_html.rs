@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 use mmrbi::*;
+use ::wasm_pack;
 
 use std::collections::BTreeSet;
 use std::io::Write;
@@ -34,6 +35,17 @@ fn main() {
         toolchain.targets().add("wasm32-wasi").or_die();
         toolchain.targets().add("wasm32-unknown-unknown").or_die();
     }
+
+    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/cache/fn.get_wasm_pack_cache.html
+    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.find_wasm_opt.html
+    // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.run.html
+    let cache = wasm_pack::cache::get_wasm_pack_cache().unwrap_or_else(|err| fatal!("unable to get wasm-pack cache: {}", err));
+    let wasm_opt = match wasm_pack::wasm_opt::find_wasm_opt(&cache, true).unwrap_or_else(|err| fatal!("unable to find wasm-opt: {}", err)) {
+        wasm_pack::install::Status::Found(f)                => f,
+        wasm_pack::install::Status::CannotInstall           => fatal!("cannot install `wasm-opt`"),
+        wasm_pack::install::Status::PlatformNotSupported    => fatal!("platform not supported for `wasm-opt`"),
+    };
+    let wasm_opt = wasm_opt.binary("wasm-opt").unwrap_or_else(|err| fatal!("unable to find binary `wasm-opt` in package `wasm-opt`: {}", err));
 
     let mut args = std::env::args();
     let _cargo  = args.next();
@@ -267,7 +279,13 @@ fn main() {
                 .replace("<script src=\"script.js\"></script>", template_js);
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
-            let target_wasm = target_arch_config_dir.join(format!("{}.wasm", target));
+            let target_wasm_sync = target_arch_config_dir.join(format!("{}.wasm", target));
+            let target_wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
+            let mut asyncify = Command::new(&wasm_opt);
+            asyncify.arg("--asyncify").arg(&target_wasm_sync).arg("--output").arg(&target_wasm);
+            status!("Running", "{}", asyncify);
+            asyncify.status0().or_die();
+
             let target_wasm = std::fs::read(&target_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", target_wasm.display(), err));
             let target_wasm = base64::encode(&target_wasm[..]);
 

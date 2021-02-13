@@ -1,44 +1,5 @@
 var main_dom_worker : Worker;
 function main_dom() {
-    const eCon      = requireElementById("console");
-    const eInput    = requireElementById("console-input");
-    const eCursor   = requireElementById("console-cursor");
-
-    const stdin = (function(): io.SharedCircularBuffer | undefined {
-        try {
-            return new io.SharedCircularBuffer(8192);
-        } catch (e) {
-            // FF: No SharedArrayBuffer support?
-            return undefined;
-        }
-    })();
-
-    // spawn web worker
-    const blob = new Blob(<BlobPart[]>Array.prototype.map.call(document.querySelectorAll('script:not([data-js-worker=\'false\'])'), function (oScript) { return oScript.textContent; }),{type: 'text/javascript'});
-    main_dom_worker = new Worker(window.URL.createObjectURL(blob));
-    main_dom_worker.onmessage = function(e: work2dom.Event) {
-        switch (e.data.kind) {
-            case "console":
-                eCon.insertBefore(document.createTextNode(e.data.text), eInput);
-                break;
-            case "proc_exit":
-                var exit = document.createElement("span");
-                exit.textContent = `\nprocess exited with code ${e.data.code}`;
-                exit.style.color = e.data.code == 0 ? "#888" : "#C44";
-                eCon.insertBefore(exit, eInput);
-                eCon.removeChild(eCursor);
-                break;
-            default:
-                console.error("unexpected event kind", e.data.kind);
-                debugger;
-                break;
-        }
-    };
-    dom2work.post({
-        kind: "init",
-        stdin: (stdin !== undefined) ? stdin.sab : undefined,
-    });
-
     type Mode = "raw" | "linebuffered";
     const mode = function(): Mode { return "linebuffered"; }();
     document.addEventListener("keypress", function(e) {
@@ -52,9 +13,7 @@ function main_dom() {
                     case "\t":
                         // should've already been handled by keydown event
                     default:
-                        if (stdin !== undefined) {
-                            stdin.write_all(text);
-                        }
+                        stdin_write(text);
                         break;
                 }
                 break;
@@ -84,12 +43,12 @@ function main_dom() {
         switch (mode) {
             case "raw":
                 switch (key) {
-                    case "Backspace":   if (stdin !== undefined) { stdin.write_all("\x08"); } break;
-                    case "Enter":       if (stdin !== undefined) { stdin.write_all("\n");   } break;
-                    case "NumpadEnter": if (stdin !== undefined) { stdin.write_all("\n");   } break;
-                    case "Tab":         if (stdin !== undefined) { stdin.write_all("\t");   } break;
-                    case "Esc":         if (stdin !== undefined) { stdin.write_all("\x1B"); } break;
-                    case "Escape":      if (stdin !== undefined) { stdin.write_all("\x1B"); } break;
+                    case "Backspace":   stdin_write("\x08");    break;
+                    case "Enter":       stdin_write("\n");      break;
+                    case "NumpadEnter": stdin_write("\n");      break;
+                    case "Tab":         stdin_write("\t");      break;
+                    case "Esc":         stdin_write("\x1B");    break;
+                    case "Escape":      stdin_write("\x1B");    break;
                     default:            return; // process no further
                 }
                 break;
@@ -105,9 +64,7 @@ function main_dom() {
                     case "NumpadEnter":
                         var buffer = (eInput.textContent || "") + "\n";
                         eInput.textContent = "";
-                        if (stdin !== undefined) {
-                            stdin.write_all(buffer);
-                        }
+                        stdin_write(buffer);
                         break;
                     case "Tab":     eInput.textContent = (eInput.textContent || "") + "\t"; break;
                     case "Esc":     eInput.textContent = (eInput.textContent || "") + "\x1B"; break;
@@ -119,10 +76,60 @@ function main_dom() {
         e.preventDefault();
         e.stopPropagation();
     });
+
+    exec_base64_wasm("{BASE64_WASM32}");
 }
 
 function requireElementById(id: string): HTMLElement {
     let el = document.getElementById(id);
     if (!el) { throw `no such element in document: #${id}`; }
     return el;
+}
+
+const eCon      = requireElementById("console");
+const eInput    = requireElementById("console-input");
+const eCursor   = requireElementById("console-cursor");
+
+function console_write(text: string) {
+    if (text === "") return;
+    eCon.insertBefore(document.createTextNode(text), eInput);
+}
+
+function console_write_proc_exit(code: number) {
+    var exit = document.createElement("span");
+    exit.textContent = `\nprocess exited with code ${code}`;
+    exit.style.color = code == 0 ? "#888" : "#C44";
+    eCon.insertBefore(exit, eInput);
+    eCon.removeChild(eCursor);
+}
+
+var stdin_buf           : number[] = [];
+var stdin_pending_io    : { max: number, callback: ((input: number[]) => void) }[] = [];
+
+function stdin_read(max: number): Promise<number[]> {
+    return new Promise((callback) => {
+        stdin_pending_io.push({max, callback});
+        stdin_dispatch();
+    });
+}
+
+function stdin_write(text: string) {
+    console_write(text);
+    var bytes = new TextEncoder().encode(text);
+    for (var i=0; i<bytes.length; ++i) {
+        stdin_buf.push(bytes[i]);
+    }
+    stdin_dispatch();
+}
+
+function stdin_dispatch() {
+    while (stdin_buf.length > 0 && stdin_pending_io.length > 0) {
+        const io = stdin_pending_io.shift();
+        if (io === undefined) continue;
+        const nread = Math.min(stdin_buf.length, io.max);
+        const read = stdin_buf.slice(0, nread);
+        const after = stdin_buf.slice(nread);
+        stdin_buf = after;
+        (io.callback)(read);
+    }
 }
