@@ -134,6 +134,8 @@ dependencies = [
  "binary-install",
  "cargo_metadata",
  "mmrbi",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

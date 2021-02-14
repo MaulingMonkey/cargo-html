@@ -30,3 +30,5 @@ mmrbi                   = { version = "0.0.15", features = ["serde", "toml"] }
 base64                  = "0.13"
 cargo_metadata          = "0.12"
 binary-install          = "0.0.2"
+serde                   = "1"
+serde_json              = "1"

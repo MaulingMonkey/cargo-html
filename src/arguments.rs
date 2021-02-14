@@ -1,6 +1,8 @@
+use crate::Metadata;
+
 use mmrbi::*;
 
-use std::collections::BTreeSet;
+use std::collections::*;
 use std::path::*;
 
 
@@ -146,6 +148,14 @@ impl Arguments {
         }
 
         o
+    }
+
+    pub fn validate_packages_against(&self, metadata: &Metadata) {
+        for pkg in self.packages.iter() {
+            if !metadata.workspace.packages.contains_key(pkg) {
+                fatal!("no such package `{}` in workspace", pkg);
+            }
+        }
     }
 }
 
