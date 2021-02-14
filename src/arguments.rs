@@ -157,3 +157,13 @@ impl Config {
         }
     }
 }
+
+impl TargetType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            TargetType::Bin     => "bin",
+            TargetType::Cdylib  => "cdylib",
+            TargetType::Example => "example",
+        }
+    }
+}
