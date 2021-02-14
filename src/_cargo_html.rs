@@ -8,7 +8,6 @@ mod tools;
 use mmrbi::*;
 
 use std::io::Write;
-use std::sync::Arc;
 
 
 
@@ -39,29 +38,6 @@ fn build(mut args: Arguments) {
     assert!(args.subcommand == Subcommand::Build);
 
     let metadata = Metadata::from_args(&args);
-    args.validate_packages_against(&metadata);
-
-    // defaults
-
-    if args.workspace {
-        for package in metadata.workspace.packages.values().filter(|p| p.is_html()) {
-            args.packages.insert(package.name.clone());
-        }
-    } else if args.packages.is_empty() {
-        // neither --workspace nor any --package s specified
-        if let Some(root) = metadata.default_package.as_ref() {
-            if root.is_html() {
-                args.packages.insert(root.name.clone());
-            }
-        }
-        if args.packages.is_empty() {
-            // no root, or root isn't an HTML project
-            // TODO: support workspace default members?
-            for package in metadata.workspace.packages.values().filter(|p| p.is_html()) {
-                args.packages.insert(package.name.clone());
-            }
-        }
-    }
 
     // Create command *before* inserting defaults for HTML page generation - our defaults should match `build`s default behavior
     let mut cargo_build_wasi = Command::parse("cargo build --target=wasm32-wasi").unwrap();
@@ -69,10 +45,8 @@ fn build(mut args: Arguments) {
         cargo_build_wasi.arg("--manifest-path").arg(manifest_path);
     }
 
-    for pkg in metadata.workspace.packages.values() {
-        if args.packages.contains(&pkg.name) && pkg.is_wasi() {
-            cargo_build_wasi.arg("--package").arg(&pkg.name);
-        }
+    for pkg in metadata.selected.packages.values().filter(|p| p.is_wasi()) {
+        cargo_build_wasi.arg("--package").arg(&pkg.name);
     }
 
     if args.bins        { cargo_build_wasi.arg("--bins"); }
@@ -89,8 +63,7 @@ fn build(mut args: Arguments) {
 
     // match to cmd defaults
 
-    for pkg in metadata.workspace.packages.values() {
-        if !args.packages.contains(&pkg.name) { continue; }
+    for pkg in metadata.selected.packages.values() {
         for target in pkg.targets.iter() {
             for crate_type in target.crate_types.iter() {
                 match crate_type.as_str() {
@@ -119,8 +92,7 @@ fn build(mut args: Arguments) {
 
     let target_dir = metadata.workspace.root.join("target");
 
-    let pkg_filter = |p: &Arc<cargo_metadata::Package>| args.packages.contains(&p.name) && p.is_wasi();
-    if metadata.workspace.packages.values().any(pkg_filter) {
+    if metadata.selected.packages.values().any(|p| p.is_wasi()) {
         println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
 
         for config in args.configs.iter().copied() {
@@ -137,8 +109,7 @@ fn build(mut args: Arguments) {
         }
     }
 
-    let pkg_filter = |p: &Arc<cargo_metadata::Package>| args.packages.contains(&p.name) && p.is_wasm_pack();
-    if metadata.workspace.packages.values().any(pkg_filter) {
+    if metadata.selected.packages.values().any(|p| p.is_wasm_pack()) {
         println!("\u{001B}[30;102m                         Building wasm-pack targets                         \u{001B}[0m");
 
         for config in args.configs.iter().copied() {
@@ -152,9 +123,7 @@ fn build(mut args: Arguments) {
                 Config::Release => drop(cmd.arg("--release")),
             }
 
-            for pkg in metadata.workspace.packages.values() {
-                if !pkg.is_wasm_pack() { continue; }
-
+            for pkg in metadata.selected.packages.values().filter(|p| p.is_wasm_pack()) {
                 let mut dir = pkg.manifest_path.clone();
                 dir.pop();
 
