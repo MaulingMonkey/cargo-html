@@ -10,15 +10,8 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) struct Metadata {
-    workspace:          Workspace,
     selected:           Selected,
     target_directory:   PathBuf,
-}
-
-#[derive(Debug)]
-pub(crate) struct Workspace {
-    pub packages:           BTreeMap<String, Arc<Package>>,
-    pub targets:            BTreeMap<(TargetType, String), Arc<Package>>,
 }
 
 #[derive(Debug, Default)]
@@ -70,10 +63,6 @@ impl Metadata {
             .and_then(|root| workspace_packages.values().find(|pkg| pkg.id == root).cloned());
 
         let mut metadata = Self {
-            workspace: Workspace {
-                packages:       workspace_packages,
-                targets:        workspace_targets,
-            },
             selected: Selected::default(),
             target_directory:   std::mem::take(&mut metadata.target_directory),
         };
@@ -81,7 +70,7 @@ impl Metadata {
         // Validate packages
 
         for pkg in args.packages.iter() {
-            let pkg = metadata.workspace.packages.get(pkg).unwrap_or_else(|| fatal!("no such package `{}` in workspace", pkg));
+            let pkg = workspace_packages.get(pkg).unwrap_or_else(|| fatal!("no such package `{}` in workspace", pkg));
             if !args.workspace {
                 assert!(metadata.selected.packages.insert(pkg.name.clone(), pkg.clone()).is_none());
             }
@@ -90,7 +79,7 @@ impl Metadata {
         // Select packages
 
         if args.workspace {
-            metadata.selected.packages = metadata.workspace.packages.iter()
+            metadata.selected.packages = workspace_packages.iter()
                 .filter(|(_name, pkg)| pkg.is_html())
                 .map(|(name, pkg)| (name.clone(), pkg.clone()))
                 .collect();
@@ -104,7 +93,7 @@ impl Metadata {
             if metadata.selected.packages.is_empty() {
                 // no root, or root isn't an HTML project
                 // TODO: support workspace default members?
-                metadata.selected.packages = metadata.workspace.packages.iter()
+                metadata.selected.packages = workspace_packages.iter()
                     .filter(|(_name, pkg)| pkg.is_html())
                     .map(|(name, pkg)| (name.clone(), pkg.clone()))
                     .collect();
@@ -114,13 +103,13 @@ impl Metadata {
         // Validate targets
 
         for target in args.targets.iter() {
-            let pkg = metadata.workspace.targets.get(target).unwrap_or_else(|| fatal!("no such {} `{}` in workspace", target.0.as_str(), target.1));
+            let pkg = workspace_targets.get(target).unwrap_or_else(|| fatal!("no such {} `{}` in workspace", target.0.as_str(), target.1));
             if !metadata.selected.packages.contains_key(&pkg.name) { fatal!("{} `{}` exists in workspace, but the package `{}` isn't selected for building", target.0.as_str(), target.1, pkg.name); }
         }
 
         // Select targets
 
-        metadata.selected.targets = metadata.workspace.targets.iter()
+        metadata.selected.targets = workspace_targets.iter()
             .filter(|((ty, name), pkg)| metadata.selected.packages.contains_key(&pkg.name) && (args.targets.contains(&(*ty, name.clone())) || match ty {
                 TargetType::Bin     => args.bins,
                 TargetType::Cdylib  => args.cdylibs,
