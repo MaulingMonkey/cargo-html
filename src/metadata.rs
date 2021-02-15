@@ -10,15 +10,9 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) struct Metadata {
-    all:                All,
     workspace:          Workspace,
     selected:           Selected,
     target_directory:   PathBuf,
-}
-
-#[derive(Debug)]
-pub(crate) struct All {
-    pub packages:           BTreeMap<String, Arc<Package>>,
 }
 
 #[derive(Debug)]
@@ -78,9 +72,6 @@ impl Metadata {
             .and_then(|root| workspace_packages.values().find(|pkg| pkg.id == root).cloned());
 
         let mut metadata = Self {
-            all: All {
-                packages:       all_packages
-            },
             workspace: Workspace {
                 packages:       workspace_packages,
                 targets:        workspace_targets,
