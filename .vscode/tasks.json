@@ -95,6 +95,24 @@
 
 
 
+        // cargo-web-world
+        {
+            "label":            "cargo html -p cargo-web-world",
+            "command":          "cargo html -p cargo-web-world",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo html -p cargo-web-world --release",
+            "command":          "cargo html -p cargo-web-world --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+
+
+
         // goodbye-world
         {
             "label":            "cargo html -p goodbye-world",

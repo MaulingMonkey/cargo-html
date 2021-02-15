@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{TARGET_NAME}</title>
+</head><body>
+    <center>
+        <h1>{TARGET_NAME}</h1>
+    </center>
+    <script>
+        const global_fetch = fetch;
+        function exec_wasm(base64) {
+            function fetch(url, options) {
+                if (!url.endsWith("{TARGET_NAME}.wasm")) { // XXX: only one wasm file, hack it in
+                    return global_fetch(url, options);
+                } else {
+                    var binary = atob(base64);
+                    var typedarray = new Uint8Array(binary.length);
+                    for (var i=0; i<binary.length; ++i) { typedarray[i] = binary.charCodeAt(i); }
+                    var body = new Blob([typedarray], { type: "application/wasm" });
+                    var response = new Response(body, { status: 200, statusText: "OK" });
+                    return Promise.resolve(response);
+                }
+            }
+
+            {PACKAGE_JS}
+        }
+
+        exec_wasm("{BASE64_WASM32}");
+    </script>
+</body></html>

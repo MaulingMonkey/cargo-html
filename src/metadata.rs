@@ -124,10 +124,14 @@ impl Metadata {
     }
 
     pub fn selected_packages(&self)             -> impl Iterator<Item = &Package> { self.selected.packages.values().map(|v| &**v) }
-    pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()) }
+    pub fn selected_packages_cargo_web(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_cargo_web()) }
+    pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()     ) }
     pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack()) }
 
-    pub fn selected_targets(&self) -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.keys() }
+    pub fn selected_targets(&self)              -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.keys() }
+    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_cargo_web()  ).map(|(key, _)| key) }
+    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_wasi()       ).map(|(key, _)| key) }
+    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_wasm_pack()  ).map(|(key, _)| key) }
 
     pub fn target_directory(&self) -> &Path { self.target_directory.as_path() }
 }

@@ -1,6 +1,38 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // cargo-web-world
+        {
+            "name":                     "cargo-web-world • chrome • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p cargo-web-world",
+            "url":                      "${workspaceFolder}/examples/target/wasm32-unknown-unknown/debug/cargo-web-world.html",
+        },
+        {
+            "name":                     "cargo-web-world • chrome • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p cargo-web-world --release",
+            "url":                      "${workspaceFolder}/examples/target/wasm32-unknown-unknown/release/cargo-web-world.html",
+        },
+        {
+            "name":                     "cargo-web-world • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p cargo-web-world",
+            "file":                     "${workspaceFolder}/examples/target/wasm32-unknown-unknown/debug/cargo-web-world.html",
+        },
+        {
+            "name":                     "cargo-web-world • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p cargo-web-world --release",
+            "file":                     "${workspaceFolder}/examples/target/wasm32-unknown-unknown/release/cargo-web-world.html",
+        },
+
+
+
         // hello-world
         {
             "name":                     "hello-world • chrome • debug",

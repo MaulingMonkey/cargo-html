@@ -1,0 +1,15 @@
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name                    = "cargo-web-world"
+version                 = "0.0.0"
+authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
+edition                 = "2018"
+publish                 = false
+
+[[bin]]
+name                    = "cargo-web-world"
+path                    = "cargo-web-world.rs"
+
+[dependencies]
+stdweb                  = "0.4"

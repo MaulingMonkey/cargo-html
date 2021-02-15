@@ -379,6 +379,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d43451d366fa7ea4e4d109bab99597e4bbfcc0bee67985a4f81ac19dba2db8"
 dependencies = [
  "alphanumeric-sort",
+ "semver",
  "serde",
  "toml",
 ]

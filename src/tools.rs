@@ -1,7 +1,5 @@
 use mmrbi::*;
 
-use std::path::PathBuf;
-
 
 
 pub(crate) fn install_toolchains() {
@@ -12,7 +10,7 @@ pub(crate) fn install_toolchains() {
     }
 }
 
-pub(crate) fn find_install_wasm_opt() -> PathBuf {
+pub(crate) fn find_install_wasm_opt() -> Command {
     // https://docs.rs/wasm-pack/0.9.1/wasm_pack/cache/fn.get_wasm_pack_cache.html
     // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.find_wasm_opt.html
     // https://docs.rs/wasm-pack/0.9.1/wasm_pack/wasm_opt/fn.run.html
@@ -42,5 +40,20 @@ pub(crate) fn find_install_wasm_opt() -> PathBuf {
     let cache = binary_install::Cache::new("wasm-pack").unwrap_or_else(|err| fatal!("unable to get wasm-pack cache: {}", err)); // reuse wasm-pack's binary cache
     let url = format!("https://github.com/WebAssembly/binaryen/releases/download/{vers}/binaryen-{vers}-{target}.tar.gz", vers = vers, target = target);
     let download = cache.download(true, "wasm-opt", &["wasm-opt"], &url).unwrap_or_else(|err| fatal!("error downloading wasm-opt: {}", err)).unwrap();
-    download.binary("wasm-opt").unwrap_or_else(|err| fatal!("error getting wasm-opt binary from download: {}", err))
+    let path = download.binary("wasm-opt").unwrap_or_else(|err| fatal!("error getting wasm-opt binary from download: {}", err));
+    Command::new(path)
+}
+
+pub(crate) fn find_install_wasm_pack() -> Command {
+    let min = "0.9.1";
+    mmrbi::wasm_pack::install_at_least(min).unwrap_or_else(|err| fatal!("unable to install wasm-pack {}: {}", min, err));
+    Command::new("wasm-pack")
+}
+
+pub(crate) fn find_install_cargo_web() -> Command {
+    let min = "0.6.26";
+    mmrbi::cargo_web::install_at_least(min).unwrap_or_else(|err| fatal!("unable to install cargo-web {}: {}", min, err));
+    let mut cmd = Command::new("cargo");
+    cmd.arg("web");
+    return cmd;
 }
