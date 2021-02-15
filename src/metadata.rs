@@ -10,11 +10,11 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) struct Metadata {
-    pub all:                All,
-    pub workspace:          Workspace,
-    pub selected:           Selected,
-    pub default_package:    Option<Arc<Package>>,
-    pub target_directory:   PathBuf,
+    all:                All,
+    workspace:          Workspace,
+    selected:           Selected,
+    default_package:    Option<Arc<Package>>,
+    target_directory:   PathBuf,
 }
 
 #[derive(Debug)]
@@ -148,4 +148,12 @@ impl Metadata {
 
         metadata
     }
+
+    pub fn selected_packages(&self)             -> impl Iterator<Item = &Package> { self.selected.packages.values().map(|v| &**v) }
+    pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()) }
+    pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack()) }
+
+    pub fn selected_targets(&self) -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.keys() }
+
+    pub fn target_directory(&self) -> &Path { self.target_directory.as_path() }
 }

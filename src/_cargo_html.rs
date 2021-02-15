@@ -48,8 +48,8 @@ fn build(args: Arguments) {
 
     let mut any_built = false;
 
-    let target_dir = metadata.target_directory;
-    if metadata.selected.packages.values().any(|p| p.is_wasi()) {
+    let target_dir = metadata.target_directory();
+    if metadata.selected_packages_wasi().any(|_| true) {
         println!("\u{001B}[30;102m                        Building wasm32-wasi targets                        \u{001B}[0m");
 
         let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
@@ -57,7 +57,7 @@ fn build(args: Arguments) {
             cmd.arg("--manifest-path").arg(manifest_path);
         }
     
-        for pkg in metadata.selected.packages.values().filter(|p| p.is_wasi()) {
+        for pkg in metadata.selected_packages_wasi() {
             cmd.arg("--package").arg(&pkg.name);
         }
     
@@ -65,7 +65,7 @@ fn build(args: Arguments) {
         if args.examples    { cmd.arg("--examples"); }
         // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
     
-        for (ty, target) in metadata.selected.targets.keys() {
+        for (ty, target) in metadata.selected_targets() {
             match ty {
                 TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
                 TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
@@ -87,7 +87,7 @@ fn build(args: Arguments) {
         }
     }
 
-    if metadata.selected.packages.values().any(|p| p.is_wasm_pack()) {
+    if metadata.selected_packages_wasm_pack().any(|_| true) {
         println!("\u{001B}[30;102m                         Building wasm-pack targets                         \u{001B}[0m");
 
         for config in args.configs.iter().copied() {
@@ -101,7 +101,7 @@ fn build(args: Arguments) {
                 Config::Release => drop(cmd.arg("--release")),
             }
 
-            for pkg in metadata.selected.packages.values().filter(|p| p.is_wasm_pack()) {
+            for pkg in metadata.selected_packages_wasm_pack() {
                 let mut dir = pkg.manifest_path.clone();
                 dir.pop();
 
@@ -124,7 +124,7 @@ fn build(args: Arguments) {
 
     for config in args.configs.iter().copied() {
         let target_arch_config_dir = target_dir.join("wasm32-wasi").join(config.as_str());
-        for (ty, target) in metadata.selected.targets.keys() {
+        for (ty, target) in metadata.selected_targets() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
@@ -159,7 +159,7 @@ fn build(args: Arguments) {
 
         let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
         let pkg_dir                 = target_arch_config_dir.join("pkg");
-        for (ty, target) in metadata.selected.targets.keys() {
+        for (ty, target) in metadata.selected_targets() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => continue,
                 TargetType::Example => continue,
