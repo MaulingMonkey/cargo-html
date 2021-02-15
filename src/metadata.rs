@@ -19,8 +19,6 @@ pub(crate) struct Metadata {
 pub(crate) struct Workspace {
     pub packages:           BTreeMap<String, Arc<Package>>,
     pub targets:            BTreeMap<(TargetType, String), Arc<Package>>,
-    pub root:               PathBuf,
-    pub metadata:           serde_json::Value,
 }
 
 #[derive(Debug, Default)]
@@ -75,8 +73,6 @@ impl Metadata {
             workspace: Workspace {
                 packages:       workspace_packages,
                 targets:        workspace_targets,
-                root:           std::mem::take(&mut metadata.workspace_root),
-                metadata:       std::mem::take(&mut metadata.workspace_metadata),
             },
             selected: Selected::default(),
             target_directory:   std::mem::take(&mut metadata.target_directory),
