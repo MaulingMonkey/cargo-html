@@ -2,6 +2,7 @@
 <html lang="en"><head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{TARGET_NAME}</title>
     <style>
         #console {
@@ -10,9 +11,12 @@
             white-space:    pre-wrap;
             display:        block;
             width:          100em;
-            min-height:     50em;
+            height:         50em;
+            max-width:      90vw;
+            max-height:     calc(90vh - 7em);
             text-align:     left;
             padding:        0.2em 0.5em;
+            overflow-y:     auto;
         }
 
         @keyframes blink {
