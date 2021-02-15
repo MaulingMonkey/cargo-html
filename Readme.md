@@ -77,6 +77,7 @@ Requires
 [wasm](https://caniuse.com/wasm),
 [async-functions](https://caniuse.com/async-functions),
 [promises](https://caniuse.com/promises),
+[textencoder](https://caniuse.com/textencoder),
 and being generally awesome.
 
 | Browser               | Supported Version |
@@ -87,11 +88,11 @@ and being generally awesome.
 | Firefox for Android   | ✔️ 83+
 | Opera                 | ✔️ 44+
 | Opera Mobile          | ✔️ 59+
-| Opera Mini            | ❌ None (missing WASM, Async Functions)
+| Opera Mini            | ❌ None (missing WASM, Async Functions, TextEncoder)
 | Safari                | ✔️ 11+
 | iOS Safari            | ✔️ 11+
-| Edge                  | ✅ 16+
-| IE                    | ❌ None (missing WASM, Async Functions)
+| Edge                  | ✅ 79+
+| IE                    | ❌ None (missing WASM, Async Functions, TextEncoder)
 | Android Browser       | ✔️ 81+
 | UC Browser for Android| ❌ None (missing WASM)
 | Samsung Internet      | ✅ 7.2+
