@@ -374,9 +374,9 @@ dependencies = [
 
 [[package]]
 name = "mmrbi"
-version = "0.0.15"
+version = "0.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80d43451d366fa7ea4e4d109bab99597e4bbfcc0bee67985a4f81ac19dba2db8"
+checksum = "9bfbbc7b9e8e3330c4bd7868da55c58ae5ea840450aa35080710673b93c70908"
 dependencies = [
  "alphanumeric-sort",
  "semver",
