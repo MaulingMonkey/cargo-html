@@ -13,7 +13,6 @@ pub(crate) struct Metadata {
     all:                All,
     workspace:          Workspace,
     selected:           Selected,
-    default_package:    Option<Arc<Package>>,
     target_directory:   PathBuf,
 }
 
@@ -89,7 +88,6 @@ impl Metadata {
                 metadata:       std::mem::take(&mut metadata.workspace_metadata),
             },
             selected: Selected::default(),
-            default_package,
             target_directory:   std::mem::take(&mut metadata.target_directory),
         };
 
@@ -111,7 +109,7 @@ impl Metadata {
                 .collect();
         } else if args.packages.is_empty() {
             // neither --workspace nor any --package s specified
-            if let Some(root) = metadata.default_package.as_ref() {
+            if let Some(root) = default_package.as_ref() {
                 if root.is_html() {
                     metadata.selected.packages.insert(root.name.clone(), root.clone());
                 }
