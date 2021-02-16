@@ -101,6 +101,8 @@ fn build(args: Arguments) {
 
     if metadata.selected_packages_cargo_web().any(|_| true) {
         header!("Building cargo-web targets");
+        let rustc_ver = mmrbi::rustc::version().unwrap_or_else(|err| fatal!("unable to determine rustc version: {}", err));
+        if rustc_ver.is_at_least(1, 48, 0) { warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+: https://github.com/koute/stdweb/issues/411"); }
 
         let mut cmd = cargo_web.clone();
         cmd.arg("build");
