@@ -7,9 +7,9 @@ pub(crate) trait PackageExt {
 
 impl PackageExt for cargo_metadata::Package {
     fn is_html(&self)       -> bool { self.metadata.get("html").map_or(true, |html| html != false) }
-    fn is_cargo_web(&self)  -> bool { self.is_html() && self.has_bin_or_example() && self.has_stdweb_dependency() }
-    fn is_wasi(&self)       -> bool { self.is_html() && self.has_bin_or_example() && !self.has_stdweb_dependency() }
-    fn is_wasm_pack(&self)  -> bool { self.is_html() && self.has_cdylib() && self.has_wasm_bindgen_dependency() }
+    fn is_cargo_web(&self)  -> bool { self.is_html() && self.has_bin_or_example() && self.metadata.pointer("/html/cargo-web").map_or_else(|| self.has_stdweb_dependency(), |cargo_web| cargo_web != false) }
+    fn is_wasi(&self)       -> bool { self.is_html() && self.has_bin_or_example() && !self.is_cargo_web() }
+    fn is_wasm_pack(&self)  -> bool { self.is_html() && self.has_cdylib() && self.metadata.pointer("/html/wasm-pack").map_or_else(|| self.has_wasm_bindgen_dependency(), |wasm_pack| wasm_pack != false) }
 }
 
 trait IntPackageExt {
