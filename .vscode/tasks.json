@@ -164,5 +164,39 @@
             "problemMatcher":   "$rustc",
             "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
+
+
+
+        // quicksilver-demo
+        {
+            "label":            "cargo html -p quicksilver-demo",
+            "command":          "cargo +1.47.0 html -p quicksilver-demo",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo html -p quicksilver-demo --release",
+            "command":          "cargo +1.47.0 html -p quicksilver-demo --release",
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo build -p quicksilver-demo",
+            "command":          "cargo build -p quicksilver-demo",
+            "options":          { "cwd": "${workspaceFolder}/examples" },
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
+        {
+            "label":            "cargo build -p quicksilver-demo --release",
+            "command":          "cargo build -p quicksilver-demo --release",
+            "options":          { "cwd": "${workspaceFolder}/examples" },
+            "type":             "shell",
+            "problemMatcher":   "$rustc",
+            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
+        },
     ]
 }

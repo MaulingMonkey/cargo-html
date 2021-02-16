@@ -129,6 +129,68 @@
 
 
 
+        // quicksilver-demo
+        {
+            "name":                     "quicksilver-demo • chrome • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p quicksilver-demo",
+            "url":                      "${workspaceFolder}/examples/target/wasm32-unknown-unknown/debug/quicksilver-demo.html",
+        },
+        {
+            "name":                     "quicksilver-demo • chrome • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p quicksilver-demo --release",
+            "url":                      "${workspaceFolder}/examples/target/wasm32-unknown-unknown/release/quicksilver-demo.html",
+        },
+        {
+            "name":                     "quicksilver-demo • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p quicksilver-demo",
+            "file":                     "${workspaceFolder}/examples/target/wasm32-unknown-unknown/debug/quicksilver-demo.html",
+        },
+        {
+            "name":                     "quicksilver-demo • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p quicksilver-demo --release",
+            "file":                     "${workspaceFolder}/examples/target/wasm32-unknown-unknown/release/quicksilver-demo.html",
+        },
+        {
+            "name":                     "quicksilver-demo • native • debug",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build -p quicksilver-demo",
+            "program":                  "${workspaceFolder}/examples/target/debug/quicksilver-demo",
+            "cwd":                      "${workspaceFolder}/examples",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/examples/target/debug/quicksilver-demo.exe",
+                "enableDebugHeap":          true,
+            }
+        },
+        {
+            "name":                     "quicksilver-demo • native • release",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build -p quicksilver-demo --release",
+            "program":                  "${workspaceFolder}/examples/target/debug/quicksilver-demo",
+            "cwd":                      "${workspaceFolder}/examples",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/examples/target/debug/quicksilver-demo.exe",
+                "enableDebugHeap":          true,
+            }
+        },
+
+
+
         // cargo-html
         {
             "name":                     "cargo-html • debug",
