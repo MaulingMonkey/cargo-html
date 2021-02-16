@@ -1,4 +1,4 @@
-use stdweb::*;
+#[cfg(target_arch = "wasm32")] use stdweb::*;
 
 use std::collections::HashMap;
 
@@ -11,5 +11,6 @@ fn main() {
     //println!("{:?}", hm);
 
     std::thread::yield_now();
-    js! { alert("Hello, world!"); };
+    #[cfg(target_arch = "wasm32")] js! { alert("Hello, world!"); };
+    #[cfg(not(target_arch = "wasm32"))] println!("Hello, world!");
 }
