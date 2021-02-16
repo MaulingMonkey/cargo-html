@@ -10,17 +10,10 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) struct Metadata {
-    selected:           Selected,
+    selected_packages:  BTreeMap<String, Arc<Package>>,
+    selected_targets:   BTreeMap<(TargetType, String), Arc<Package>>,
     target_directory:   PathBuf,
 }
-
-#[derive(Debug, Default)]
-pub(crate) struct Selected {
-    pub packages:           BTreeMap<String, Arc<Package>>,
-    pub targets:            BTreeMap<(TargetType, String), Arc<Package>>,
-}
-
-
 
 impl Metadata {
     pub fn from_args(args: &Arguments) -> Self {
@@ -63,7 +56,8 @@ impl Metadata {
             .and_then(|root| workspace_packages.values().find(|pkg| pkg.id == root).cloned());
 
         let mut metadata = Self {
-            selected: Selected::default(),
+            selected_packages:  Default::default(),
+            selected_targets:   Default::default(),
             target_directory:   std::mem::take(&mut metadata.target_directory),
         };
 
@@ -72,14 +66,14 @@ impl Metadata {
         for pkg in args.packages.iter() {
             let pkg = workspace_packages.get(pkg).unwrap_or_else(|| fatal!("no such package `{}` in workspace", pkg));
             if !args.workspace {
-                assert!(metadata.selected.packages.insert(pkg.name.clone(), pkg.clone()).is_none());
+                assert!(metadata.selected_packages.insert(pkg.name.clone(), pkg.clone()).is_none());
             }
         }
 
         // Select packages
 
         if args.workspace {
-            metadata.selected.packages = workspace_packages.iter()
+            metadata.selected_packages = workspace_packages.iter()
                 .filter(|(_name, pkg)| pkg.is_html())
                 .map(|(name, pkg)| (name.clone(), pkg.clone()))
                 .collect();
@@ -87,13 +81,13 @@ impl Metadata {
             // neither --workspace nor any --package s specified
             if let Some(root) = default_package.as_ref() {
                 if root.is_html() {
-                    metadata.selected.packages.insert(root.name.clone(), root.clone());
+                    metadata.selected_packages.insert(root.name.clone(), root.clone());
                 }
             }
-            if metadata.selected.packages.is_empty() {
+            if metadata.selected_packages.is_empty() {
                 // no root, or root isn't an HTML project
                 // TODO: support workspace default members?
-                metadata.selected.packages = workspace_packages.iter()
+                metadata.selected_packages = workspace_packages.iter()
                     .filter(|(_name, pkg)| pkg.is_html())
                     .map(|(name, pkg)| (name.clone(), pkg.clone()))
                     .collect();
@@ -104,13 +98,13 @@ impl Metadata {
 
         for target in args.targets.iter() {
             let pkg = workspace_targets.get(target).unwrap_or_else(|| fatal!("no such {} `{}` in workspace", target.0.as_str(), target.1));
-            if !metadata.selected.packages.contains_key(&pkg.name) { fatal!("{} `{}` exists in workspace, but the package `{}` isn't selected for building", target.0.as_str(), target.1, pkg.name); }
+            if !metadata.selected_packages.contains_key(&pkg.name) { fatal!("{} `{}` exists in workspace, but the package `{}` isn't selected for building", target.0.as_str(), target.1, pkg.name); }
         }
 
         // Select targets
 
-        metadata.selected.targets = workspace_targets.iter()
-            .filter(|((ty, name), pkg)| metadata.selected.packages.contains_key(&pkg.name) && (args.targets.contains(&(*ty, name.clone())) || match ty {
+        metadata.selected_targets = workspace_targets.iter()
+            .filter(|((ty, name), pkg)| metadata.selected_packages.contains_key(&pkg.name) && (args.targets.contains(&(*ty, name.clone())) || match ty {
                 TargetType::Bin     => args.bins,
                 TargetType::Cdylib  => args.cdylibs,
                 TargetType::Example => args.examples,
@@ -123,15 +117,15 @@ impl Metadata {
         metadata
     }
 
-    pub fn selected_packages(&self)             -> impl Iterator<Item = &Package> { self.selected.packages.values().map(|v| &**v) }
+    pub fn selected_packages(&self)             -> impl Iterator<Item = &Package> { self.selected_packages.values().map(|v| &**v) }
     pub fn selected_packages_cargo_web(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_cargo_web()) }
     pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()     ) }
     pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack()) }
 
-    pub fn selected_targets(&self)              -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.keys() }
-    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_cargo_web()  ).map(|(key, _)| key) }
-    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_wasi()       ).map(|(key, _)| key) }
-    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected.targets.iter().filter(|(_, pkg)| pkg.is_wasm_pack()  ).map(|(key, _)| key) }
+    pub fn selected_targets(&self)              -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.keys() }
+    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_cargo_web()  ).map(|(key, _)| key) }
+    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_wasi()       ).map(|(key, _)| key) }
+    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_wasm_pack()  ).map(|(key, _)| key) }
 
     pub fn target_directory(&self) -> &Path { self.target_directory.as_path() }
 }
