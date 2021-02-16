@@ -11,5 +11,5 @@ publish                 = false
 name                    = "cargo-web-world"
 path                    = "cargo-web-world.rs"
 
-[dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 stdweb                  = "0.4"
