@@ -27,14 +27,12 @@ impl Metadata {
 
         let workspace_member_ids    = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
 
-        let mut all_packages        = BTreeMap::<String, Arc<Package>>::new();
         let mut workspace_packages  = BTreeMap::<String, Arc<Package>>::new();
         let mut workspace_targets   = BTreeMap::<(TargetType, String), Arc<Package>>::new();
 
         for package in std::mem::take(&mut metadata.packages).into_iter() {
             let package = Arc::new(package);
 
-            assert!(all_packages.insert(package.name.clone(), package.clone()).is_none());
             if workspace_member_ids.contains(&package.id) {
                 assert!(workspace_packages.insert(package.name.clone(), package.clone()).is_none());
 
