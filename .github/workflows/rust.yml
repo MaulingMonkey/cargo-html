@@ -26,5 +26,7 @@ jobs:
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         curl -L https://github.com/koute/cargo-web/releases/download/0.6.26/cargo-web-x86_64-unknown-linux-gnu.gz | gzip -d > ~/.cargo/bin/cargo-web
         chmod +x ~/.cargo/bin/cargo-web
+        wasm-pack --version
+        cargo web --version
     - name: Build
       run: cargo b
