@@ -6,7 +6,7 @@ type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of 
 type usize  = number & { _not_real: "usize"; }
 
 class MemoryLE {
-    readonly memory: WebAssembly.Memory;
+    memory: WebAssembly.Memory;
 
     constructor(memory: WebAssembly.Memory) {
         this.memory = memory;

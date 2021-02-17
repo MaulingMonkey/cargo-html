@@ -6,7 +6,7 @@ type Fd = number & { _not_real: "fd"; }
 
 function exec_base64_wasm(wasm: string) {
     var exports : Exports;
-    var memory : MemoryLE;
+    const memory : MemoryLE = new MemoryLE(<any>undefined);
 
     function main() {
         try {
@@ -235,30 +235,17 @@ function exec_base64_wasm(wasm: string) {
         return ERRNO_SUCCESS;
     }, ERRNO_ASYNCIFY)}
 
-    function random_get(buf: ptr, len: usize): Errno {
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-random_getbuf-pointeru8-buf_len-size---errno
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1914
-        if ("crypto" in self) {
-            self.crypto.getRandomValues(memory.slice8(buf, 0 as usize, len));
-        } else {
-            for (var i=0; i<len; ++i) {
-                memory.write_u8(buf, i, (0xFF & Math.floor(Math.random()*0x100)) as u8);
-            }
-        }
-        return ERRNO_SUCCESS;
-    }
-
     const imports = {
         wasi_snapshot_preview1: Object.assign(
             {},
             wasi_snapshot_preview1.nyi,
+            wasi_snapshot_preview1.random(memory, "insecure-nondeterministic"),
             {
                 fd_read,
                 fd_write,
                 poll_oneoff,
                 proc_exit,
                 sched_yield,
-                random_get,
             }
         ),
     };
@@ -290,7 +277,7 @@ function exec_base64_wasm(wasm: string) {
     }).then(function (m) {
         exports = <Exports><unknown>m.exports;
 
-        memory = new MemoryLE(exports.memory);
+        memory.memory = exports.memory;
         asyncify_page_idx = memory.memory.grow(asyncify_page_count);
         console.assert(asyncify_page_idx !== -1);
         asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;

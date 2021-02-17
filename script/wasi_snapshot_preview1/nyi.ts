@@ -45,7 +45,7 @@ namespace wasi_snapshot_preview1.nyi {
     export function proc_exit                   (): Errno { return nyi(); }
     export function proc_raise                  (): Errno { return nyi(); }
     export function sched_yield                 (): Errno { return nyi(); }
-    export function random_getbuf               (): Errno { return nyi(); }
+    export function random_get                  (): Errno { return nyi(); }
     export function sock_recv                   (): Errno { return nyi(); }
     export function sock_send                   (): Errno { return nyi(); }
     export function sock_shutdown               (): Errno { return nyi(); }
