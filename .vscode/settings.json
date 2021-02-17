@@ -2,6 +2,7 @@
 {
     "files.exclude": {
         "/**/.git": true,
+        "/**/Cargo.lock": true,
         "/target/*/*/*": true,
     }
 }
