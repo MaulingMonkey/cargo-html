@@ -14,14 +14,6 @@ function exec_base64_wasm(wasm: string) {
     // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html
     // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md
 
-    function sleep_ms(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(() => resolve(), ms));
-    }
-
-    function sleep_ns(ns: number): Promise<void> {
-        return sleep_ms(ns / 1000 / 1000);
-    }
-
     function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return asyncifier.asyncify(async () => {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
 
@@ -86,100 +78,22 @@ function exec_base64_wasm(wasm: string) {
         return errno;
     }
 
-    function poll_oneoff(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno { return asyncifier.asyncify(async () => {
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-poll_oneoffin-constpointersubscription-out-pointerevent-nsubscriptions-size---errno-size
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1892
-
-        let out_nevents = 0;
-        memory.write_usize(out_nevents_ptr, 0, out_nevents as usize);
-
-        if (in_nsubs == 0) { return ERRNO_SUCCESS; }
-        if (in_nsubs > 1) { wasi_snapshot_preview1.nyi.nyi(); return ERRNO_2BIG; }
-
-        for (var sub=0; sub<in_nsubs; ++sub) {
-            let sub_base = (in_subs + 48 * sub) as ptr;
-
-            let userdata        = memory.read_u64_pair(sub_base, 0);
-
-            let u_tag           = memory.read_u8( sub_base, 8);
-            type Eventtype = u8;
-            const EVENTTYPE_CLOCK       = <Eventtype>0;
-            const EVENTTYPE_FD_READ     = <Eventtype>1;
-            const EVENTTYPE_FD_WRITE    = <Eventtype>2;
-            if (u_tag !== EVENTTYPE_CLOCK) {
-                return wasi_snapshot_preview1.nyi.nyi();
-            }
-            // 7 bytes of padding
-
-            let u_u_clock_id    = memory.read_u32(sub_base, 16);
-            type Clockid = u32;
-            const CLOCKID_REALTIME              = <Clockid>0; // The clock measuring real time. Time value zero corresponds with 1970-01-01T00:00:00Z.
-            const CLOCKID_MONOTONIC             = <Clockid>1; // The store-wide monotonic clock, which is defined as a clock measuring real time, whose value cannot be adjusted and which cannot have negative clock jumps. The epoch of this clock is undefined. The absolute time value of this clock therefore has no meaning.
-            const CLOCKID_PROCESS_CPUTIME_ID    = <Clockid>2;
-            const CLOCKID_THREAD_CPUTIME_ID     = <Clockid>3;
-            // 4 bytes of padding
-
-            let u_u_clock_timeout   = memory.read_u64_approx(sub_base, 24);
-            let u_u_clock_precision = memory.read_u64_approx(sub_base, 32);
-
-            let u_u_clock_flags     = memory.read_u16(sub_base, 40);
-            const SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME  = <u16>0x1;
-            console.assert(u_u_clock_flags === 0, "u_u_clock_flags !== 0 not yet supported");
-
-            let abs = (u_u_clock_flags & SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME) !== 0;
-            // 6 bytes of padding
-
-            if (abs) {
-                return wasi_snapshot_preview1.nyi.nyi();
-            } else {
-                switch (u_u_clock_id) {
-                    case CLOCKID_REALTIME:
-                    case CLOCKID_MONOTONIC:
-                        await sleep_ns(u_u_clock_timeout);
-
-                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-struct
-                        memory.write_u64_pair( out_events, 32 * out_nevents +  0, userdata);
-                        memory.write_u32(      out_events, 32 * out_nevents +  8, 0 as u32); // error
-                        memory.write_u8(       out_events, 32 * out_nevents + 10, u_tag); // type
-                        // fd_readwrite can be skipped for clocks
-
-                        out_nevents += 1;
-                        memory.write_usize(out_nevents_ptr, 0, out_nevents as usize);
-                        break;
-                    default:
-                        return wasi_snapshot_preview1.nyi.nyi();
-                }
-            }
-        }
-
-        memory.write_usize(out_nevents_ptr, 0, in_nsubs);
-        return ERRNO_SUCCESS;
-    }, ERRNO_ASYNCIFY)}
-
     function proc_exit(code: number): never {
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
         con.write_proc_exit(code);
         throw "exit";
     }
 
-    function sched_yield(): Errno { return asyncifier.asyncify(async () => {
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-sched_yield---errno
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
-        await sleep_ms(0);
-        return ERRNO_SUCCESS;
-    }, ERRNO_ASYNCIFY)}
-
     const imports = {
         wasi_snapshot_preview1: Object.assign(
             {},
             wasi_snapshot_preview1.nyi,
-            wasi_snapshot_preview1.random(memory, "insecure-nondeterministic"),
+            wasi_snapshot_preview1.random   (memory, "insecure-nondeterministic"),
+            wasi_snapshot_preview1.time     (memory, { sleep: asyncifier, clock: "nondeterministic" }),
             {
                 fd_read,
                 fd_write,
-                poll_oneoff,
                 proc_exit,
-                sched_yield,
             }
         ),
     };
