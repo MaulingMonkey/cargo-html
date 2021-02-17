@@ -8,9 +8,9 @@ checksum = "e0e75706f4ee4c69aaa277f73a7a6ad60222193938d4266b929aacd17ebb29b9"
 
 [[package]]
 name = "mmrbi"
-version = "0.0.16"
+version = "0.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bfbbc7b9e8e3330c4bd7868da55c58ae5ea840450aa35080710673b93c70908"
+checksum = "4a842a3e81185ddb8194afc1987c809cf96771b34b2b882120741f106efcd509"
 dependencies = [
  "alphanumeric-sort",
 ]
