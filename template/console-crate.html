@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{TARGET_NAME}</title>
     <style>
-        #console {
+        #cargo-html-console {
             background:     #000;
             color:          #FFF;
             white-space:    pre-wrap;
@@ -25,12 +25,12 @@
             100%    { opacity: 60%; }
         }
 
-        #console-input {
+        #cargo-html-console-input {
             opacity:            70%;
             text-decoration:    underline;
         }
 
-        #console-cursor {
+        #cargo-html-console-cursor {
             animation:      blink 800ms step-start infinite;
         }
 
@@ -46,7 +46,7 @@
 </head><body>
     <center>
         <h1>{TARGET_NAME}</h1>
-        <code id="console"><span id="console-input"></span><span id="console-cursor" class="noselect">█</span></code>
+        <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span id="cargo-html-console-cursor" class="noselect">█</span></code>
     </center>
     <script src="script.js"></script>
     <script>main_dom();</script>

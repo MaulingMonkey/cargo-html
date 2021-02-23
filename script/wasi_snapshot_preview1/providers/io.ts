@@ -7,7 +7,7 @@ namespace wasi_snapshot_preview1 {
             ConReader.try_create({ // stdin
                 mode:       "linebuffered",
                 listen_to:  document,
-                input:      "console-input",
+                input:      "cargo-html-console-input",
                 echo:       con.write,
             }),
             new ConWriter(), // stdout

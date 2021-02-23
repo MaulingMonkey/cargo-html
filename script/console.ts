@@ -5,9 +5,9 @@ namespace con {
         return el;
     }
 
-    const eCon      = requireElementById("console");
-    const eInput    = requireElementById("console-input");
-    const eCursor   = requireElementById("console-cursor");
+    const eCon      = requireElementById("cargo-html-console");
+    const eInput    = requireElementById("cargo-html-console-input");
+    const eCursor   = requireElementById("cargo-html-console-cursor");
 
     export const input = eInput;
 
