@@ -74,15 +74,9 @@ namespace wasi_snapshot_preview1 {
                 const EVENTTYPE_FD_WRITE    = <Eventtype>2;
                 if (u_tag !== EVENTTYPE_CLOCK) throw "only u_tag == EVENTTYPE_CLOCK currently supported";
                 // 7 bytes of padding
-        
-                let u_u_clock_id    = memory.read_u32(sub_base, 16);
-                type Clockid = u32;
-                const CLOCKID_REALTIME              = <Clockid>0; // The clock measuring real time. Time value zero corresponds with 1970-01-01T00:00:00Z.
-                const CLOCKID_MONOTONIC             = <Clockid>1; // The store-wide monotonic clock, which is defined as a clock measuring real time, whose value cannot be adjusted and which cannot have negative clock jumps. The epoch of this clock is undefined. The absolute time value of this clock therefore has no meaning.
-                const CLOCKID_PROCESS_CPUTIME_ID    = <Clockid>2;
-                const CLOCKID_THREAD_CPUTIME_ID     = <Clockid>3;
+
+                let u_u_clock_id        = memory.read_u32(sub_base, 16) as unknown as ClockID;
                 // 4 bytes of padding
-        
                 let u_u_clock_timeout   = memory.read_u64_approx(sub_base, 24);
                 let u_u_clock_precision = memory.read_u64_approx(sub_base, 32);
         
