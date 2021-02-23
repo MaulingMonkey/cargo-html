@@ -10,6 +10,7 @@ namespace wasi_snapshot_preview1.fs.temp {
         locked: number = 0;
 
         constructor(debug_id: string | undefined) {
+            this.debug_id = debug_id;
         }
     }
 
@@ -37,10 +38,17 @@ namespace wasi_snapshot_preview1.fs.temp {
 
         readonly debug_id: string | undefined;
         readonly entries: { [name: string]: Entry };
+        parent: Dir | undefined = undefined;
 
         constructor(debug_id: string | undefined, entries: { [name: string]: Entry }) {
             super(debug_id);
-            this.entries    = entries;
+            this.entries = entries;
+            Object.values(entries).forEach(entry => {
+                if (entry.node.type === "dir") {
+                    if (entry.node.parent !== undefined) throw `fs.temp.Dir ${entry.node.debug_id} already had a parent`;
+                    entry.node.parent = this;
+                }
+            });
         }
     }
 
@@ -61,7 +69,23 @@ namespace wasi_snapshot_preview1.fs.temp {
             // No symlinks supported yet
             // const _follow_symlinks = !!(_dirflags & LOOKUPFLAGS_SYMLINK_FOLLOW);
 
-            var entry = this.dir.entries[path];
+            var dir : Dir | undefined = this.dir;
+            var components = path.split("/");
+            for (var i = 0; i < components.length - 1; ++i) {
+                const c = components[i];
+                if (dir) switch (c) {
+                    case ".":   break;
+                    case "..":  dir = dir.parent; break;
+                    default:
+                        const e = dir.entries[c];
+                        if (!e || e.node.type !== "dir") throw ERRNO_NOTDIR;
+                        dir = e.node;
+                        break;
+                }
+            }
+            if (!dir) throw ERRNO_NOTDIR;
+            const name = components[components.length-1];
+            var entry = dir.entries[name];
 
             const creat     = !!(oflags & OFLAGS_CREAT);
             const directory = !!(oflags & OFLAGS_DIRECTORY);
@@ -83,9 +107,9 @@ namespace wasi_snapshot_preview1.fs.temp {
                 // File/directory does not yet exist
 
                 if (!creat) throw ERRNO_NOENT;
-                const debug_id = this.dir.debug_id ? `${this.dir.debug_id}path/` : undefined;
-                entry = this.dir.entries[path] = {
-                    node: directory ? new Dir(debug_id, {}) : new File(debug_id),
+                const debug_id = dir.debug_id ? `${dir.debug_id}${name}` : undefined;
+                entry = dir.entries[name] = {
+                    node: directory ? new Dir(debug_id + "/", {}) : new File(debug_id),
                 };
             }
 

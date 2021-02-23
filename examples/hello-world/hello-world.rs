@@ -20,11 +20,20 @@ fn main() {
     eprintln!("std::env::args: {:?}", std::env::args().collect::<Vec<String>>());
     eprintln!("std::env::vars: {:?}", std::env::vars().collect::<Vec<(String, String)>>());
 
-    std::fs::write("asdf.txt", "example text").unwrap();
-    std::fs::write("/asdf.txt", "example text 2").unwrap();
+    std::fs::write("asdf1.txt", "example text 1").unwrap();
+    std::fs::write("/asdf2.txt", "example text 2").unwrap();
+    std::fs::write("/home/asdf3.txt", "example text 3").unwrap();
 
-    assert!(std::fs::read_to_string("asdf.txt").unwrap() == "example text");
-    assert!(std::fs::read_to_string("/asdf.txt").unwrap() == "example text 2");
+    assert!(std::fs::read_to_string("asdf1.txt").unwrap() == "example text 1");
+    assert!(std::fs::read_to_string("./asdf1.txt").unwrap() == "example text 1");
+    assert!(std::fs::read_to_string("/home/asdf1.txt").unwrap() == "example text 1");
+
+    assert!(std::fs::read_to_string("/asdf2.txt").unwrap() == "example text 2");
+    assert!(std::fs::read_to_string("../asdf2.txt").unwrap() == "example text 2");
+
+    assert!(std::fs::read_to_string("asdf3.txt").unwrap() == "example text 3");
+    assert!(std::fs::read_to_string("./asdf3.txt").unwrap() == "example text 3");
+    assert!(std::fs::read_to_string("/home/asdf3.txt").unwrap() == "example text 3");
 
     // TODO: subdirs
 
