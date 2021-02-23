@@ -7,7 +7,7 @@ namespace wasi_snapshot_preview1 {
     export function env(memory: MemoryLE, args: string[], env: { [id: string]: string }) {
         const utf8              = new TextEncoder();
         const utf8_arg          = args.map(arg => utf8.encode(`${arg}\0`));
-        const utf8_env          = Object.entries(env).map((key, val) => utf8.encode(`${key}=${val}\0`)); // XXX: is this correct? See https://github.com/WebAssembly/WASI/issues/396
+        const utf8_env          = Object.entries(env).map((key, val) => utf8.encode(`${key}=${val}\0`));
         const utf8_arg_total    = utf8_arg.reduce((prev, s) => prev + s.length, 0);
         const utf8_env_total    = utf8_env.reduce((prev, s) => prev + s.length, 0);
 
