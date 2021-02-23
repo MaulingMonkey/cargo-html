@@ -43,10 +43,15 @@ class Asyncifier {
                 con.write_proc_exit(code);
             }
         } catch (e) {
-            if (e !== "exit") {
-                console.error(e);
-                debugger;
-                throw e;
+            switch (e) {
+                case "exit":
+                case "fatal-signal":
+                case "stop-signal":
+                    break;
+                default:
+                    console.error(e);
+                    debugger;
+                    throw e;
             }
         }
     }

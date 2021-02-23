@@ -23,4 +23,14 @@ namespace con {
         eCon.insertBefore(exit, eInput);
         eCon.removeChild(eCursor);
     }
+
+    export function write_proc_signal(desc: string, fatal: boolean) {
+        var sig = document.createElement("span");
+        sig.textContent = `\nprocess generated signal SIG${desc}`;
+        sig.style.color = !fatal ? "#888" : "#C44";
+        eCon.insertBefore(sig, eInput);
+        if (fatal) {
+            eCon.removeChild(eCursor);
+        }
+    }
 }
