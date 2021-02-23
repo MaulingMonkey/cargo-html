@@ -4,7 +4,12 @@ namespace wasi_snapshot_preview1 {
      */
     export function io(memory: MemoryLE, asyncifier: Asyncifier, {}: {}) {
         const FDS : (Handle | HandleAsync | undefined)[] = [
-            new ConReader(), // stdin
+            new ConReader({ // stdin
+                mode:       "linebuffered",
+                listen_to:  document,
+                input:      document.getElementById("console-input"),
+                echo:       con.write,
+            }),
             new ConWriter(), // stdout
             new ConWriter(), // stderr
         ];

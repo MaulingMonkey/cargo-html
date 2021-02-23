@@ -43,3 +43,7 @@ function exec_base64_wasm(wasm: string) {
         asyncifier.launch(exports);
     });
 }
+
+function main_dom() {
+    exec_base64_wasm("{BASE64_WASM32}");
+}
