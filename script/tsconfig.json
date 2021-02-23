@@ -4,7 +4,7 @@
         "strict":           true,
         "outFile":          "../template/script.js",
         "module":           "none",
-        "target":           "es2017",
+        "target":           "ESNext",
         "removeComments":   true,
         "inlineSources":    true,
         "inlineSourceMap":  true,
