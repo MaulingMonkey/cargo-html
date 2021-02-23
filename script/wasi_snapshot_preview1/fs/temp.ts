@@ -134,7 +134,6 @@ namespace wasi_snapshot_preview1.fs.temp {
                     return f;
                 default:
                     unreachable(entry.node);
-                    throw "never"; // workaround (for older tsc?)
             }
         }
 

@@ -41,9 +41,9 @@ namespace wasi_snapshot_preview1 {
 
             try {
                 if (handle.async) {
-                    await handle.fd_close!();
+                    await handle.fd_close();
                 } else {
-                    handle.fd_close!();
+                    handle.fd_close();
                 }
             } catch (errno) {
                 if (typeof errno === "number") {
@@ -72,9 +72,9 @@ namespace wasi_snapshot_preview1 {
             var nwritten = 0;
             try {
                 if (handle.async) {
-                    nwritten = await handle.fd_read!(iovec);
+                    nwritten = await handle.fd_read(iovec);
                 } else {
-                    nwritten = handle.fd_read!(iovec);
+                    nwritten = handle.fd_read(iovec);
                 }
             } catch (errno) {
                 if (typeof errno === "number") {
@@ -101,9 +101,9 @@ namespace wasi_snapshot_preview1 {
             var nwritten = 0;
             try {
                 if (handle.async) {
-                    nwritten = await handle.fd_write!(ciovec);
+                    nwritten = await handle.fd_write(ciovec);
                 } else {
-                    nwritten = handle.fd_write!(ciovec);
+                    nwritten = handle.fd_write(ciovec);
                 }
             } catch (errno) {
                 if (typeof errno === "number") {
@@ -139,9 +139,9 @@ namespace wasi_snapshot_preview1 {
             var out_fd : Fd;
             try {
                 if (handle.async) {
-                    out_fd = alloc_handle_fd(await handle.path_open!(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
+                    out_fd = alloc_handle_fd(await handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
                 } else {
-                    out_fd = alloc_handle_fd(handle.path_open!(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
+                    out_fd = alloc_handle_fd(handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
                 }
             } catch (errno) {
                 if (typeof errno === "number") {
