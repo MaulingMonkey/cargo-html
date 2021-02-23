@@ -52,6 +52,7 @@ namespace wasi_snapshot_preview1 {
                     throw errno;
                 }
             }
+            delete FDS[fd];
             return ERRNO_SUCCESS;
         }, ERRNO_ASYNCIFY)}
 
