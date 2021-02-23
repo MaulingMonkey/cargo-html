@@ -36,6 +36,7 @@ start "" target/wasm32-wasi/debug/hello-world.html
 ```
 
 
+
 <h2 name="examples">Examples</h2>
 
 ### rust-mini-games
@@ -71,34 +72,54 @@ git commit -m "Updated examples"
 ```
 
 
-<h2>Portability</h2>
 
-Requires
-[wasm](https://caniuse.com/wasm),
-[async-functions](https://caniuse.com/async-functions),
-[promises](https://caniuse.com/promises),
-[textencoder](https://caniuse.com/textencoder),
-and being generally awesome.
+<h2 name="portability-generated-html">Portability: Generated HTML</h2>
+
+Requires:
+* [wasm](https://caniuse.com/wasm)
+* [async-functions](https://caniuse.com/async-functions)
+* [bigint](https://caniuse.com/bigint)
+* [promises](https://caniuse.com/promises)
+* [textencoder](https://caniuse.com/textencoder)
+* Generally awesomeness.
 
 | Browser               | Supported Version |
 | -----------------     | ----------------- |
-| Chrome                | ✅ 57+
+| Chrome                | ✅ 67+
 | Chrome for Android    | ✅ 88+
-| Firefox               | ✅ 53+
-| Firefox for Android   | ✔️ 83+
-| Opera                 | ✔️ 44+
+| Firefox               | ✅ 68+
+| Firefox for Android   | ✔️ 85+
+| Opera                 | ✔️ 54+
 | Opera Mobile          | ✔️ 59+
-| Opera Mini            | ❌ None (missing WASM, Async Functions, TextEncoder)
-| Safari                | ✔️ 11+
-| iOS Safari            | ✔️ 11+
-| Edge                  | ✅ 79+
-| IE                    | ❌ None (missing WASM, Async Functions, TextEncoder)
+| Opera Mini            | ❌ None (missing WASM, Async Functions, TextEncoder, BigInt)
+| Safari                | ✔️ 14+
+| iOS Safari            | ✔️ 14.4+
+| Edge                  | ✅ 88+
+| IE                    | ❌ None (missing WASM, Async Functions, TextEncoder, BigInt)
 | Android Browser       | ✔️ 81+
-| UC Browser for Android| ❌ None (missing WASM)
-| Samsung Internet      | ✅ 7.2+
-| QQ Browser            | ✔️ 10.4+
-| Baidu Browser         | ❌ None (missing WASM, Async Functions)
-| KaiOS Browser         | ❌ None (missing WASM, Async Functions)
+| UC Browser for Android| ❌ None (missing WASM, BigInt)
+| Samsung Internet      | ✅ 9.2+
+| QQ Browser            | ❌ None (missing BigInt)
+| Baidu Browser         | ❌ None (missing WASM, Async Functions, BigInt)
+| KaiOS Browser         | ❌ None (missing WASM, Async Functions, BigInt)
+
+| ?     | Legend    |
+| ----- | --------- |
+| ✅    | Tested
+| ✔️    | Should work, but untested, so probably broken - file issues!
+| ❌    | Broken (Browsers could probably be fixed via polyfills and different codegen?)
+
+
+
+<h2 name="portability-command-line">Portability: Command Line</h2>
+
+Requires:
+* [rustup](https://rustup.rs/)
+* [cargo](https://github.com/rust-lang/cargo) (typically installed via rustup)
+* Prebuilt [wasm-opt](https://github.com/WebAssembly/binaryen/releases) binaries (will auto-download.)
+* [wasm-pack](https://github.com/rustwasm/wasm-pack) for `wasm_bindgen` support (will be auto-installed from source.)
+* [cargo-web](https://github.com/koute/cargo-web) for `stdweb` support (will be auto-installed from source.)
+* Generally awesomeness.
 
 | Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
 | ------------- | --------- | --------- | --------- | --------- | ----- |
@@ -110,7 +131,9 @@ and being generally awesome.
 | ----- | --------- |
 | ✅    | Tested
 | ✔️    | Should work
-| ❌    | Broken (Browsers could probably be fixed via polyfills and different codegen?)
+| ❌    | Broken (`wasm-opt` binaries unavailable, can't asyncify WASM)
+
+
 
 <h2 name="license">License</h2>
 
