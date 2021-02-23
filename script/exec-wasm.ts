@@ -4,7 +4,7 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 
 type Fd = u32 & { _not_real: "fd"; }
 
-function exec_base64_wasm(wasm: string) {
+function exec_base64_wasm(target_name: string, wasm: string) {
     var exports : Exports;
     const memory : MemoryLE = new MemoryLE(<any>undefined);
     const asyncifier = new Asyncifier();
@@ -13,7 +13,7 @@ function exec_base64_wasm(wasm: string) {
         wasi_snapshot_preview1: Object.assign(
             {},
             wasi_snapshot_preview1.nyi      (),
-            wasi_snapshot_preview1.env      (memory, ["program.wasm"], { "KEY": "VALUE", "CARGO_HTML": "YES" }),
+            wasi_snapshot_preview1.env      (memory, [target_name+".html"], { "KEY": "VALUE", "CARGO_HTML": "YES" }),
             wasi_snapshot_preview1.random   (memory, "nondeterministic"),
             wasi_snapshot_preview1.time     (memory, { sleep: asyncifier, clock: "nondeterministic" }),
             wasi_snapshot_preview1.signals  (memory, "enabled"),
@@ -44,6 +44,6 @@ function exec_base64_wasm(wasm: string) {
     });
 }
 
-function main_dom() {
-    exec_base64_wasm("{BASE64_WASM32}");
+function main(target_name: string) {
+    exec_base64_wasm(target_name, "{BASE64_WASM32}");
 }
