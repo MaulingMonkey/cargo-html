@@ -1,9 +1,5 @@
 /**
- * Error codes returned by functions.
- * 
- * Not all of these error codes are returned by the functions provided by this API;
- * some are used in higher-level library layers,
- * and others are provided merely for alignment with POSIX.
+ * Signal condition.
  * 
  * ### See Also
  * 
