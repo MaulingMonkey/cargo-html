@@ -5,6 +5,12 @@ type u32    = number & { _basic_type: "u32"; }
 type u64    = number & { _basic_type: "u64"; } // XXX: number only has 52 bits of precision
 type usize  = number & { _basic_type: "usize"; }
 
+type i8     = number & { _basic_type: "i8";  }
+type i16    = number & { _basic_type: "i16"; }
+type i32    = number & { _basic_type: "i32"; }
+type i64    = number & { _basic_type: "i64"; } // XXX: number only has 52 bits of precision
+type isize  = number & { _basic_type: "isize"; }
+
 class MemoryLE {
     memory: WebAssembly.Memory;
 
@@ -17,7 +23,7 @@ class MemoryLE {
     read_u32(  ptr: ptr, offset: number): u32      { return new DataView(this.memory.buffer).getUint32(ptr + offset, true) as u32; }
     read_usize(ptr: ptr, offset: number): usize    { return this.read_u32(  ptr, offset) as any; }
     read_ptr(  ptr: ptr, offset: number): ptr      { return this.read_usize(ptr, offset) as any; }
-    
+
     // XXX: `number` only guarantees 52-bit precision, so this is pretty bogus
     read_u64_approx(  ptr: ptr, offset: number): u64 {
         let dv = new DataView(this.memory.buffer);
