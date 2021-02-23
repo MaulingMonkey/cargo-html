@@ -19,7 +19,7 @@ namespace wasi_snapshot_preview1 {
     }
 
     export class ConReader implements HandleAsync {
-        readonly async: true = true;
+        readonly async = true;
 
         private readonly settings : ConReaderSettings;
         private readonly pending_io : { max: number, callback: ((input: number[]) => void) }[] = [];

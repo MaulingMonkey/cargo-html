@@ -1,6 +1,6 @@
 namespace wasi_snapshot_preview1 {
     export class ConWriter implements Handle {
-        readonly async: false = false;
+        readonly async = false;
 
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;
