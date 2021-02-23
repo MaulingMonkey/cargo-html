@@ -78,12 +78,6 @@ function exec_base64_wasm(wasm: string) {
         return errno;
     }
 
-    function proc_exit(code: number): never {
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-        con.write_proc_exit(code);
-        throw "exit";
-    }
-
     const imports = {
         wasi_snapshot_preview1: Object.assign(
             {},
