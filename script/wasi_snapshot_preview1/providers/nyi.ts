@@ -4,12 +4,12 @@ namespace wasi_snapshot_preview1 {
     /**
      * A super basic `wasi_snapshot_preview1` syscall provider.
      * All provided syscalls are implemented as:
-     * 
+     *
      * ```js
      * debugger;
      * return ERRNO_NOTCAPABLE;
      * ```
-     * 
+     *
      * This allows you to run programs that require not yet implemented syscalls
      * until you reach the point of actually trying to call one of them.
      */
@@ -58,7 +58,7 @@ namespace wasi_snapshot_preview1 {
             path_symlink:               function path_symlink               (): Errno { return nyi(); },
             path_unlink_file:           function path_unlink_file           (): Errno { return nyi(); },
             poll_oneoff:                function poll_oneoff                (): Errno { return nyi(); },
-            proc_exit:                  function proc_exit                  (): Errno { return nyi(); }, // TODO: fix return
+            proc_exit:                  function proc_exit                  (): never { throw "proc_exit nyi"; },
             proc_raise:                 function proc_raise                 (): Errno { return nyi(); },
             sched_yield:                function sched_yield                (): Errno { return nyi(); },
             random_get:                 function random_get                 (): Errno { return nyi(); },
