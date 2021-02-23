@@ -10,7 +10,7 @@
  * * [Rust wasi crate definition](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#641)
  * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-signal-variant)
  */
-type Signal = number & { _not_real: "signal"; }
+type Signal = u8 & { _not_real: "signal"; }
 
 
 

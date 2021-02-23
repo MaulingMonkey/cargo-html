@@ -1,9 +1,9 @@
-type ptr    = number & { _not_real: "ptr"; }
-type u8     = number & { _not_real: "u8"; }
-type u16    = number & { _not_real: "u16"; }
-type u32    = number & { _not_real: "u32"; }
-type u64    = number & { _not_real: "u64"; } // XXX: number only has 52 bits of precision
-type usize  = number & { _not_real: "usize"; }
+type ptr    = number & { _basic_type: "ptr"; }
+type u8     = number & { _basic_type: "u8";  }
+type u16    = number & { _basic_type: "u16"; }
+type u32    = number & { _basic_type: "u32"; }
+type u64    = number & { _basic_type: "u64"; } // XXX: number only has 52 bits of precision
+type usize  = number & { _basic_type: "usize"; }
 
 class MemoryLE {
     memory: WebAssembly.Memory;

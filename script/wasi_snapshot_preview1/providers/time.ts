@@ -75,7 +75,7 @@ namespace wasi_snapshot_preview1 {
                 if (u_tag !== EVENTTYPE_CLOCK) throw "only u_tag == EVENTTYPE_CLOCK currently supported";
                 // 7 bytes of padding
 
-                let u_u_clock_id        = memory.read_u32(sub_base, 16) as unknown as ClockID;
+                let u_u_clock_id        = memory.read_u32(sub_base, 16) as ClockID;
                 // 4 bytes of padding
                 let u_u_clock_timeout   = memory.read_u64_approx(sub_base, 24);
                 let u_u_clock_precision = memory.read_u64_approx(sub_base, 32);
@@ -107,9 +107,9 @@ namespace wasi_snapshot_preview1 {
                 const r = resolved[sub];
                 switch (r.type) {
                     case "sleep":
-                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-struct
+                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-record
                         memory.write_u64_pair( out_events, 32 * sub +  0, r.userdata);
-                        memory.write_u32(      out_events, 32 * sub +  8, r.error as any);
+                        memory.write_u16(      out_events, 32 * sub +  8, r.error);
                         memory.write_u8(       out_events, 32 * sub + 10, EVENTTYPE_CLOCK); // type
                         // fd_readwrite can be skipped for clocks
                         break;

@@ -10,7 +10,7 @@
  * * [Rust wasi crate definition](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#25)
  * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-errno-variant)
  */
-type Errno = number & { _not_real: "errno"; }
+type Errno = u16 & { _not_real: "errno"; }
 
 
 

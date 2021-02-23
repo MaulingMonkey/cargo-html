@@ -2,7 +2,7 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 // Ref: https://webassembly.github.io/spec/core/exec/runtime.html#memory-instances
 // Ref: https://github.com/WebAssembly/spec/issues/208
 
-type Fd = number & { _not_real: "fd"; }
+type Fd = u32 & { _not_real: "fd"; }
 
 function exec_base64_wasm(wasm: string) {
     var exports : Exports;
