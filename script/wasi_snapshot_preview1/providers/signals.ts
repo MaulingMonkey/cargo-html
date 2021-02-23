@@ -1,4 +1,19 @@
 namespace wasi_snapshot_preview1 {
+    /**
+     * Provide the `proc_*` syscalls.  This has two available `style`s:
+     * 
+     * *    `"disabled"` - don't provide the syscall at all.
+     * 
+     * 
+     * *    `"enabled"` - provides a variety of behaviors:
+     *      * Print exit codes and signals to the HTML console (if available)
+     *      * Invoke `debugger;` for `SIGNAL_TRAP`
+     *      * Throw `"exit"`, `"fatal-signal"`, or `"stop-signal"` for fatal/stop signals.
+     *      * Return `ERRNO_SUCCESS` or `ERRNO_INVAL` for non-fatal or invalid signals.
+     * 
+     * 
+     * A future implementation should probably provider Asyncifier support to let execution paused by `SIGNAL_STOP` etc. to resume if so desired.
+     */
     export function signals(_memory: MemoryLE, style: "disabled" | "enabled") {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-random_getbuf-pointeru8-buf_len-size---errno
 

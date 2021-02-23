@@ -29,6 +29,22 @@ namespace wasi_snapshot_preview1 {
     interface SleepRequest  { type: "sleep", userdata: [u32, u32], nanoseconds: number }
     interface SleepResult   { type: "sleep", userdata: [u32, u32], error: Errno }
 
+    /**
+     * Provide time related syscall implementations.
+     * 
+     * ### `sleep` styles
+     * 
+     * *    `"disabled"`    - Log, `debugger;` and return `ERRNO_NOTCAPABLE` if a thread tries to sleep.
+     * *    `"skip"`        - Sleep for three days in microsecnds!  A thread trying to sleep is simply ignored.
+     * *    `"busy-wait"`   - Wait in a busy loop.  The DOM won't be able to update, so this is discouraged.
+     * *    `Asyncifier`    - Turn thread sleeps into yield points for asyncronous promises.
+     * 
+     * ### `clock` styles - **NOT YET IMPLEMENTED**
+     * 
+     * *    `"disabled"`            - Don't allow clocks to be queried.
+     * *    `"zero"`                - Pretend it's Jan 1st, 1970, and that all execution is instantanious.
+     * *    `"nondeterministic"`    - Allow the real world to leak in, code to self-measure, and [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
+     */
     export function time(memory: MemoryLE, {sleep, clock}: { sleep: "disabled" | "skip" | "busy-wait" | Asyncifier, clock: "disabled" | "zero" | "nondeterministic" }) {
         var real_start = 0;
         try { real_start = Date.now(); } catch (e) {}
