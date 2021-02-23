@@ -9,10 +9,10 @@ namespace wasi_snapshot_preview1 {
         mode:       Mode;
 
         /** Which HTML element to listen to keyboard events with */
-        listen_to:  Document | HTMLElement;
+        listen_to:  Document | HTMLElement | string;
 
         /** Which HTML element to preview input in.  Ignored for `mode` == `"raw"`. */
-        input:      HTMLElement | null;
+        input:      HTMLElement | string | null;
 
         /** How to echo stdin */
         echo:       (output: string) => void;
@@ -23,17 +23,40 @@ namespace wasi_snapshot_preview1 {
 
         private readonly settings : ConReaderSettings;
         private readonly pending_io : { max: number, callback: ((input: number[]) => void) }[] = [];
+        private readonly input : HTMLElement | null;
         private buf : number[] = [];
 
         constructor(settings: ConReaderSettings) {
-            console.assert(settings.input !== null || settings.mode === "raw");
             this.settings = settings;
-            if (settings.listen_to instanceof Document) {
+
+            if (typeof settings.listen_to === "string") {
+                const e = document.getElementById(settings.listen_to);
+                if (!e) throw `ConReader: no such element: #${settings.listen_to}`;
+                e.addEventListener("keydown",  ev => this.keydown(ev));
+                e.addEventListener("keypress", ev => this.keypress(ev));
+            } else if (settings.listen_to instanceof Document) {
                 settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
                 settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
             } else {
                 settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
                 settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
+            }
+
+            if (typeof settings.input === "string") {
+                this.input = document.getElementById(settings.input);
+                if (this.input === null) throw `ConReader: no such element: #${settings.input}`;
+            } else {
+                this.input = settings.input;
+                if (this.input === null && settings.mode !== "raw") throw `ConReader: linebuffered mode requires an input element`;
+            }
+        }
+
+        static try_create(settings: ConReaderSettings): ConReader | undefined {
+            try {
+                return new ConReader(settings);
+            } catch (e) {
+                console.error(e);
+                return undefined;
             }
         }
 
@@ -102,7 +125,7 @@ namespace wasi_snapshot_preview1 {
                             // should've already been handled by keydown event
                             break;
                         default:
-                            this.settings.input!.textContent += text;
+                            this.input!.textContent += text;
                             break;
                     }
                     break;
@@ -134,20 +157,20 @@ namespace wasi_snapshot_preview1 {
                 case "linebuffered":
                     switch (key) {
                         case "Backspace":
-                            if (!!s.input!.textContent) {
-                                s.input!.textContent = s.input!.textContent.substr(0, s.input!.textContent.length-1);
+                            if (!!this.input!.textContent) {
+                                this.input!.textContent = this.input!.textContent.substr(0, this.input!.textContent.length-1);
                             }
                             // else TODO: some kind of alert?
                             break;
                         case "Enter":
                         case "NumpadEnter":
-                            var buffer = (s.input!.textContent || "") + "\n";
-                            s.input!.textContent = "";
+                            var buffer = (this.input!.textContent || "") + "\n";
+                            this.input!.textContent = "";
                             this.write(buffer);
                             break;
-                        case "Tab":     s.input!.textContent = (s.input!.textContent || "") + "\t"; break;
-                        case "Esc":     s.input!.textContent = (s.input!.textContent || "") + "\x1B"; break;
-                        case "Escape":  s.input!.textContent = (s.input!.textContent || "") + "\x1B"; break;
+                        case "Tab":     this.input!.textContent = (this.input!.textContent || "") + "\t"; break;
+                        case "Esc":     this.input!.textContent = (this.input!.textContent || "") + "\x1B"; break;
+                        case "Escape":  this.input!.textContent = (this.input!.textContent || "") + "\x1B"; break;
                         default:        return; // process no further
                     }
                     break;
