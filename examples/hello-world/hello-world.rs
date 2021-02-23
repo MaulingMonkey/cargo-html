@@ -12,6 +12,19 @@ fn main() {
     assert!(0 == unsafe { libc::__wasilibc_register_preopened_fd(4, ".\0".as_ptr().cast()) });
     //unsafe { wasi::proc_raise(wasi::SIGNAL_TRAP); }
 
+    // wasi-libc's lazy-initialization of the environment appears to be getting skipped.
+    // __wasilibc_environ starts out initialized to 0 and thus __wasilibc_ensure_environ noops.
+    // Hack around the problem by forcibly resetting and reinitializing the environment.
+    //
+    // Ref: https://github.com/WebAssembly/wasi-libc/commit/9efc2f428358564fe64c374d762d0bfce1d92507
+    //
+    extern "C" {
+        fn __wasilibc_ensure_environ();
+        static mut __wasilibc_environ: *mut *mut i8;
+    }
+    unsafe { __wasilibc_environ = -1isize as _; };
+    unsafe { __wasilibc_ensure_environ(); };
+
     let mut hm = HashMap::new();
     hm.insert("foo", "bar");
     hm.insert("a", "b");
