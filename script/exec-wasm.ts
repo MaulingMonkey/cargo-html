@@ -81,7 +81,7 @@ function exec_base64_wasm(wasm: string) {
     const imports = {
         wasi_snapshot_preview1: Object.assign(
             {},
-            wasi_snapshot_preview1.nyi,
+            wasi_snapshot_preview1.nyi      (),
             wasi_snapshot_preview1.random   (memory, "insecure-nondeterministic"),
             wasi_snapshot_preview1.time     (memory, { sleep: asyncifier, clock: "nondeterministic" }),
             wasi_snapshot_preview1.signals  (memory, "enabled"),
