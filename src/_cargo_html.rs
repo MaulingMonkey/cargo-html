@@ -68,15 +68,15 @@ fn build(args: Arguments) {
         if let Some(manifest_path) = args.manifest_path.as_ref() {
             cmd.arg("--manifest-path").arg(manifest_path);
         }
-    
+
         for pkg in metadata.selected_packages_wasi() {
             cmd.arg("--package").arg(&pkg.name);
         }
-    
+
         if args.bins        { cmd.arg("--bins"); }
         if args.examples    { cmd.arg("--examples"); }
         // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
-    
+
         for (ty, target) in metadata.selected_targets() {
             match ty {
                 TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
