@@ -57,6 +57,12 @@ class MemoryLE {
         this.write_u32(ptr, offset+0, lo);
         this.write_u32(ptr, offset+4, hi);
     }
+    write_u64(     ptr: ptr, offset: number, value: u64) {
+        let lo = Number(value & 0xFFFFFFFFn) as u32;
+        let hi = Number(value >> 32n) as u32;
+        this.write_u32(ptr, offset+0, lo);
+        this.write_u32(ptr, offset+4, hi);
+    }
 
     slice(ptr: ptr, start: usize, end: usize): DataView { return new DataView(this.memory.buffer, ptr+start, end-start); }
     slice8(ptr: ptr, start: usize, end: usize): Uint8Array { return new Uint8Array(this.memory.buffer, ptr+start, end-start); }
