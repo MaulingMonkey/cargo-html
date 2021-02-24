@@ -1,12 +1,12 @@
 /**
  * Error codes returned by functions.
- * 
+ *
  * Not all of these error codes are returned by the functions provided by this API;
  * some are used in higher-level library layers,
  * and others are provided merely for alignment with POSIX.
- * 
+ *
  * ### See Also
- * 
+ *
  * * [Rust wasi crate definition](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#25)
  * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-errno-variant)
  */
@@ -97,8 +97,6 @@ const ERRNO_INPROGRESS          = <Errno>26;
 
 /** Interrupted function. */
 const ERRNO_INTR                = <Errno>27;
-
-// TODO: verify numbers bellow this marker
 
 /** Invalid argument. */
 const ERRNO_INVAL               = <Errno>28;
@@ -249,3 +247,86 @@ const ERRNO_NOTCAPABLE          = <Errno>76;
 
 /** Extension: Execution has been paused through asyncification. */
 const ERRNO_ASYNCIFY            = <Errno>9001;
+
+function errno_string(errno: Errno): string | undefined {
+    switch (errno) {
+        case ERRNO_SUCCESS:         return "SUCCESS";
+        case ERRNO_2BIG:            return "2BIG";
+        case ERRNO_ACCESS:          return "ACCESS";
+        case ERRNO_ADDRINUSE:       return "ADDRINUSE";
+        case ERRNO_ADDRNOTAVAIL:    return "ADDRNOTAVAIL";
+        case ERRNO_AFNOSUPPORT:     return "AFNOSUPPORT";
+        case ERRNO_AGAIN:           return "AGAIN";
+        case ERRNO_ALREADY:         return "ALREADY";
+        case ERRNO_BADF:            return "BADF";
+        case ERRNO_BADMSG:          return "BADMSG";
+        case ERRNO_BUSY:            return "BUSY";
+        case ERRNO_CANCELED:        return "CANCELED";
+        case ERRNO_CHILD:           return "CHILD";
+        case ERRNO_CONNABORTED:     return "CONNABORTED";
+        case ERRNO_CONNREFUSED:     return "CONNREFUSED";
+        case ERRNO_CONNRESET:       return "CONNRESET";
+        case ERRNO_DEADLK:          return "DEADLK";
+        case ERRNO_DESTADDRREQ:     return "DESTADDRREQ";
+        case ERRNO_DOM:             return "DOM";
+        case ERRNO_DQUOT:           return "DQUOT";
+        case ERRNO_EXIST:           return "EXIST";
+        case ERRNO_FAULT:           return "FAULT";
+        case ERRNO_FBIG:            return "FBIG";
+        case ERRNO_HOSTUNREACH:     return "HOSTUNREACH";
+        case ERRNO_IDRM:            return "IDRM";
+        case ERRNO_ILSEQ:           return "ILSEQ";
+        case ERRNO_INPROGRESS:      return "INPROGRESS";
+        case ERRNO_INTR:            return "INTR";
+        case ERRNO_INVAL:           return "INVAL";
+        case ERRNO_IO:              return "IO";
+        case ERRNO_ISCONN:          return "ISCONN";
+        case ERRNO_ISDIR:           return "ISDIR";
+        case ERRNO_LOOP:            return "LOOP";
+        case ERRNO_MFILE:           return "MFILE";
+        case ERRNO_MLINK:           return "MLINK";
+        case ERRNO_MSGSIZE:         return "MSGSIZE";
+        case ERRNO_MULTIHOP:        return "MULTIHOP";
+        case ERRNO_NAMETOOLONG:     return "NAMETOOLONG";
+        case ERRNO_NETDOWN:         return "NETDOWN";
+        case ERRNO_NETRESET:        return "NETRESET";
+        case ERRNO_NETUNREACH:      return "NETUNREACH";
+        case ERRNO_NFILE:           return "NFILE";
+        case ERRNO_NOBUFS:          return "NOBUFS";
+        case ERRNO_NODEV:           return "NODEV";
+        case ERRNO_NOENT:           return "NOENT";
+        case ERRNO_NOEXEC:          return "NOEXEC";
+        case ERRNO_NOLCK:           return "NOLCK";
+        case ERRNO_NOLINK:          return "NOLINK";
+        case ERRNO_NOMEM:           return "NOMEM";
+        case ERRNO_NOMSG:           return "NOMSG";
+        case ERRNO_NOPROTOOPT:      return "NOPROTOOPT";
+        case ERRNO_NOSPC:           return "NOSPC";
+        case ERRNO_NOSYS:           return "NOSYS";
+        case ERRNO_NOTCONN:         return "NOTCONN";
+        case ERRNO_NOTDIR:          return "NOTDIR";
+        case ERRNO_NOTEMPTY:        return "NOTEMPTY";
+        case ERRNO_NOTRECOVERABLE:  return "NOTRECOVERABLE";
+        case ERRNO_NOTSOCK:         return "NOTSOCK";
+        case ERRNO_NOTSUP:          return "NOTSUP";
+        case ERRNO_NOTTY:           return "NOTTY";
+        case ERRNO_NXIO:            return "NXIO";
+        case ERRNO_OVERFLOW:        return "OVERFLOW";
+        case ERRNO_OWNERDEAD:       return "OWNERDEAD";
+        case ERRNO_PERM:            return "PERM";
+        case ERRNO_PIPE:            return "PIPE";
+        case ERRNO_PROTO:           return "PROTO";
+        case ERRNO_PROTONOSUPPORT:  return "PROTONOSUPPORT";
+        case ERRNO_PROTOTYPE:       return "PROTOTYPE";
+        case ERRNO_RANGE:           return "RANGE";
+        case ERRNO_ROFS:            return "ROFS";
+        case ERRNO_SPIPE:           return "SPIPE";
+        case ERRNO_SRCH:            return "SRCH";
+        case ERRNO_STALE:           return "STALE";
+        case ERRNO_TIMEDOUT:        return "TIMEDOUT";
+        case ERRNO_TXTBSY:          return "TXTBSY";
+        case ERRNO_XDEV:            return "XDEV";
+        case ERRNO_NOTCAPABLE:      return "NOTCAPABLE";
+        case ERRNO_ASYNCIFY:        return "ASYNCIFY";
+    }
+}
