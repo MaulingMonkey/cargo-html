@@ -221,6 +221,19 @@ namespace wasi_snapshot_preview1.fs.temp {
 
         debug(): string { return `FileHandle { file.debug_id = \"${this.file.debug_id}\" }` }
 
+        fd_filestat_get(): FileStat {
+            return {
+                dev:            0n as Device,
+                ino:            0n as Inode,
+                filetype:       FILETYPE_REGULAR_FILE,
+                nlink:          1n as LinkCount,
+                size:           this.file.filesize(),
+                access_time:    0n as TimeStamp,
+                modified_time:  0n as TimeStamp,
+                change_time:    0n as TimeStamp,
+            };
+        }
+
         fd_read(iovec: IovecArray): usize {
             if (!this.can_seek  ) throw ERRNO_NOTCAPABLE;
             if (!this.can_read  ) throw ERRNO_NOTCAPABLE;
