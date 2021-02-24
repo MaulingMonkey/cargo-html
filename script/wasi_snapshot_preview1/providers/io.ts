@@ -3,6 +3,8 @@ namespace wasi_snapshot_preview1 {
      * Provide input/output related syscall implementations.
      */
     export function io(memory: MemoryLE, asyncifier: Asyncifier, {}: {}) {
+        const trace = true;
+
         const DIR_TEMP = new fs.temp.Dir("/temp/", {});
         const DIR_HOME = new fs.temp.Dir("/home/", {});
         const DIR_ROOT = new fs.temp.Dir("/", {
@@ -31,10 +33,13 @@ namespace wasi_snapshot_preview1 {
             return next_fd as Fd;
         }
 
-        function wrap_fd(fd: Fd, op: (handle: Handle | HandleAsync) => Promise<Errno>): Errno {
+        function wrap_fd(fd: Fd, opname: string, op: (handle: Handle | HandleAsync) => Promise<Errno>): Errno {
             return asyncifier.asyncify(async () => {
                 const handle = FDS[fd];
-                if (handle === undefined) return ERRNO_BADF; // handle does not exist
+                if (handle === undefined) {
+                    if (trace) console.error("%s(%d, ...) failed: ERRNO_BADF", opname, fd);
+                    return ERRNO_BADF; // handle does not exist
+                }
                 try {
                     return await op(handle);
                 } catch (errno) {
@@ -69,10 +74,11 @@ namespace wasi_snapshot_preview1 {
 
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
-        function fd_close(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_close(fd: Fd): Errno { return wrap_fd(fd, "fd_close", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1700
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_close
             if (handle.fd_close === undefined) {
+                if (trace) console.error("fd_close(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
                 return ERRNO_ACCESS; // handle does not support operation
             } else if (handle.async) {
                 await handle.fd_close();
@@ -83,13 +89,15 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, "fd_filestat_get", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1717
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_get
 
             var result : FileStat;
-            if (handle.fd_filestat_get === undefined) return ERRNO_ACCESS; // handle does not support operation
-            if (handle.async) {
+            if (handle.fd_filestat_get === undefined) {
+                if (trace) console.error("fd_filestat_get(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
                 result = await handle.fd_filestat_get();
             } else {
                 result = handle.fd_filestat_get();
@@ -98,13 +106,15 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, "fd_prestat_get", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1739
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_get
 
             var result : PreStat;
-            if (handle.fd_prestat_get === undefined) return ERRNO_ACCESS; // handle does not support operation
-            if (handle.async) {
+            if (handle.fd_prestat_get === undefined) {
+                if (trace) console.error("fd_prestat_get(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
                 result = await handle.fd_prestat_get();
             } else {
                 result = handle.fd_prestat_get();
@@ -113,11 +123,14 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, "fd_read", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
 
-            if (handle.fd_read === undefined) return ERRNO_ACCESS; // handle does not support operation
+            if (handle.fd_read === undefined) {
+                if (trace) console.error("fd_read(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                return ERRNO_ACCESS; // handle does not support operation
+            }
 
             const iovec = new IovecArray(memory, iovec_array_ptr, iovec_array_len);
             var nwritten = 0;
@@ -130,12 +143,15 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, "fd_write", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_write
             // https://nodejs.org/api/wasi.html
 
-            if (handle.fd_write === undefined) return ERRNO_ACCESS; // handle does not support operation
+            if (handle.fd_write === undefined) {
+                if (trace) console.error("fd_write(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                return ERRNO_ACCESS; // handle does not support operation
+            }
 
             const ciovec = new IovecArray(memory, ciovec_array_ptr, ciovec_array_len);
             var nwritten = 0;
@@ -148,12 +164,15 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_fd(fd, "path_filestat_get", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1805
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_filestat_get
 
             const path = memory.read_string(path_ptr, +0 as usize, path_len);
-            if (handle.path_filestat_get === undefined) return ERRNO_ACCESS; // handle does not support operation
+            if (handle.path_filestat_get === undefined) {
+                if (trace) console.error("path_filestat_get(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
+                return ERRNO_ACCESS; // handle does not support operation
+            }
 
             var stat : FileStat;
             if (handle.async) {
@@ -176,12 +195,15 @@ namespace wasi_snapshot_preview1 {
             fs_rights_inheriting:   Rights,
             fdflags:                FdFlags,
             opened_fd:              ptr,
-        ): Errno { return wrap_fd(fd, async (handle) => {
+        ): Errno { return wrap_fd(fd, "path_open", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1352
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_open
 
-            if (handle.path_open === undefined) return ERRNO_ACCESS; // handle does not support operation
             const path = memory.read_string(path_ptr, 0 as usize, path_len);
+            if (handle.path_open === undefined) {
+                if (trace) console.error("path_open(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
+                return ERRNO_ACCESS; // handle does not support operation
+            }
 
             var out_fd : Fd;
             if (handle.async) {
