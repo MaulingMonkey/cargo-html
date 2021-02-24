@@ -106,6 +106,28 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
+        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, "fd_prestat_dir_name", async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1741
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_dir_name
+
+            var result : Uint8Array;
+            if (handle.fd_prestat_dir_name === undefined) {
+                if (trace) console.error("fd_prestat_dir_name(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                result = await handle.fd_prestat_dir_name();
+            } else {
+                result = handle.fd_prestat_dir_name();
+            }
+            if (path_len < result.length) {
+                if (trace) console.error("fd_prestat_dir_name(%d, ...) failed: ERRNO_NAMETOOLONG (provided buffer smaller than dir name)", fd);
+                return ERRNO_NAMETOOLONG; // handle does not support operation
+            }
+            for (var i=0; i<result.length; ++i)         memory.write_u8(path, i, result[i] as u8);
+            for (var i=result.length; i<path_len; ++i)  memory.write_u8(path, i, 0 as u8);
+            return ERRNO_SUCCESS;
+        })}
+
         function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, "fd_prestat_get", async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1739
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_get
@@ -219,6 +241,7 @@ namespace wasi_snapshot_preview1 {
         return {
             fd_close,
             fd_filestat_get,
+            fd_prestat_dir_name,
             fd_prestat_get,
             fd_read,
             fd_write,

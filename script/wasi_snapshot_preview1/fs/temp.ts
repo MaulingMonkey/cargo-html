@@ -87,6 +87,17 @@ namespace wasi_snapshot_preview1.fs.temp {
             return [dir, name, dir.entries[name]];
         }
 
+        fd_prestat_dir_name(): Uint8Array {
+            return new TextEncoder().encode(this.dir.debug_id || "");
+        }
+
+        fd_prestat_get(): PreStat {
+            return {
+                tag:                PREOPENTYPE_DIR,
+                u_dir_pr_name_len:  this.fd_prestat_dir_name().length as usize,
+            };
+        }
+
         path_filestat_get(_flags: LookupFlags, path: string): FileStat {
             // No symlinks supported yet
             // const _follow_symlinks = !!(_flags & LOOKUPFLAGS_SYMLINK_FOLLOW);
