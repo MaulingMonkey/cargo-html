@@ -60,6 +60,8 @@ namespace wasi_snapshot_preview1 {
             }
         }
 
+        debug(): string { return "ConReader"; }
+
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());
             const nread = read.length;

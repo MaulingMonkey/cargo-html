@@ -31,28 +31,68 @@ namespace wasi_snapshot_preview1 {
 
         // XXX: WASI recommends randomizing FDs, but I want optional deterministic behavior.
         let next_fd = 1000;
+        function advance_fd() {
+            next_fd = (next_fd + 1) & 0x3FFFFFFF
+        }
         function alloc_handle_fd(handle: Handle | HandleAsync): Fd {
-            while (next_fd in FDS) next_fd = (next_fd + 1) & 0x3FFFFFFF;
+            advance_fd(); // churn file descriptors - without this, we might reuse the same FD back to back a lot, which while legal, complicates debugging
+            while (next_fd in FDS) advance_fd();
             FDS[next_fd] = handle;
             return next_fd as Fd;
         }
 
-        function wrap_fd(fd: Fd, opname: string, op: (handle: Handle | HandleAsync) => Promise<Errno>): Errno {
+        function get_io_caller_name(): string {
+            const s = (new Error()).stack;
+            if (!s) return "???";
+            const m = /^\s*at ((fd|path)_[a-zA-Z_]*)/gm.exec(s);
+            if (!m) return "???";
+            return m[1];
+        }
+
+        function wrap_fd(fd: Fd, op: (handle: Handle | HandleAsync) => Promise<Errno>): Errno {
+            const name = trace ? get_io_caller_name() : undefined;
             return asyncifier.asyncify(async () => {
                 const handle = FDS[fd];
                 if (handle === undefined) {
-                    if (trace) console.error("%s(%d, ...) failed: ERRNO_BADF", opname, fd);
+                    if (trace) console.error("%s(fd=%d, ...) failed: ERRNO_BADF", name, fd);
                     return ERRNO_BADF; // handle does not exist
                 }
+                let ret : Errno;
                 try {
-                    return await op(handle);
+                    ret = await op(handle);
                 } catch (errno) {
                     if (typeof errno === "number") {
-                        return errno as Errno;
+                        ret = errno as Errno;
                     } else {
                         throw errno;
                     }
                 }
+                if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, entry=%s, ...) failed: ERRNO_%s", name, fd, handle.debug(), errno_string(ret));
+                return ret;
+            }, ERRNO_ASYNCIFY);
+        }
+
+        function wrap_path(fd: Fd, path_ptr: ptr, path_len: usize, op: (handle: Handle | HandleAsync, path: string) => Promise<Errno>): Errno {
+            const name = trace ? get_io_caller_name() : undefined;
+            return asyncifier.asyncify(async () => {
+                const path = memory.read_string(path_ptr, +0 as usize, path_len);
+                const handle = FDS[fd];
+                if (handle === undefined) {
+                    if (trace) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_BADF", name, fd, path);
+                    return ERRNO_BADF; // handle does not exist
+                }
+                let ret : Errno;
+                try {
+                    ret = await op(handle, path);
+                } catch (errno) {
+                    if (typeof errno === "number") {
+                        ret = errno as Errno;
+                    } else {
+                        throw errno;
+                    }
+                }
+                if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_%s", name, fd, path, errno_string(ret));
+                return ret;
             }, ERRNO_ASYNCIFY);
         }
 
@@ -78,11 +118,11 @@ namespace wasi_snapshot_preview1 {
 
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
-        function fd_close(fd: Fd): Errno { return wrap_fd(fd, "fd_close", async (handle) => {
+        function fd_close(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1700
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_close
             if (handle.fd_close === undefined) {
-                if (trace) console.error("fd_close(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
             } else if (handle.async) {
                 await handle.fd_close();
@@ -93,13 +133,13 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, "fd_filestat_get", async (handle) => {
+        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1717
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_get
 
             var result : FileStat;
             if (handle.fd_filestat_get === undefined) {
-                if (trace) console.error("fd_filestat_get(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
             } else if (handle.async) {
                 result = await handle.fd_filestat_get();
@@ -110,13 +150,13 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, "fd_prestat_dir_name", async (handle) => {
+        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1741
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_dir_name
 
             var result : Uint8Array;
             if (handle.fd_prestat_dir_name === undefined) {
-                if (trace) console.error("fd_prestat_dir_name(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
             } else if (handle.async) {
                 result = await handle.fd_prestat_dir_name();
@@ -132,7 +172,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, "fd_prestat_get", async (handle) => {
+        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1739
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_get
 
@@ -149,7 +189,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, "fd_read", async (handle) => {
+        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
 
@@ -169,7 +209,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, "fd_write", async (handle) => {
+        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_write
             // https://nodejs.org/api/wasi.html
@@ -190,23 +230,32 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_fd(fd, "path_filestat_get", async (handle) => {
+        function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1802
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_create_directory
+            if (handle.path_create_directory === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            } else if (handle.async) {
+                await handle.path_create_directory(path);
+            } else {
+                handle.path_create_directory(path);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1805
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_filestat_get
-
-            const path = memory.read_string(path_ptr, +0 as usize, path_len);
+            var stat : FileStat;
             if (handle.path_filestat_get === undefined) {
                 if (trace) console.error("path_filestat_get(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
                 return ERRNO_ACCESS; // handle does not support operation
-            }
-
-            var stat : FileStat;
-            if (handle.async) {
+            } else if (handle.async) {
                 stat = await handle.path_filestat_get(flags, path);
             } else {
                 stat = handle.path_filestat_get(flags, path);
             }
-
             write_filestat(buf, 0 as usize, stat);
             return ERRNO_SUCCESS;
         })}
@@ -221,11 +270,10 @@ namespace wasi_snapshot_preview1 {
             fs_rights_inheriting:   Rights,
             fdflags:                FdFlags,
             opened_fd:              ptr,
-        ): Errno { return wrap_fd(fd, "path_open", async (handle) => {
+        ): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1352
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_open
 
-            const path = memory.read_string(path_ptr, 0 as usize, path_len);
             if (handle.path_open === undefined) {
                 if (trace) console.error("path_open(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
                 return ERRNO_ACCESS; // handle does not support operation
@@ -249,6 +297,7 @@ namespace wasi_snapshot_preview1 {
             fd_prestat_get,
             fd_read,
             fd_write,
+            path_create_directory,
             path_filestat_get,
             path_open,
         };

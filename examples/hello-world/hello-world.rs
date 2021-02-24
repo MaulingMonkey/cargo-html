@@ -11,9 +11,11 @@ fn main() {
     eprintln!("std::env::args: {:?}", std::env::args().collect::<Vec<String>>());
     eprintln!("std::env::vars: {:?}", std::env::vars().collect::<Vec<(String, String)>>());
 
+    std::fs::create_dir_all("/path/to/some/subdir").unwrap();
     std::fs::write("asdf1.txt", "example text 1").unwrap();
     std::fs::write("/asdf2.txt", "example text 2").unwrap();
     std::fs::write("/home/asdf3.txt", "example text 3").unwrap();
+    std::fs::write("/path/to/some/subdir/asdf4.txt", "example text 4").unwrap();
 
     assert!(std::fs::read_to_string("asdf1.txt").unwrap() == "example text 1");
     assert!(std::fs::read_to_string("./asdf1.txt").unwrap() == "example text 1");
@@ -27,7 +29,9 @@ fn main() {
     assert!(std::fs::read_to_string("./home/asdf3.txt").unwrap() == "example text 3");
     assert!(std::fs::read_to_string("/home/asdf3.txt").unwrap() == "example text 3");
 
-    // TODO: subdirs
+    assert!(std::fs::read_to_string("path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
+    assert!(std::fs::read_to_string("./path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
+    assert!(std::fs::read_to_string("/path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
 
     std::thread::yield_now();
     std::thread::sleep(std::time::Duration::from_secs(1));

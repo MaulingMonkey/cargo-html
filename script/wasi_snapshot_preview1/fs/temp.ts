@@ -67,7 +67,9 @@ namespace wasi_snapshot_preview1.fs.temp {
             if (prestat_name) this.prestat_name = new TextEncoder().encode(prestat_name);
         }
 
-        private path_entry(path: string): [Dir, string, Entry | undefined] {
+        debug(): string { return `DirectoryHandle { dir.debug_id = \"${this.dir.debug_id}\" }` }
+
+        private path_entry(path: string, notdir: Errno = ERRNO_NOTDIR): [Dir, string, Entry | undefined] {
             var dir : Dir = this.dir;
             var components = path.split("/");
             for (var i = 0; i < components.length - 1; ++i) {
@@ -75,18 +77,31 @@ namespace wasi_snapshot_preview1.fs.temp {
                 if (dir) switch (c) {
                     case ".":   break;
                     case "..":
-                        if (!dir.parent) throw ERRNO_NOTDIR;
+                        if (!dir.parent) throw notdir;
                         dir = dir.parent;
                         break;
                     default:
                         const e = dir.entries[c];
-                        if (!e || e.node.type !== "dir") throw ERRNO_NOTDIR;
+                        if (!e || e.node.type !== "dir") throw notdir;
                         dir = e.node;
                         break;
                 }
             }
             const name = components[components.length-1];
             return [dir, name, dir.entries[name]];
+        }
+
+        fd_filestat_get(): FileStat {
+            return {
+                dev:            0n as Device,
+                ino:            0n as Inode,
+                filetype:       FILETYPE_DIRECTORY,
+                nlink:          1n as LinkCount,
+                size:           0n as FileSize,
+                access_time:    0n as TimeStamp,
+                modified_time:  0n as TimeStamp,
+                change_time:    0n as TimeStamp,
+            };
         }
 
         fd_prestat_dir_name(): Uint8Array {
@@ -100,6 +115,12 @@ namespace wasi_snapshot_preview1.fs.temp {
                 tag:                PREOPENTYPE_DIR,
                 u_dir_pr_name_len:  this.prestat_name.length as usize,
             };
+        }
+
+        path_create_directory(path: string) {
+            var [dir, name, entry] = this.path_entry(path, ERRNO_NOENT);
+            if (entry !== undefined) throw ERRNO_EXIST;
+            dir.entries[name] = { node: new Dir(dir.debug_id === undefined ? undefined : `${dir.debug_id}${name}/`, {}) };
         }
 
         path_filestat_get(_flags: LookupFlags, path: string): FileStat {
@@ -197,6 +218,8 @@ namespace wasi_snapshot_preview1.fs.temp {
             this.file = file;
             file.locked += 1;
         }
+
+        debug(): string { return `FileHandle { file.debug_id = \"${this.file.debug_id}\" }` }
 
         fd_read(iovec: IovecArray): usize {
             if (!this.can_seek  ) throw ERRNO_NOTCAPABLE;
