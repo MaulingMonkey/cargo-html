@@ -24,13 +24,9 @@ namespace wasi_snapshot_preview1.fs.temp {
             this.data = [];
         }
 
-        size(): number {
-            return this.data.length;
-        }
-
-        truncate(size: number) {
-            if (size < this.data.length) this.data.splice(size, this.data.length-size);
-        }
+        filesize(): FileSize { return BigInt(this.data.length) as u64; }
+        filetype(): FileType { return FILETYPE_REGULAR_FILE; }
+        truncate(size: FileSize) { var nsize = Number(size); if (nsize < this.data.length) this.data.splice(nsize, this.data.length-nsize); }
     }
 
     export class Dir extends Node {
@@ -50,6 +46,10 @@ namespace wasi_snapshot_preview1.fs.temp {
                 }
             });
         }
+
+        filesize(): FileSize { return 0n as u64; }
+        filetype(): FileType { return FILETYPE_DIRECTORY; }
+        truncate(_size: FileSize) {}
     }
 
     export class DirectoryHandle implements Handle {
@@ -65,17 +65,17 @@ namespace wasi_snapshot_preview1.fs.temp {
             dir.locked += 1;
         }
 
-        path_open(_dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Handle {
-            // No symlinks supported yet
-            // const _follow_symlinks = !!(_dirflags & LOOKUPFLAGS_SYMLINK_FOLLOW);
-
-            var dir : Dir | undefined = this.dir;
+        private path_entry(path: string): [Dir, string, Entry | undefined] {
+            var dir : Dir = this.dir;
             var components = path.split("/");
             for (var i = 0; i < components.length - 1; ++i) {
                 const c = components[i];
                 if (dir) switch (c) {
                     case ".":   break;
-                    case "..":  dir = dir.parent; break;
+                    case "..":
+                        if (!dir.parent) throw ERRNO_NOTDIR;
+                        dir = dir.parent;
+                        break;
                     default:
                         const e = dir.entries[c];
                         if (!e || e.node.type !== "dir") throw ERRNO_NOTDIR;
@@ -83,9 +83,34 @@ namespace wasi_snapshot_preview1.fs.temp {
                         break;
                 }
             }
-            if (!dir) throw ERRNO_NOTDIR;
             const name = components[components.length-1];
-            var entry = dir.entries[name];
+            return [dir, name, dir.entries[name]];
+        }
+
+        path_filestat_get(_flags: LookupFlags, path: string): FileStat {
+            // No symlinks supported yet
+            // const _follow_symlinks = !!(_flags & LOOKUPFLAGS_SYMLINK_FOLLOW);
+
+            var [_dir, _name, entry] = this.path_entry(path);
+            if (entry === undefined) throw ERRNO_NOENT;
+
+            return {
+                dev:            0n as Device,
+                ino:            0n as Inode,
+                filetype:       entry.node.filetype(),
+                nlink:          1n as u64,
+                size:           entry.node.filesize(),
+                access_time:    0n as TimeStamp,
+                modified_time:  0n as TimeStamp,
+                change_time:    0n as TimeStamp,
+            };
+        }
+
+        path_open(_dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Handle {
+            // No symlinks supported yet
+            // const _follow_symlinks = !!(_dirflags & LOOKUPFLAGS_SYMLINK_FOLLOW);
+
+            var [dir, name, entry] = this.path_entry(path);
 
             const creat     = !!(oflags & OFLAGS_CREAT);
             const directory = !!(oflags & OFLAGS_DIRECTORY);
@@ -98,7 +123,7 @@ namespace wasi_snapshot_preview1.fs.temp {
                 if (trunc) {
                     switch (entry.node.type) {
                         case "dir":     throw ERRNO_INVAL;
-                        case "file":    entry.node.truncate(0); break;
+                        case "file":    entry.node.truncate(0n as u64); break;
                         default:        unreachable(entry.node);
                     }
                 }
@@ -129,7 +154,7 @@ namespace wasi_snapshot_preview1.fs.temp {
                     return d;
                 case "file":
                     var f = new FileHandle(entry.node);
-                    if (append)    f.position = entry.node.size();
+                    if (append)    f.position = Number(entry.node.filesize());
                     if (nonblock)  f.blocking = false;
                     return f;
                 default:

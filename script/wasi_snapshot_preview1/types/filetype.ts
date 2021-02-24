@@ -1,0 +1,9 @@
+type FileType = u8  & { _not_real: "filetype" }; // FILETYPE_*
+const FILETYPE_UNKNOWN = <FileType>0;
+const FILETYPE_BLOCK_DEVICE = <FileType>1;
+const FILETYPE_CHARACTER_DEVICE = <FileType>2;
+const FILETYPE_DIRECTORY = <FileType>3;
+const FILETYPE_REGULAR_FILE = <FileType>4;
+const FILETYPE_SOCKET_DGRAM = <FileType>5;
+const FILETYPE_SOCKET_STREAM = <FileType>6;
+const FILETYPE_SYMBOLIC_LINK = <FileType>7;
