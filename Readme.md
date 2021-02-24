@@ -81,7 +81,7 @@ Requires:
 * [bigint](https://caniuse.com/bigint)
 * [promises](https://caniuse.com/promises)
 * [textencoder](https://caniuse.com/textencoder)
-* Generally awesomeness.
+* General awesomeness.
 
 | Browser               | Supported Version |
 | -----------------     | ----------------- |
@@ -119,7 +119,7 @@ Requires:
 * Prebuilt [wasm-opt](https://github.com/WebAssembly/binaryen/releases) binaries (will auto-download.)
 * [wasm-pack](https://github.com/rustwasm/wasm-pack) for `wasm_bindgen` support (will be auto-installed from source.)
 * [cargo-web](https://github.com/koute/cargo-web) for `stdweb` support (will be auto-installed from source.)
-* Generally awesomeness.
+* General awesomeness.
 
 | Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
 | ------------- | --------- | --------- | --------- | --------- | ----- |
