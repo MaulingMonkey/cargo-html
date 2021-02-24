@@ -96,17 +96,6 @@ namespace wasi_snapshot_preview1 {
             }, ERRNO_ASYNCIFY);
         }
 
-        function write_filestat(ptr: ptr, off: usize, filestat: FileStat) {
-            memory.write_u64(ptr, off+ 0, filestat.dev              );
-            memory.write_u64(ptr, off+ 8, filestat.ino              );
-            memory.write_u8( ptr, off+16, filestat.filetype         );
-            memory.write_u64(ptr, off+24, filestat.nlink            );
-            memory.write_u64(ptr, off+32, filestat.size             );
-            memory.write_u64(ptr, off+40, filestat.access_time      );
-            memory.write_u64(ptr, off+48, filestat.modified_time    );
-            memory.write_u64(ptr, off+56, filestat.change_time      );
-        }
-
         function write_prestat(ptr: ptr, off: usize, prestat: PreStat) {
             memory.write_u8(ptr, off+ 0, prestat.tag);
             switch (prestat.tag) {
@@ -146,7 +135,7 @@ namespace wasi_snapshot_preview1 {
             } else {
                 result = handle.fd_filestat_get();
             }
-            write_filestat(buf, 0 as usize, result);
+            write_filestat(memory, buf, 0 as usize, result);
             return ERRNO_SUCCESS;
         })}
 
@@ -256,7 +245,7 @@ namespace wasi_snapshot_preview1 {
             } else {
                 stat = handle.path_filestat_get(flags, path);
             }
-            write_filestat(buf, 0 as usize, stat);
+            write_filestat(memory, buf, 0 as usize, stat);
             return ERRNO_SUCCESS;
         })}
 
