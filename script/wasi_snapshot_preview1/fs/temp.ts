@@ -55,14 +55,16 @@ namespace wasi_snapshot_preview1.fs.temp {
     export class DirectoryHandle implements Handle {
         readonly async = false;
         readonly dir: Dir;
+        readonly prestat_name: Uint8Array | undefined;
 
         list        = true;
         read        = true;
         write       = true;
 
-        constructor(dir: Dir) {
+        constructor(dir: Dir, prestat_name?: string) {
             this.dir = dir;
             dir.locked += 1;
+            if (prestat_name) this.prestat_name = new TextEncoder().encode(prestat_name);
         }
 
         private path_entry(path: string): [Dir, string, Entry | undefined] {
@@ -88,13 +90,15 @@ namespace wasi_snapshot_preview1.fs.temp {
         }
 
         fd_prestat_dir_name(): Uint8Array {
-            return new TextEncoder().encode(this.dir.debug_id || "");
+            if (this.prestat_name === undefined) throw ERRNO_NOTCAPABLE;
+            return this.prestat_name;
         }
 
         fd_prestat_get(): PreStat {
+            if (this.prestat_name === undefined) throw ERRNO_NOTCAPABLE;
             return {
                 tag:                PREOPENTYPE_DIR,
-                u_dir_pr_name_len:  this.fd_prestat_dir_name().length as usize,
+                u_dir_pr_name_len:  this.prestat_name.length as usize,
             };
         }
 

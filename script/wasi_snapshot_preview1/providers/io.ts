@@ -21,8 +21,12 @@ namespace wasi_snapshot_preview1 {
             }),
             1: new ConWriter(), // stdout
             2: new ConWriter(), // stderr
-            3: new fs.temp.DirectoryHandle(DIR_ROOT), // root
-            4: new fs.temp.DirectoryHandle(DIR_HOME), // cwd for stable rust
+
+            // root and cwd preopened handles
+            // stable vs nightly rust treat this differently for inferring the CWD, but DIR_ROOT should be portable
+            // https://github.com/WebAssembly/wasi-libc/blob/5ccebd3130ef6e384474d921d0c24ebf5403ae1a/libc-bottom-half/sources/getcwd.c#L10
+            3: new fs.temp.DirectoryHandle(DIR_ROOT, "/"),
+            4: new fs.temp.DirectoryHandle(DIR_ROOT, "."),
         };
 
         // XXX: WASI recommends randomizing FDs, but I want optional deterministic behavior.

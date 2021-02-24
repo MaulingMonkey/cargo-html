@@ -1,6 +1,6 @@
 interface Exports {
     memory:                 WebAssembly.Memory,
-    main:                   () => number, // XXX: right signature?
+    _start:                 () => number, // XXX: right signature?
 
     asyncify_start_rewind:  (addr: number) => void,
     asyncify_start_unwind:  (addr: number) => void,

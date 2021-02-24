@@ -2,34 +2,12 @@ use std::collections::HashMap;
 use std::io::Write;
 
 fn main() {
-    //  __wasilibc_find_relpath             https://rust-lang.github.io/libc/wasm32-wasi/libc/fn.__wasilibc_find_relpath.html
-    //  __wasilibc_register_preopened_fd    https://rust-lang.github.io/libc/wasm32-wasi/libc/fn.__wasilibc_register_preopened_fd.html
-    //
-    //  https://github.com/rust-lang/rust/blob/14265f9c5558e599ba8908cffc717f26389420e1/library/std/src/sys/wasi/fs.rs#L650
-    //  https://github.com/WebAssembly/wasi-libc/blob/f2e779e5f1ba4a539937cedeeaa762c1e0c162df/libc-bottom-half/sources/preopens.c
-    //
-    assert!(0 == unsafe { libc::__wasilibc_register_preopened_fd(3, "/\0".as_ptr().cast()) });
-    assert!(0 == unsafe { libc::__wasilibc_register_preopened_fd(4, ".\0".as_ptr().cast()) });
-    //unsafe { wasi::proc_raise(wasi::SIGNAL_TRAP); }
-
-    // wasi-libc's lazy-initialization of the environment appears to be getting skipped.
-    // __wasilibc_environ starts out initialized to 0 and thus __wasilibc_ensure_environ noops.
-    // Hack around the problem by forcibly resetting and reinitializing the environment.
-    //
-    // Ref: https://github.com/WebAssembly/wasi-libc/commit/9efc2f428358564fe64c374d762d0bfce1d92507
-    //
-    extern "C" {
-        fn __wasilibc_ensure_environ();
-        static mut __wasilibc_environ: *mut *mut i8;
-    }
-    unsafe { __wasilibc_environ = -1isize as _; };
-    unsafe { __wasilibc_ensure_environ(); };
-
     let mut hm = HashMap::new();
     hm.insert("foo", "bar");
     hm.insert("a", "b");
     println!("{:?}", hm);
 
+    eprintln!("std::env::current_dir: {:?}", std::env::current_dir());
     eprintln!("std::env::args: {:?}", std::env::args().collect::<Vec<String>>());
     eprintln!("std::env::vars: {:?}", std::env::vars().collect::<Vec<(String, String)>>());
 
@@ -39,13 +17,14 @@ fn main() {
 
     assert!(std::fs::read_to_string("asdf1.txt").unwrap() == "example text 1");
     assert!(std::fs::read_to_string("./asdf1.txt").unwrap() == "example text 1");
-    assert!(std::fs::read_to_string("/home/asdf1.txt").unwrap() == "example text 1");
+    assert!(std::fs::read_to_string("/asdf1.txt").unwrap() == "example text 1");
 
+    assert!(std::fs::read_to_string("asdf2.txt").unwrap() == "example text 2");
     assert!(std::fs::read_to_string("/asdf2.txt").unwrap() == "example text 2");
-    assert!(std::fs::read_to_string("../asdf2.txt").unwrap() == "example text 2");
+    assert!(std::fs::read_to_string("./asdf2.txt").unwrap() == "example text 2");
 
-    assert!(std::fs::read_to_string("asdf3.txt").unwrap() == "example text 3");
-    assert!(std::fs::read_to_string("./asdf3.txt").unwrap() == "example text 3");
+    assert!(std::fs::read_to_string("home/asdf3.txt").unwrap() == "example text 3");
+    assert!(std::fs::read_to_string("./home/asdf3.txt").unwrap() == "example text 3");
     assert!(std::fs::read_to_string("/home/asdf3.txt").unwrap() == "example text 3");
 
     // TODO: subdirs

@@ -30,12 +30,12 @@ class Asyncifier {
         console.assert(asyncify_page_idx !== -1);
         this.asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;
 
-        this.main();
+        this.start();
     }
 
-    private main() {
+    private start() {
         try {
-            const code = (this.exports!.main)() || 0;
+            const code = (this.exports!._start)() || 0;
             if (this.unwinding) {
                 this.unwinding = false;
                 this.exports!.asyncify_stop_unwind();
@@ -67,7 +67,7 @@ class Asyncifier {
                     this.rewind_exception    = undefined;
                     // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
                     exports.asyncify_start_rewind(this.asyncify_byte_idx);
-                    this.main();
+                    this.start();
                 },
                 (error_reason) => {
                     this.rewinding           = true;
@@ -75,7 +75,7 @@ class Asyncifier {
                     this.rewind_exception    = error_reason === undefined ? "undefined reason" : error_reason;
                     // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
                     exports.asyncify_start_rewind(this.asyncify_byte_idx);
-                    this.main();
+                    this.start();
                 },
             );
 
