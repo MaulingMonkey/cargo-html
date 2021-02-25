@@ -1,5 +1,5 @@
 /** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#filetype)\] The type of a file descriptor or file. */
-type FileType = u8 & { _not_real: "filetype" }; // FILETYPE_*
+type FileType = u8 & { _not_real: "filetype" };
 
 
 

@@ -1,11 +1,8 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fdflags)\]
  * File descriptor flags.
- *
- * ### See Also
- *
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fdflags-record)
  */
-type FdFlags = u16 & { _not_real: "fdflags" }; // FDFLAGS_*
+type FdFlags = u16 & { _not_real: "fdflags" };
 
 
 

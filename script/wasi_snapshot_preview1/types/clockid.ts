@@ -1,12 +1,10 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#clockid)\]
  * Identifiers for clocks.
- * 
- * ### See Also
- * 
- * * [Rust wasi crate definition](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#12)
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-clockid-variant)
  */
 type ClockID = u32 & { _not_real: "clockid"; }
+
+
 
 /**
  * The clock measuring real time.

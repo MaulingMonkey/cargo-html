@@ -1,14 +1,10 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#errno)\]
  * Error codes returned by functions.
  *
  * Not all of these error codes are returned by the functions provided by this API;
  * some are used in higher-level library layers,
  * and others are provided merely for alignment with POSIX.
- *
- * ### See Also
- *
- * * [Rust wasi crate definition](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#25)
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-errno-variant)
  */
 type Errno = u16 & { _not_real: "errno"; }
 

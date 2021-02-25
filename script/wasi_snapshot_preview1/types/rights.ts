@@ -1,11 +1,8 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#rights)\]
  * File descriptor rights, determining which actions may be performed.
- *
- * ### See Also
- *
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-rights-record)
  */
-type Rights = u64 & { _not_real: "rights" }; // RIGHTS_*
+type Rights = u64 & { _not_real: "rights" };
 
 
 

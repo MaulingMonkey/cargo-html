@@ -20,7 +20,7 @@ type TimeStamp = u64;
 
 
 /**
- * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-filestat-record)\]
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#filestat)\]
  * File attributes.
  */
 interface FileStat {

@@ -1,12 +1,14 @@
-/** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-preopentype-variant)\] Identifiers for preopened capabilities. */
+/** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#preopentype)\] Identifiers for preopened capabilities. */
 type PreOpenType = u8 & { _not_real: "preopentype"; }
+
+
 
 /** A pre-opened directory. */
 const PREOPENTYPE_DIR = <PreOpenType>0;
 
 
 
-/** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-prestat-variant)\] Information about a pre-opened capability. */
+/** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#prestat)\] Information about a pre-opened capability. */
 interface PreStat {
     tag:                PreOpenType;
 

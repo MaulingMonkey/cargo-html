@@ -1,11 +1,10 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#advice)\]
  * File or memory access pattern advisory information.
- *
- * ### See Also
- *
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-advice-variant)
  */
 type Advice = u8 & { _not_real: "advice" };
+
+
 
 /** The application has no advice to give on its behavior with respect to the specified data. */
 const ADVICE_NORMAL     = <Advice>0;

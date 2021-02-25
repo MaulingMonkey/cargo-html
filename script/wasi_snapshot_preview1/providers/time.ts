@@ -31,16 +31,16 @@ namespace wasi_snapshot_preview1 {
 
     /**
      * Provide time related syscall implementations.
-     * 
+     *
      * ### `sleep` styles
-     * 
+     *
      * *    `"disabled"`    - Log, `debugger;` and return `ERRNO_NOTCAPABLE` if a thread tries to sleep.
      * *    `"skip"`        - Sleep for three days in microsecnds!  A thread trying to sleep is simply ignored.
      * *    `"busy-wait"`   - Wait in a busy loop.  The DOM won't be able to update, so this is discouraged.
      * *    `Asyncifier`    - Turn thread sleeps into yield points for asyncronous promises.
-     * 
+     *
      * ### `clock` styles - **NOT YET IMPLEMENTED**
-     * 
+     *
      * *    `"disabled"`            - Don't allow clocks to be queried.
      * *    `"zero"`                - Pretend it's Jan 1st, 1970, and that all execution is instantanious.
      * *    `"nondeterministic"`    - Allow the real world to leak in, code to self-measure, and [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
@@ -49,7 +49,7 @@ namespace wasi_snapshot_preview1 {
         var real_start = 0;
         try { real_start = Date.now(); } catch (e) {}
 
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-sched_yield---errno
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#sched_yield
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
         var sched_yield : () => Errno;
         switch (sleep) {
@@ -82,7 +82,7 @@ namespace wasi_snapshot_preview1 {
                 let sub_base = (in_subs + 48 * sub) as ptr;
 
                 let userdata        = memory.read_u64_pair(sub_base, 0);
-        
+
                 let u_tag           = memory.read_u8( sub_base, 8);
                 type Eventtype = u8;
                 const EVENTTYPE_CLOCK       = <Eventtype>0;
@@ -95,11 +95,11 @@ namespace wasi_snapshot_preview1 {
                 // 4 bytes of padding
                 let u_u_clock_timeout   = memory.read_u64_approx(sub_base, 24);
                 let u_u_clock_precision = memory.read_u64_approx(sub_base, 32);
-        
+
                 let u_u_clock_flags     = memory.read_u16(sub_base, 40);
                 const SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME  = <u16>0x1;
                 console.assert(u_u_clock_flags === 0, "u_u_clock_flags !== 0 not yet supported");
-        
+
                 let abs = (u_u_clock_flags & SUBCLOCKFLAGS_SUBSCRIPTION_CLOCK_ABSTIME) !== 0;
                 // 6 bytes of padding
 
@@ -123,7 +123,7 @@ namespace wasi_snapshot_preview1 {
                 const r = resolved[sub];
                 switch (r.type) {
                     case "sleep":
-                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-event-record
+                        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#event
                         memory.write_u64_pair( out_events, 32 * sub +  0, r.userdata);
                         memory.write_u16(      out_events, 32 * sub +  8, r.error);
                         memory.write_u8(       out_events, 32 * sub + 10, EVENTTYPE_CLOCK); // type

@@ -24,9 +24,7 @@ namespace wasi_snapshot_preview1 {
             throw fatal ? "fatal-signal" : "stop-signal";
         }
 
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-random_getbuf-pointeru8-buf_len-size---errno
-
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-proc_exitrval-exitcode
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#proc_exit
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
         function proc_exit(code: number): never {
             if (code === 0) trace_exit_0?.io(`process exited with code ${code}`);
@@ -34,7 +32,7 @@ namespace wasi_snapshot_preview1 {
             throw "exit";
         }
 
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-proc_raisesig-signal---result-errno
+        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#proc_raise
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1904
         function proc_raise(code: Signal): Errno {
             switch (code) {

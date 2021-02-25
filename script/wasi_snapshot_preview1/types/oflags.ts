@@ -1,11 +1,10 @@
 /**
+ * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#oflags)\]
  * Open flags used by `path_open`.
- *
- * ### See Also
- *
- * * [WASI standard documentation](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-oflags-record)
  */
-type OFlags = u16 & { _not_real: "oflags" }; // LOOKUPFLAGS_* ?
+type OFlags = u16 & { _not_real: "oflags" };
+
+
 
 /** Create file if it does not exist. */
 const OFLAGS_CREAT = <OFlags>(1 << 0);
