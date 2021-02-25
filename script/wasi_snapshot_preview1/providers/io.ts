@@ -2,7 +2,7 @@ namespace wasi_snapshot_preview1 {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function io(memory: MemoryLE, asyncifier: Asyncifier, {}: {}) {
+    export function io(memory: MemoryLE, asyncifier: Asyncifier, settings: Settings) {
         const trace = true;
 
         const DIR_TEMP = new fs.temp.Dir("/temp/", {});
@@ -14,9 +14,9 @@ namespace wasi_snapshot_preview1 {
 
         const FDS : { [fd: number]: (Handle | HandleAsync | undefined) } = {
             0: ConReader.try_create({ // stdin
-                mode:       "linebuffered",
-                listen_to:  document,
-                input:      "cargo-html-console-input",
+                mode:       settings.domtty?.mode   || "line-buffered",
+                listen_to:  settings.domtty?.listen || document,
+                input:      settings.domtty?.input  || "cargo-html-console-input",
                 echo:       con.write,
             }),
             1: new ConWriter(), // stdout

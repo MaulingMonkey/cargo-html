@@ -1,10 +1,10 @@
 namespace wasi_snapshot_preview1 {
-    type Mode = "raw" | "linebuffered";
+    type Mode = "raw" | "line-buffered";
 
     interface ConReaderSettings {
         /**
          * * `"raw"`            - recieve each keyboard event on stdin immediately
-         * * `"linebuffered"`   - recieve keyboard input on stdin once enter is pressed
+         * * `"line-buffered"`  - recieve keyboard input on stdin once enter is pressed
          */
         mode:       Mode;
 
@@ -119,7 +119,7 @@ namespace wasi_snapshot_preview1 {
                             break;
                     }
                     break;
-                case "linebuffered":
+                case "line-buffered":
                     switch (text) {
                         case "\n":
                         case "\r":
@@ -156,7 +156,7 @@ namespace wasi_snapshot_preview1 {
                         default:            return; // process no further
                     }
                     break;
-                case "linebuffered":
+                case "line-buffered":
                     switch (key) {
                         case "Backspace":
                             if (!!this.input!.textContent) {
