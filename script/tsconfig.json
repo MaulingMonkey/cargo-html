@@ -8,5 +8,6 @@
         "removeComments":   true,
         "inlineSources":    true,
         "inlineSourceMap":  true,
+        "noFallthroughCasesInSwitch": true,
     }
 }

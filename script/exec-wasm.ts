@@ -4,12 +4,14 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 
 
 async function exec_base64_wasm(settings: Settings, wasm: string) {
-    // Inferred settings
+    // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";
+    const domtty = DomTty.new(settings);
     const args = settings.args || [
         `${document.location.origin}${document.location.pathname}`,
         ...(document.location.search ? decodeURI(document.location.search).substr(1).split(' ') : []) // TODO: quoted arg handling?
     ];
+
 
     // Compile WASM
     const binary = atob(wasm);
@@ -30,18 +32,22 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
 
     // Setup WASM environment
     const memory : MemoryLE = new MemoryLE(<any>undefined);
-    const imports = { wasi_snapshot_preview1: {} };
-    Object.assign(
-        imports.wasi_snapshot_preview1,
-        wasi_snapshot_preview1.nyi      (),
-        wasi_snapshot_preview1.env      (memory, args, settings.env || {}),
-        wasi_snapshot_preview1.random   (memory, settings.random || determinism),
-        wasi_snapshot_preview1.time     (memory, { sleep: settings.sleep === "nondeterministic" ? (asyncifier || "busy-wait") : (settings.sleep || "busy-wait"), clock: settings.clock || determinism }),
-        wasi_snapshot_preview1.signals  (memory, "enabled"),
-    );
+    const imports = {
+        wasi_snapshot_preview1: Object.assign({},
+            Object.assign({},
+                wasi_snapshot_preview1.nyi      (),
+                wasi_snapshot_preview1.env      (memory, args, settings.env || {}),
+                wasi_snapshot_preview1.random   (memory, settings.random || determinism),
+            ),
+            Object.assign({},
+                wasi_snapshot_preview1.time     (memory, { sleep: settings.sleep === "nondeterministic" ? (asyncifier || "busy-wait") : (settings.sleep || "busy-wait"), clock: settings.clock || determinism }),
+                wasi_snapshot_preview1.signals  (memory, domtty, settings),
+            ),
+        ),
+    };
     if (asyncifier !== undefined) Object.assign(
         imports.wasi_snapshot_preview1,
-        wasi_snapshot_preview1.io(memory, asyncifier, settings),
+        wasi_snapshot_preview1.io(memory, asyncifier, domtty, settings),
     );
     // XXX: need non-async I/O options
 
@@ -53,10 +59,13 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
 
 
     // Launch WASM
-    if (asyncifier) {
-        asyncifier.launch(exports);
-    } else try {
-        con.write_proc_exit(exports._start() || 0);
+    try {
+        if (asyncifier) {
+            await asyncifier.launch(exports);
+        } else {
+            exports._start();
+        }
+        imports.wasi_snapshot_preview1.proc_exit(0);
     } catch (e) {
         switch (e) {
             case "exit":
@@ -69,6 +78,8 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
                 throw e;
         }
     }
+
+    domtty?.shutdown();
 }
 
 

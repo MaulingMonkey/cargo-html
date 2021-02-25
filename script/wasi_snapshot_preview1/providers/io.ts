@@ -2,7 +2,7 @@ namespace wasi_snapshot_preview1 {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function io(memory: MemoryLE, asyncifier: Asyncifier, settings: Settings) {
+    export function io(memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
         const trace = true;
 
         const DIR_TEMP = new fs.temp.Dir("/temp/", {});
@@ -13,21 +13,28 @@ namespace wasi_snapshot_preview1 {
         });
 
         const FDS : { [fd: number]: (Handle | HandleAsync | undefined) } = {
-            0: ConReader.try_create({ // stdin
-                mode:       settings.domtty?.mode   || "line-buffered",
-                listen_to:  settings.domtty?.listen || document,
-                input:      settings.domtty?.input  || "cargo-html-console-input",
-                echo:       con.write,
-            }),
-            1: new ConWriter(), // stdout
-            2: new ConWriter(), // stderr
-
             // root and cwd preopened handles
             // stable vs nightly rust treat this differently for inferring the CWD, but DIR_ROOT should be portable
             // https://github.com/WebAssembly/wasi-libc/blob/5ccebd3130ef6e384474d921d0c24ebf5403ae1a/libc-bottom-half/sources/getcwd.c#L10
             3: new fs.temp.DirectoryHandle(DIR_ROOT, "/"),
             4: new fs.temp.DirectoryHandle(DIR_ROOT, "."),
         };
+
+        switch (settings.stdin || (domtty ? "dom" : "prompt")) {
+            case "badfd":   break;
+            case "prompt":  break; // TODO: proper prompt device
+            case "dom":     FDS[0] = ConReader.try_create({
+                                mode:       settings.domtty?.mode   || "line-buffered",
+                                listen_to:  settings.domtty?.listen || document,
+                                input:      settings.domtty?.input  || "cargo-html-console-input",
+                                echo:       (text) => domtty ? domtty.write(text) : undefined,
+                            }); break;
+        }
+
+        const stdout = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-log"),   "#FFF", domtty);
+        const stderr = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-error"), "#F44", domtty);
+        if (stdout) FDS[1] = stdout;
+        if (stderr) FDS[2] = stderr;
 
         // XXX: WASI recommends randomizing FDs, but I want optional deterministic behavior.
         let next_fd = 1000;

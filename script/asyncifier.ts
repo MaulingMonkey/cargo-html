@@ -10,6 +10,8 @@ class Asyncifier {
     rewind_result:          any;
     rewind_exception:       any;
     asyncify_byte_idx:      number;
+    resolve:                undefined | ((code: number) => void) = undefined;
+    reject:                 undefined | ((reject?: any) => void) = undefined;
 
     constructor() {
         this.memory                 = undefined;
@@ -21,38 +23,45 @@ class Asyncifier {
         this.asyncify_byte_idx      = 0;
     }
 
-    launch(exports: Exports) {
-        if (this.exports !== undefined) throw "Asyncifier.launch is not reentrant";
+    launch(exports: Exports): Promise<number> {
+        if (this.resolve || this.reject) throw "Asyncifier.launch already executing an entry point";
+
+        if (this.exports) {
+            if (this.exports.memory != exports.memory) throw "Asyncifier.launch cannot switch memory imports";
+            // already allocated an asyncify page
+        } else {
+            const asyncify_page_idx = exports.memory.grow(asyncify_page_count);
+            console.assert(asyncify_page_idx !== -1);
+            this.asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;
+        }
+
         this.memory     = new MemoryLE(exports.memory);
         this.exports    = exports;
 
-        const asyncify_page_idx = exports.memory.grow(asyncify_page_count);
-        console.assert(asyncify_page_idx !== -1);
-        this.asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;
-
-        this.start();
+        return new Promise((resolve, reject) => {
+            this.resolve = resolve;
+            this.reject  = reject;
+            this.restart_wasm();
+        });
     }
 
-    private start() {
+    private restart_wasm() {
         try {
-            const code = (this.exports!._start)() || 0;
+            const code = (this.exports!._start)();
             if (this.unwinding) {
                 this.unwinding = false;
                 this.exports!.asyncify_stop_unwind();
             } else {
-                con.write_proc_exit(code);
+                const r = this.resolve;
+                this.resolve = undefined;
+                this.reject = undefined;
+                r!(code);
             }
         } catch (e) {
-            switch (e) {
-                case "exit":
-                case "fatal-signal":
-                case "stop-signal":
-                    break;
-                default:
-                    console.error(e);
-                    debugger;
-                    throw e;
-            }
+            const r = this.reject;
+            this.resolve = undefined;
+            this.reject = undefined;
+            r!(e);
         }
     }
 
@@ -67,7 +76,7 @@ class Asyncifier {
                     this.rewind_exception    = undefined;
                     // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
                     exports.asyncify_start_rewind(this.asyncify_byte_idx);
-                    this.start();
+                    this.restart_wasm();
                 },
                 (error_reason) => {
                     this.rewinding           = true;
@@ -75,7 +84,7 @@ class Asyncifier {
                     this.rewind_exception    = error_reason === undefined ? "undefined reason" : error_reason;
                     // shouldn't need to modify memory - should've been populated by code before asyncify_start_unwind
                     exports.asyncify_start_rewind(this.asyncify_byte_idx);
-                    this.start();
+                    this.restart_wasm();
                 },
             );
 

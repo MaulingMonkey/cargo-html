@@ -3,8 +3,8 @@
  */
 interface Settings {
     // Browser Environment
-    domtty?:        DomTty;
-    trap?:          "fatal" | "fatal-debugger" | "debugger";
+    domtty?:        DomTtySettings;
+    trap?:          "fatal" | "soft-debugger" | "debugger" | "fatal-debugger";
 
     // WASI Environment
     args?:          string[];
@@ -81,10 +81,10 @@ type OutputEscape = "none" | "ansi";
 /**
  * Controls what HTML element(s) `"dom"` inputs/outputs bind to, as well as the behavior of those elements.
  */
-interface DomTty {
+interface DomTtySettings {
     /** The HTML element to attach keyboard listeners to. */        listen:     HTMLElement | string | Document | undefined;
     /** The HTML element to commit output to. */                    output:     HTMLElement | string;
-    /** The HTML element to preview line-buffered input in. */      input?:     HTMLElement | string;
+    /** The HTML element to preview line-buffered input in. */      input:      HTMLElement | string;
     /** If input should be processed immediately or buffered. */    mode?:      InputMode;
     /** Output escape processing. */                                escape?:    OutputEscape;
 }

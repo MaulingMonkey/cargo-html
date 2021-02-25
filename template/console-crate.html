@@ -30,7 +30,7 @@
             text-decoration:    underline;
         }
 
-        #cargo-html-console-cursor {
+        #cargo-html-console .cursor {
             animation:      blink 800ms step-start infinite;
         }
 
@@ -46,12 +46,13 @@
 </head><body>
     <center>
         <h1>{TARGET_NAME}</h1>
-        <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span id="cargo-html-console-cursor" class="noselect">█</span></code>
+        <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span class="cursor noselect">█</span></code>
     </center>
     <script src="script.js"></script>
     <script>
         // TODO: replace this with a placeholder that feeds from Cargo.toml's metadata
         main({
+            domtty: { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" },
             env: { "CARGO_HTML": "1", "RUST": "1" },
         });
     </script>
