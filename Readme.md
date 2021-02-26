@@ -124,8 +124,8 @@ Requires:
 
 | Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
 | ------------- | --------- | --------- | --------- | --------- | ----- |
-| Windows       | ✅       | ❌B       | ❌BO     | ❌BO      | ❌BO \[...\]
-| Linux         | ✅       | ❌B       | ❌B      | ❌B       | ❌BO \[...\]
+| Windows       | ✅       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
+| Linux         | ✅       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
 | OS X          | ✔️       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
 
 | ?     | Legend    |

@@ -42,16 +42,12 @@ pub(crate) fn find_install_wasm_opt() -> Command {
     // https://github.com/rustwasm/wasm-pack/blob/d46d1c69b788956160deed5e4e603f4f2780ffcf/src/install/mod.rs
     // https://github.com/WebAssembly/binaryen/releases/
 
-    let vers = "version_90";
+    let vers = "version_99";
     let target = if cfg!(windows) {
-        if      cfg!(target_arch = "x86_64" ) { "x86-windows" }
-        else if cfg!(target_arch = "x86"    ) { "x86-windows" } // we *could* use "x86_64-windows" but wasm-pack doesn't and we don't need to either.  https://github.com/rustwasm/wasm-pack/blob/d46d1c69b788956160deed5e4e603f4f2780ffcf/src/install/mod.rs#L179
+        if      cfg!(target_arch = "x86_64" ) { "x86_64-windows" }
         else { fatal!("pre-built windows wasm-opt binaries not available for this target_arch"); }
     } else if cfg!(target_os = "linux") {
         if      cfg!(target_arch = "x86_64" ) { "x86_64-linux"  } // wasm-pack uses "x86-linux" but surely that's busted?  https://github.com/rustwasm/wasm-pack/blob/d46d1c69b788956160deed5e4e603f4f2780ffcf/src/install/mod.rs#L167
-        else if cfg!(target_arch = "x86"    ) { "x86-linux"     }
-        else if cfg!(target_arch = "aarch64") { "aarch64-linux" }
-        else if cfg!(target_arch = "arm"    ) { "armhf-linux"   }
         else { fatal!("pre-built linux wasm-opt binaries not available for this target_arch"); }
     } else if cfg!(target_os = "macos") {
         if      cfg!(target_arch = "x86_64" ) { "x86_64-apple-darwin" }
