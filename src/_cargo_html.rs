@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod arguments;      use arguments::*;
+#[path = "build/_build.rs"] mod build;
 mod js;
 mod metadata;       use metadata::*;
 mod tools;
@@ -53,148 +54,24 @@ fn build(args: Arguments) {
     // Preinstall tools
 
     tools::install_toolchains();
-    let wasm_pack   = tools::find_install_wasm_pack();
     let wasm_opt    = tools::find_install_wasm_opt();
-    let cargo_web   = tools::find_install_cargo_web();
 
     // Build
 
-    let mut any_built = false;
+    let wasm_built
+        = build::wasm::wasi_targets(&args, &metadata)
+        | build::wasm::cargo_web_targets(&args, &metadata)
+        | build::wasm::wasm_pack_targets(&args, &metadata)
+        ;
 
-    let target_dir = metadata.target_directory();
-    if metadata.selected_packages_wasi().any(|_| true) {
-        header!("Building wasm32-wasi targets");
-
-        let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
-        if let Some(manifest_path) = args.manifest_path.as_ref() {
-            cmd.arg("--manifest-path").arg(manifest_path);
-        }
-
-        for pkg in metadata.selected_packages_wasi() {
-            cmd.arg("--package").arg(&pkg.name);
-        }
-
-        if args.bins        { cmd.arg("--bins"); }
-        if args.examples    { cmd.arg("--examples"); }
-        // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
-
-        for (ty, target, _pkg) in metadata.selected_targets_wasi() {
-            match ty {
-                TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
-                TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
-                TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s wasm32-wasi builds
-            }
-        }
-
-        for config in args.configs.iter().copied() {
-            let mut cmd = cmd.clone();
-
-            match config {
-                Config::Debug   => {},
-                Config::Release => drop(cmd.arg("--release")),
-            }
-
-            status!("Running", "{:?}", cmd);
-            cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
-            any_built = true;
-        }
-
-        for config in args.configs.iter().copied() {
-            let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
-            let js_dir = target_arch_config_dir.join("js");
-
-            for (ty, target, pkg) in metadata.selected_targets_wasi() {
-                let target_arch_config_dir = match ty {
-                    TargetType::Bin     => target_arch_config_dir.clone(),
-                    TargetType::Example => target_arch_config_dir.join("examples"),
-                    TargetType::Cdylib  => continue, // XXX?
-                };
-
-                let wasm_bindgen_version = match pkg.wasm_bindgen.as_ref() {
-                    None => continue, // no wasm bindgen dependency
-                    Some(v) => v.to_string(),
-                };
-
-                let mut cmd = tools::find_install_wasm_bindgen(&wasm_bindgen_version);
-                if config == Config::Debug { cmd.arg("--debug"); }
-                cmd.arg("--target").arg("bundler");
-                cmd.arg("--no-typescript");
-                cmd.arg("--out-dir").arg(&js_dir);
-                cmd.arg(target_arch_config_dir.join(format!("{}.wasm", target)));
-                status!("Running", "{:?}", cmd);
-                cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
-            }
-        }
-    }
-
-    if metadata.selected_packages_cargo_web().any(|_| true) {
-        header!("Building cargo-web targets");
-        let rustc_ver = mmrbi::rustc::version().unwrap_or_else(|err| fatal!("unable to determine rustc version: {}", err));
-        if rustc_ver.is_at_least(1, 48, 0) { warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+: https://github.com/koute/stdweb/issues/411"); }
-
-        let mut cmd = cargo_web.clone();
-        cmd.arg("build");
-        cmd.arg("--target").arg("wasm32-unknown-unknown");
-        cmd.arg("--runtime").arg("standalone");
-
-        for config in args.configs.iter().copied() {
-            let mut cmd = cmd.clone();
-            match config {
-                Config::Debug   => {},
-                Config::Release => drop(cmd.arg("--release")),
-            }
-
-            for pkg in metadata.selected_packages_cargo_web() {
-                let mut cmd = cmd.clone();
-
-                let mut dir = pkg.manifest_path.clone();
-                dir.pop();
-                cmd.current_dir(dir);
-
-                status!("Running", "{} for `{}`", cmd, pkg.name);
-                cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
-                any_built = true;
-            }
-        }
-    }
-
-    if metadata.selected_packages_wasm_pack().any(|_| true) {
-        header!("Building wasm-pack targets");
-
-        for config in args.configs.iter().copied() {
-            let mut cmd = wasm_pack.clone();
-            cmd.arg("build");
-            cmd.arg("--no-typescript"); // *.d.ts defs are pointless for bundled HTML files
-            cmd.arg("--target").arg("no-modules");
-            cmd.arg("--out-dir").arg(target_dir.join("wasm32-unknown-unknown").join(config.as_str()).join("pkg"));
-            match config {
-                Config::Debug   => drop(cmd.arg("--dev")),
-                Config::Release => drop(cmd.arg("--release")),
-            }
-
-            for pkg in metadata.selected_packages_wasm_pack() {
-                let mut dir = pkg.manifest_path.clone();
-                dir.pop();
-
-                let mut cmd = cmd.clone();
-                cmd.current_dir(dir);
-                status!("Running", "{} for `{}`", cmd, pkg.name);
-                cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
-                any_built = true;
-            }
-        }
-    }
-
-    if !any_built {
-        fatal!("no selected packages contain any bin/example targets for `cargo html` to build");
-    }
+    if !wasm_built { fatal!("no selected packages contain any bin/example targets for `cargo html` to build"); }
 
     header!("Building HTML pages");
 
-    let script_placeholder  = "\"{BASE64_WASM32}\"";
+    let script_placeholder = "\"{BASE64_WASM32}\"";
 
     for config in args.configs.iter().copied() {
-        let target_arch_config_dir = target_dir.join("wasm32-wasi").join(config.as_str());
+        let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
         for (ty, target, pkg) in metadata.selected_targets_wasi() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
@@ -250,7 +127,7 @@ fn build(args: Arguments) {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
 
-        let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
+        let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
         for (ty, target, _pkg) in metadata.selected_targets_cargo_web() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
@@ -279,7 +156,7 @@ fn build(args: Arguments) {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
 
-        let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
+        let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
         let pkg_dir                 = target_arch_config_dir.join("pkg");
         for (ty, target, _pkg) in metadata.selected_targets_wasm_pack() {
             let target_arch_config_dir = match ty {

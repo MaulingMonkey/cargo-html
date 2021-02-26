@@ -1,0 +1,116 @@
+use super::util::*;
+use crate::*;
+
+
+
+pub(crate) fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
+    header("Building wasm32-wasi targets");
+
+    let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
+    if let Some(manifest_path) = args.manifest_path.as_ref() {
+        cmd.arg("--manifest-path").arg(manifest_path);
+    }
+
+    for pkg in metadata.selected_packages_wasi() {
+        cmd.arg("--package").arg(&pkg.name);
+    }
+
+    if args.bins        { cmd.arg("--bins"); }
+    if args.examples    { cmd.arg("--examples"); }
+    // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
+
+    for (ty, target, _pkg) in metadata.selected_targets_wasi() {
+        match ty {
+            TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
+            TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
+            TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s wasm32-wasi builds
+        }
+    }
+
+    for config in args.configs.iter().copied() {
+        let mut cmd = cmd.clone();
+
+        match config {
+            Config::Debug   => {},
+            Config::Release => drop(cmd.arg("--release")),
+        }
+
+        run(cmd);
+    }
+
+    for config in args.configs.iter().copied() {
+        let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
+        let js_dir = target_arch_config_dir.join("js");
+
+        for (ty, target, pkg) in metadata.selected_targets_wasi() {
+            let target_arch_config_dir = match ty {
+                TargetType::Bin     => target_arch_config_dir.clone(),
+                TargetType::Example => target_arch_config_dir.join("examples"),
+                TargetType::Cdylib  => continue, // XXX?
+            };
+
+            let wasm_bindgen_version = match pkg.wasm_bindgen.as_ref() {
+                None => continue, // no wasm bindgen dependency
+                Some(v) => v.to_string(),
+            };
+
+            let mut cmd = tools::find_install_wasm_bindgen(&wasm_bindgen_version);
+            if config == Config::Debug { cmd.arg("--debug"); }
+            cmd.arg("--target").arg("bundler");
+            cmd.arg("--no-typescript");
+            cmd.arg("--out-dir").arg(&js_dir);
+            cmd.arg(target_arch_config_dir.join(format!("{}.wasm", target)));
+            run(cmd);
+        }
+    }
+
+    any_this_header()
+}
+
+pub(crate) fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
+    header("Building cargo-web targets");
+
+    for config in args.configs.iter().copied() {
+        for pkg in metadata.selected_packages_cargo_web() {
+            if !any_this_header() {
+                let rustc_ver = mmrbi::rustc::version().unwrap_or_else(|err| fatal!("unable to determine rustc version: {}", err));
+                if rustc_ver.is_at_least(1, 48, 0) { warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+: https://github.com/koute/stdweb/issues/411"); }
+            }
+
+            let mut cmd = tools::find_install_cargo_web();
+            cmd.current_dir(&pkg.directory);
+            cmd.arg("build");
+            cmd.arg("--target").arg("wasm32-unknown-unknown");
+            cmd.arg("--runtime").arg("standalone");
+            match config {
+                Config::Debug   => {},
+                Config::Release => drop(cmd.arg("--release")),
+            }
+            run(cmd);
+        }
+    }
+
+    any_this_header()
+}
+
+pub(crate) fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
+    header("Building wasm-pack targets");
+
+    for config in args.configs.iter().copied() {
+        for pkg in metadata.selected_packages_wasm_pack() {
+            let mut cmd = tools::find_install_wasm_pack();
+            cmd.current_dir(&pkg.directory);
+            cmd.arg("build");
+            cmd.arg("--no-typescript"); // *.d.ts defs are pointless for bundled HTML files
+            cmd.arg("--target").arg("no-modules");
+            cmd.arg("--out-dir").arg(metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg"));
+            match config {
+                Config::Debug   => drop(cmd.arg("--dev")),
+                Config::Release => drop(cmd.arg("--release")),
+            }
+            run(cmd);
+        }
+    }
+
+    any_this_header()
+}

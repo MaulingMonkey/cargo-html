@@ -14,6 +14,7 @@ pub(crate) struct Package {
     pub name:           String,
     pub manifest_path:  PathBuf,
     pub targets:        Vec<Target>,
+    pub directory:      PathBuf,
 
     pub wasm_bindgen:   Option<Version>,
 
@@ -54,6 +55,9 @@ impl Package {
         let is_wasi         = is_html && has_bin_or_example && !is_cargo_web;
         let is_wasm_pack    = is_html && has_cdylib && p.metadata.pointer("/html/wasm-pack").map_or_else(|| has_wasm_bindgen_dependency, |wasm_pack| wasm_pack != false);
 
+        let mut directory = p.manifest_path.clone();
+        directory.pop();
+
         Self {
             is_html,
             is_cargo_web,
@@ -66,6 +70,7 @@ impl Package {
             name:           p.name,
             manifest_path:  p.manifest_path,
             targets:        p.targets,
+            directory,
         }
     }
 }
