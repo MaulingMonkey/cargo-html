@@ -38,11 +38,6 @@ fn build(args: Args) {
        // debug
        exec("cargo build --frozen --workspace --all-targets");
        exec("cargo test  --frozen --workspace --all-targets");
-       if has_nightly() {
-           exec("cargo +nightly doc --no-deps -p cargo-html");
-       } else {
-           exec("cargo doc --no-deps -p cargo-html");
-       }
        exec("cargo html");
 
        // release
