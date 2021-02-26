@@ -6,7 +6,5 @@ type LookupFlags = u32 & { _not_real: "lookupflags" };
 
 
 
-/**
- * As long as the resolved path corresponds to a symbolic link, it is expanded.
- */
+/** As long as the resolved path corresponds to a symbolic link, it is expanded. */
 const LOOKUPFLAGS_SYMLINK_FOLLOW = <LookupFlags>1;
