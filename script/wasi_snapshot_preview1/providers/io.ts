@@ -37,15 +37,17 @@ namespace wasi_snapshot_preview1 {
         if (stderr) FDS[2] = stderr;
 
         // XXX: WASI recommends randomizing FDs, but I want optional deterministic behavior.
-        let next_fd = 1000;
-        function advance_fd() {
-            next_fd = (next_fd + 1) & 0x3FFFFFFF
+        let _next_fd = 0x1000;
+        function advance_fd(): number {
+            ++_next_fd;
+            if (_next_fd > 0x3FFFFFFF) _next_fd = 0x1000;
+            return _next_fd ^ 0xFF; // shuffle low bits around some
         }
         function alloc_handle_fd(handle: Handle | HandleAsync): Fd {
-            advance_fd(); // churn file descriptors - without this, we might reuse the same FD back to back a lot, which while legal, complicates debugging
-            while (next_fd in FDS) advance_fd();
-            FDS[next_fd] = handle;
-            return next_fd as Fd;
+            var fd = 0;
+            while ((fd = advance_fd()) in FDS) {}
+            FDS[fd] = handle;
+            return fd as Fd;
         }
 
         function get_io_caller_name(): string {
