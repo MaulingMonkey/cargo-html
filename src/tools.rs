@@ -42,7 +42,10 @@ pub(crate) fn find_install_wasm_opt() -> Command {
     // https://github.com/rustwasm/wasm-pack/blob/d46d1c69b788956160deed5e4e603f4f2780ffcf/src/install/mod.rs
     // https://github.com/WebAssembly/binaryen/releases/
 
-    let vers = "version_99";
+    let vers = if cfg!(target_os = "linux") { "version_97" } else { "version_99" };
+    // https://github.com/WebAssembly/binaryen/issues/3459 "Release 98 lacks Linux build"
+    // Release 99 also lacks a linux build.
+
     let target = if cfg!(windows) {
         if      cfg!(target_arch = "x86_64" ) { "x86_64-windows" }
         else { fatal!("pre-built windows wasm-opt binaries not available for this target_arch"); }
