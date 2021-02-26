@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
 mod arguments;      use arguments::*;
+mod js;
 mod metadata;       use metadata::*;
-mod package_ext;    use package_ext::PackageExt;
 mod tools;
 
 use mmrbi::*;
@@ -39,6 +39,7 @@ fn install_build_tools(args: Arguments) {
     assert!(args.subcommand == Subcommand::InstallBuildTools);
 
     tools::install_toolchains();
+    // wasm_bindgen would be nice to install, but annoyingly we need to match whatever the crate depends on! lame!
     tools::find_install_wasm_opt();
     tools::find_install_wasm_pack();
     tools::find_install_cargo_web();
@@ -77,7 +78,7 @@ fn build(args: Arguments) {
         if args.examples    { cmd.arg("--examples"); }
         // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
 
-        for (ty, target) in metadata.selected_targets() {
+        for (ty, target, _pkg) in metadata.selected_targets_wasi() {
             match ty {
                 TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
                 TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
@@ -96,6 +97,33 @@ fn build(args: Arguments) {
             status!("Running", "{:?}", cmd);
             cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
             any_built = true;
+        }
+
+        for config in args.configs.iter().copied() {
+            let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
+            let js_dir = target_arch_config_dir.join("js");
+
+            for (ty, target, pkg) in metadata.selected_targets_wasi() {
+                let target_arch_config_dir = match ty {
+                    TargetType::Bin     => target_arch_config_dir.clone(),
+                    TargetType::Example => target_arch_config_dir.join("examples"),
+                    TargetType::Cdylib  => continue, // XXX?
+                };
+
+                let wasm_bindgen_version = match pkg.wasm_bindgen.as_ref() {
+                    None => continue, // no wasm bindgen dependency
+                    Some(v) => v.to_string(),
+                };
+
+                let mut cmd = tools::find_install_wasm_bindgen(&wasm_bindgen_version);
+                if config == Config::Debug { cmd.arg("--debug"); }
+                cmd.arg("--target").arg("bundler");
+                cmd.arg("--no-typescript");
+                cmd.arg("--out-dir").arg(&js_dir);
+                cmd.arg(target_arch_config_dir.join(format!("{}.wasm", target)));
+                status!("Running", "{:?}", cmd);
+                cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
+            }
         }
     }
 
@@ -167,22 +195,44 @@ fn build(args: Arguments) {
 
     for config in args.configs.iter().copied() {
         let target_arch_config_dir = target_dir.join("wasm32-wasi").join(config.as_str());
-        for (ty, target) in metadata.selected_targets_wasi() {
+        for (ty, target, pkg) in metadata.selected_targets_wasi() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
                 TargetType::Cdylib  => continue, // XXX?
             };
-            let template_js   = concat!("<script>\n", include_str!("../template/script.js"), "\n</script>");
+            let js_dir = target_arch_config_dir.join("js");
+
+            let mut template_js = String::from("<script>\r\n");
+            if pkg.wasm_bindgen.is_some() {
+                js::inline_wasm_bindgen_bundler_importer(&mut template_js, "__cargo_html_wasmbindgen_bundler_js", &js_dir, target).unwrap_or_else(|err| fatal!("unable to reprocess wasm-bindgen javascript: {}", err));
+                template_js.push_str("\r\n");
+            }
+            template_js.push_str(include_str!("../template/script.js"));
+            template_js.push_str("\r\n</script>");
+
             let template_html = include_str!("../template/console-crate.html")
                 .replace("{CONFIG}", config.as_str())
                 .replace("{TARGET_NAME}", &target)
-                .replace("<script src=\"script.js\"></script>", template_js);
+                .replace("<script src=\"script.js\"></script>", &template_js);
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
-            let target_wasm_sync = target_arch_config_dir.join(format!("{}.wasm", target));
+            let target_wasm_sync = if pkg.wasm_bindgen.is_some() {
+                js_dir.join(format!("{}_bg.wasm", target))
+            } else {
+                target_arch_config_dir.join(format!("{}.wasm", target))
+            };
             let target_wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
             let mut asyncify = wasm_opt.clone();
+            match config {
+                Config::Debug => {
+                    asyncify.arg("--debuginfo");
+                },
+                Config::Release => {
+                    asyncify.arg("--debuginfo");
+                    asyncify.arg("-O4");
+                }
+            }
             asyncify.arg("--asyncify").arg(&target_wasm_sync).arg("--output").arg(&target_wasm);
             status!("Running", "{}", asyncify);
             asyncify.status0().or_die();
@@ -201,7 +251,7 @@ fn build(args: Arguments) {
         }
 
         let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
-        for (ty, target) in metadata.selected_targets_cargo_web() {
+        for (ty, target, _pkg) in metadata.selected_targets_cargo_web() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
@@ -231,7 +281,7 @@ fn build(args: Arguments) {
 
         let target_arch_config_dir  = target_dir.join("wasm32-unknown-unknown").join(config.as_str());
         let pkg_dir                 = target_arch_config_dir.join("pkg");
-        for (ty, target) in metadata.selected_targets_wasm_pack() {
+        for (ty, target, _pkg) in metadata.selected_targets_wasm_pack() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => continue,
                 TargetType::Example => continue,

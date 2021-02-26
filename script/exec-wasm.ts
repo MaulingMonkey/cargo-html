@@ -3,6 +3,8 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 // Ref: https://github.com/WebAssembly/spec/issues/208
 
 
+declare function __cargo_html_wasmbindgen_bundler_js(importer: (path: string) => unknown): unknown;
+
 async function exec_base64_wasm(settings: Settings, wasm: string) {
     // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";
@@ -31,8 +33,9 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
 
 
     // Setup WASM environment
+    const wasm_exports = {}; // we need to be able to resolve imports to not yet defined exports
     const memory : MemoryLE = new MemoryLE(<any>undefined);
-    const imports = {
+    const imports = Object.assign({
         wasi_snapshot_preview1: Object.assign({},
             Object.assign({},
                 wasi_snapshot_preview1.nyi      (),
@@ -44,7 +47,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
                 wasi_snapshot_preview1.signals  (memory, domtty, settings),
             ),
         ),
-    };
+    }, (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") ? __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports) : {});
     if (asyncifier !== undefined) Object.assign(
         imports.wasi_snapshot_preview1,
         wasi_snapshot_preview1.io(memory, asyncifier, domtty, settings),
@@ -55,6 +58,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     // Instantiate and hook WASM
     const inst = await WebAssembly.instantiate(compiled, imports);
     const exports = <Exports><unknown>inst.exports;
+    Object.assign(wasm_exports, exports);
     memory.memory = exports.memory;
 
 
@@ -62,6 +66,8 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     try {
         if (asyncifier) {
             await asyncifier.launch(exports);
+        //} else if (exports.__wbindgen_start) { // https://github.com/MaulingMonkey/cargo-html/issues/19
+        //    exports.__wbindgen_start();
         } else {
             exports._start();
         }
@@ -73,13 +79,13 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
             case "stop-signal":
                 break;
             default:
-                console.error(e);
-                debugger;
+                const trace_uncaught = wasi_snapshot_preview1.TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);
+                trace_uncaught?.io(`process terminated by uncaught JavaScript exception:\n${e}`);
                 throw e;
         }
+    } finally {
+        domtty?.shutdown();
     }
-
-    domtty?.shutdown();
 }
 
 

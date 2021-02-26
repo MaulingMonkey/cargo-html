@@ -1,10 +1,74 @@
 use crate::*;
 
-use cargo_metadata::Package;
+use cargo_metadata::{Node, PackageId, Target, Version};
 
 use std::collections::*;
 use std::path::*;
 use std::sync::Arc;
+
+
+
+#[derive(Debug)]
+pub(crate) struct Package {
+    pub id:             cargo_metadata::PackageId,
+    pub name:           String,
+    pub manifest_path:  PathBuf,
+    pub targets:        Vec<Target>,
+
+    pub wasm_bindgen:   Option<Version>,
+
+    is_html:            bool,
+    is_cargo_web:       bool,
+    is_wasi:            bool,
+    is_wasm_pack:       bool,
+}
+
+impl Package {
+    pub fn is_html      (&self) -> bool { self.is_html      }
+    pub fn is_cargo_web (&self) -> bool { self.is_cargo_web }
+    pub fn is_wasi      (&self) -> bool { self.is_wasi      }
+    pub fn is_wasm_pack (&self) -> bool { self.is_wasm_pack }
+
+    fn new(p: cargo_metadata::Package, package_id_info: &BTreeMap<PackageId, (String, Version, Option<&Node>)>) -> Self {
+        let has_cdylib  = p.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "cdylib"  ));
+        let has_bin     = p.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "bin"     ));
+        let has_example = p.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "example" ));
+        let has_bin_or_example = has_bin || has_example;
+
+        let (_, _, p_node) = package_id_info[&p.id];
+
+        let mut wasm_bindgen : Option<Version> = None;
+        for p_dep in p_node.map(|node| node.deps.iter()).into_iter().flatten() {
+            let (dep_name, dep_version, _) = &package_id_info[&p_dep.pkg];
+            if dep_name == "wasm-bindgen" {
+                if wasm_bindgen.is_some() { fatal!("package `{}` has dependencies on multiple versions of wasm-bindgen", p.name); }
+                wasm_bindgen = Some(dep_version.clone());
+            }
+        }
+
+        let has_wasm_bindgen_dependency = wasm_bindgen.is_some();
+        let has_stdweb_dependency = p.dependencies.iter().any(|d| d.name == "stdweb");
+
+        let is_html         = p.metadata.get("html").map_or(true, |html| html != false);
+        let is_cargo_web    = is_html && has_bin_or_example && p.metadata.pointer("/html/cargo-web").map_or_else(|| has_stdweb_dependency, |cargo_web| cargo_web != false);
+        let is_wasi         = is_html && has_bin_or_example && !is_cargo_web;
+        let is_wasm_pack    = is_html && has_cdylib && p.metadata.pointer("/html/wasm-pack").map_or_else(|| has_wasm_bindgen_dependency, |wasm_pack| wasm_pack != false);
+
+        Self {
+            is_html,
+            is_cargo_web,
+            is_wasi,
+            is_wasm_pack,
+
+            wasm_bindgen,
+
+            id:             p.id,
+            name:           p.name,
+            manifest_path:  p.manifest_path,
+            targets:        p.targets,
+        }
+    }
+}
 
 
 
@@ -25,13 +89,28 @@ impl Metadata {
 
         // Reprocess packages, targets
 
+        let root : Option<PackageId>;
+        let nodes : BTreeMap<PackageId, Node>;
+        if let Some(resolve) = std::mem::take(&mut metadata.resolve) {
+            root    = resolve.root;
+            nodes   = resolve.nodes.into_iter().map(|n| (n.id.clone(), n)).collect();
+        } else {
+            root    = None;
+            nodes   = Default::default();
+        }
+
         let workspace_member_ids    = std::mem::take(&mut metadata.workspace_members).into_iter().collect::<BTreeSet<_>>();
+        let package_id_info         = metadata.packages.iter().map(|p| (p.id.clone(), (
+            p.name.clone(),
+            p.version.clone(),
+            nodes.get(&p.id),
+        ))).collect::<BTreeMap<_, _>>();
 
         let mut workspace_packages  = BTreeMap::<String, Arc<Package>>::new();
         let mut workspace_targets   = BTreeMap::<(TargetType, String), Arc<Package>>::new();
 
         for package in std::mem::take(&mut metadata.packages).into_iter() {
-            let package = Arc::new(package);
+            let package = Arc::new(Package::new(package, &package_id_info));
 
             if workspace_member_ids.contains(&package.id) {
                 assert!(workspace_packages.insert(package.name.clone(), package.clone()).is_none());
@@ -49,9 +128,7 @@ impl Metadata {
             }
         }
 
-        let default_package = std::mem::take(&mut metadata.resolve)
-            .and_then(|r| r.root)
-            .and_then(|root| workspace_packages.values().find(|pkg| pkg.id == root).cloned());
+        let default_package = root.and_then(|root| workspace_packages.values().find(|pkg| pkg.id == root).cloned());
 
         let mut metadata = Self {
             selected_packages:  Default::default(),
@@ -120,10 +197,10 @@ impl Metadata {
     pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()     ) }
     pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack()) }
 
-    pub fn selected_targets(&self)              -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.keys() }
-    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_cargo_web()  ).map(|(key, _)| key) }
-    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_wasi()       ).map(|(key, _)| key) }
-    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = &(TargetType, String)> { self.selected_targets.iter().filter(|(_, pkg)| pkg.is_wasm_pack()  ).map(|(key, _)| key) }
+    pub fn selected_targets(&self)              -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets.iter().map(|((tt, name), pkg)| (*tt, name.as_str(), &**pkg)) }
+    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_cargo_web()  ) }
+    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasi()       ) }
+    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasm_pack()  ) }
 
     pub fn target_directory(&self) -> &Path { self.target_directory.as_path() }
 }

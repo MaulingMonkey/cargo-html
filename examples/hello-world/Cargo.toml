@@ -14,3 +14,4 @@ path                    = "hello-world.rs"
 [dependencies]
 libc                    = "0.2"
 wasi                    = "0.10.2"
+#wasm-bindgen            = "0.2"

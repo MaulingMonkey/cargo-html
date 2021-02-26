@@ -10,7 +10,7 @@ class Asyncifier {
     rewind_result:          any;
     rewind_exception:       any;
     asyncify_byte_idx:      number;
-    resolve:                undefined | ((code: number) => void) = undefined;
+    resolve:                undefined | (() => void) = undefined;
     reject:                 undefined | ((reject?: any) => void) = undefined;
 
     constructor() {
@@ -23,7 +23,7 @@ class Asyncifier {
         this.asyncify_byte_idx      = 0;
     }
 
-    launch(exports: Exports): Promise<number> {
+    launch(exports: Exports): Promise<void> {
         if (this.resolve || this.reject) throw "Asyncifier.launch already executing an entry point";
 
         if (this.exports) {
@@ -47,7 +47,11 @@ class Asyncifier {
 
     private restart_wasm() {
         try {
-            const code = (this.exports!._start)();
+            this.exports!._start();
+            // https://github.com/MaulingMonkey/cargo-html/issues/19
+            //if (this.exports!.__wbindgen_start) this.exports!.__wbindgen_start();
+            //else                                this.exports!._start();
+
             if (this.unwinding) {
                 this.unwinding = false;
                 this.exports!.asyncify_stop_unwind();
@@ -55,7 +59,7 @@ class Asyncifier {
                 const r = this.resolve;
                 this.resolve = undefined;
                 this.reject = undefined;
-                r!(code);
+                r!();
             }
         } catch (e) {
             const r = this.reject;

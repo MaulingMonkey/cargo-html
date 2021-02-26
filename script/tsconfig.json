@@ -6,8 +6,6 @@
         "module":           "none",
         "target":           "ESNext",
         "removeComments":   true,
-        "inlineSources":    true,
-        "inlineSourceMap":  true,
         "noFallthroughCasesInSwitch": true,
     }
 }
