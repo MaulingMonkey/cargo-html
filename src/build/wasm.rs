@@ -39,13 +39,13 @@ pub(crate) fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
     }
 
     for config in args.configs.iter().copied() {
-        let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
-        let js_dir = target_arch_config_dir.join("js");
+        let target_arch_config = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
+        let js_dir = target_arch_config.join("js");
 
         for (ty, target, pkg) in metadata.selected_targets_wasi() {
-            let target_arch_config_dir = match ty {
-                TargetType::Bin     => target_arch_config_dir.clone(),
-                TargetType::Example => target_arch_config_dir.join("examples"),
+            let target_arch_config = match ty {
+                TargetType::Bin     => target_arch_config.clone(),
+                TargetType::Example => target_arch_config.join("examples"),
                 TargetType::Cdylib  => continue, // XXX?
             };
 
@@ -59,7 +59,7 @@ pub(crate) fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
             cmd.arg("--target").arg("bundler");
             cmd.arg("--no-typescript");
             cmd.arg("--out-dir").arg(&js_dir);
-            cmd.arg(target_arch_config_dir.join(format!("{}.wasm", target)));
+            cmd.arg(target_arch_config.join(format!("{}.wasm", target)));
             run(cmd);
         }
     }
@@ -113,4 +113,36 @@ pub(crate) fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
     }
 
     any_this_header()
+}
+
+pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
+    header("Asyncify wasm32-wasi targets");
+
+    for config in args.configs.iter().copied() {
+        let target_arch_config = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
+        for (ty, target, pkg) in metadata.selected_targets_wasi() {
+            let target_arch_config = match ty {
+                TargetType::Bin     => target_arch_config.clone(),
+                TargetType::Example => target_arch_config.join("examples"),
+                TargetType::Cdylib  => continue, // XXX?
+            };
+
+            let bg_wasm = if pkg.wasm_bindgen.is_some() {
+                target_arch_config.join("js").join(format!("{}_bg.wasm", target))
+            } else {
+                target_arch_config.join(format!("{}.wasm", target))
+            };
+
+            let async_wasm = target_arch_config.join(format!("{}.async.wasm", target));
+            let mut cmd = tools::find_install_wasm_opt();
+            match config {
+                Config::Debug   => {},
+                Config::Release => drop(cmd.arg("-O4")),
+            }
+            cmd.arg("--debuginfo");
+            cmd.arg("--asyncify").arg(&bg_wasm);
+            cmd.arg("--output").arg(&async_wasm);
+            run(cmd);
+        }
+    }
 }

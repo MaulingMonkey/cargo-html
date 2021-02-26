@@ -48,15 +48,8 @@ fn install_build_tools(args: Arguments) {
 
 fn build(args: Arguments) {
     assert!(args.subcommand == Subcommand::Build);
-
     let metadata = Metadata::from_args(&args);
-
-    // Preinstall tools
-
     tools::install_toolchains();
-    let wasm_opt    = tools::find_install_wasm_opt();
-
-    // Build
 
     let wasm_built
         = build::wasm::wasi_targets(&args, &metadata)
@@ -65,6 +58,8 @@ fn build(args: Arguments) {
         ;
 
     if !wasm_built { fatal!("no selected packages contain any bin/example targets for `cargo html` to build"); }
+
+    build::wasm::asyncify(&args, &metadata);
 
     header!("Building HTML pages");
 
@@ -78,10 +73,10 @@ fn build(args: Arguments) {
                 TargetType::Example => target_arch_config_dir.join("examples"),
                 TargetType::Cdylib  => continue, // XXX?
             };
-            let js_dir = target_arch_config_dir.join("js");
 
             let mut template_js = String::from("<script>\r\n");
             if pkg.wasm_bindgen.is_some() {
+                let js_dir = target_arch_config_dir.join("js");
                 js::inline_wasm_bindgen_bundler_importer(&mut template_js, "__cargo_html_wasmbindgen_bundler_js", &js_dir, target).unwrap_or_else(|err| fatal!("unable to reprocess wasm-bindgen javascript: {}", err));
                 template_js.push_str("\r\n");
             }
@@ -94,26 +89,7 @@ fn build(args: Arguments) {
                 .replace("<script src=\"script.js\"></script>", &template_js);
             let base64_wasm32_idx = template_html.find(script_placeholder).expect("template missing {BASE64_WASM32}");
 
-            let target_wasm_sync = if pkg.wasm_bindgen.is_some() {
-                js_dir.join(format!("{}_bg.wasm", target))
-            } else {
-                target_arch_config_dir.join(format!("{}.wasm", target))
-            };
             let target_wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
-            let mut asyncify = wasm_opt.clone();
-            match config {
-                Config::Debug => {
-                    asyncify.arg("--debuginfo");
-                },
-                Config::Release => {
-                    asyncify.arg("--debuginfo");
-                    asyncify.arg("-O4");
-                }
-            }
-            asyncify.arg("--asyncify").arg(&target_wasm_sync).arg("--output").arg(&target_wasm);
-            status!("Running", "{}", asyncify);
-            asyncify.status0().or_die();
-
             let target_wasm = std::fs::read(&target_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", target_wasm.display(), err));
             let target_wasm = base64::encode(&target_wasm[..]);
 
