@@ -66,6 +66,9 @@ fn build(args: Arguments) {
     let script_placeholder = "\"{BASE64_WASM32}\"";
 
     for config in args.configs.iter().copied() {
+        let target_html_dir = metadata.target_directory().join("cargo-html").join(config.as_str());
+        std::fs::create_dir_all(&target_html_dir).unwrap_or_else(|err| fatal!("unable to create `{}`: {}", target_html_dir.display(), err));
+
         let target_arch_config_dir = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
         for (ty, target, pkg) in metadata.selected_targets_wasi() {
             let target_arch_config_dir = match ty {
@@ -93,7 +96,7 @@ fn build(args: Arguments) {
             let target_wasm = std::fs::read(&target_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", target_wasm.display(), err));
             let target_wasm = base64::encode(&target_wasm[..]);
 
-            let target_html = target_arch_config_dir.join(format!("{}.html", target));
+            let target_html = target_html_dir.join(format!("{}.html", target));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
                 write!(o, "{}", &template_html[..base64_wasm32_idx])?;
@@ -122,7 +125,7 @@ fn build(args: Arguments) {
             let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
             let wasm = base64::encode(&wasm[..]);
 
-            let target_html = target_arch_config_dir.join(format!("{}.html", target));
+            let target_html = target_html_dir.join(format!("{}.html", target));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
                 write!(o, "{}", &template_html[..base64_wasm32_idx])?;
@@ -132,14 +135,13 @@ fn build(args: Arguments) {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
 
-        let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
-        let pkg_dir                 = target_arch_config_dir.join("pkg");
+        let pkg_dir = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
         for (ty, target, _pkg) in metadata.selected_targets_wasm_pack() {
-            let target_arch_config_dir = match ty {
+            match ty {
                 TargetType::Bin     => continue,
                 TargetType::Example => continue,
-                TargetType::Cdylib  => &target_arch_config_dir,
-            };
+                TargetType::Cdylib  => {},
+            }
             let lib_name = target.replace("-", "_");
             let package_js = pkg_dir.join(format!("{}.js", lib_name));
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
@@ -153,7 +155,7 @@ fn build(args: Arguments) {
             let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
             let wasm = base64::encode(&wasm[..]);
 
-            let target_html = target_arch_config_dir.join(format!("{}.html", lib_name));
+            let target_html = target_html_dir.join(format!("{}.html", target));
             status!("Generating", "{}", target_html.display());
             mmrbi::fs::write_if_modified_with(target_html, |o| {
                 write!(o, "{}", &template_html[..base64_wasm32_idx])?;
@@ -163,4 +165,6 @@ fn build(args: Arguments) {
             }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
         }
     }
+
+    header!("Build Successful");
 }

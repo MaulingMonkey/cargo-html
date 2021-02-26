@@ -32,7 +32,7 @@ cd hello-world
 cargo html
 
 # view/run said project in the browser
-start "" target/wasm32-wasi/debug/hello-world.html
+start "" target/cargo-html/debug/hello-world.html
 ```
 
 
@@ -63,7 +63,7 @@ cd rust-mini-games
 
 # build
 cargo html --release
-robocopy /S target/wasm32-wasi/release . *.html
+robocopy /S target/cargo-html/release . *.html
 
 # create branch
 git checkout -b gh-pages
