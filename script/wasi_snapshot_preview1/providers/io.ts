@@ -116,8 +116,36 @@ namespace wasi_snapshot_preview1 {
 
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
+        function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1692
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_advise
+            if (handle.fd_advise === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_advise(offset, len, advice);
+            } else {
+                handle.fd_advise(offset, len, advice);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1695
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_allocate
+            if (handle.fd_allocate === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_allocate(offset, len);
+            } else {
+                handle.fd_allocate(offset, len);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
         function fd_close(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1700
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1698
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_close
             if (handle.fd_close === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -128,6 +156,65 @@ namespace wasi_snapshot_preview1 {
                 handle.fd_close();
             }
             delete FDS[fd];
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1701
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_datasync
+            if (handle.fd_datasync === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_datasync();
+            } else {
+                handle.fd_datasync();
+            }
+            delete FDS[fd];
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1704
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_get
+            var result : FdStat;
+            if (handle.fd_fdstat_get === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                result = await handle.fd_fdstat_get();
+            } else {
+                result = handle.fd_fdstat_get();
+            }
+            write_fdstat(memory, buf, 0 as usize, result);
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1707
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_flags
+            if (handle.fd_fdstat_set_flags === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_fdstat_set_flags(flags);
+            } else {
+                handle.fd_fdstat_set_flags(flags);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_fdstat_set_rights(fd: Fd, rights: Rights): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1710
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_rights
+            if (handle.fd_fdstat_set_rights === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_fdstat_set_rights(rights);
+            } else {
+                handle.fd_fdstat_set_rights(rights);
+            }
             return ERRNO_SUCCESS;
         })}
 
@@ -145,6 +232,50 @@ namespace wasi_snapshot_preview1 {
                 result = handle.fd_filestat_get();
             }
             write_filestat(memory, buf, 0 as usize, result);
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1719
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_size
+            if (handle.fd_filestat_set_size === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_filestat_set_size(size);
+            } else {
+                handle.fd_filestat_set_size(size);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1722
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_times
+            if (handle.fd_filestat_set_times === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                await handle.fd_filestat_set_times(access_time, modified_time, fst_flags);
+            } else {
+                handle.fd_filestat_set_times(access_time, modified_time, fst_flags);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_pread(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, offset: FileSize, nread: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1730
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pread
+            var result;
+            if (handle.fd_pread === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                result = await handle.fd_pread(new IovecArray(memory, iovec_array_ptr, iovec_array_len), offset);
+            } else {
+                result = handle.fd_pread(new IovecArray(memory, iovec_array_ptr, iovec_array_len), offset);
+            }
+            memory.write_usize(nread, 0, result as usize);
             return ERRNO_SUCCESS;
         })}
 
@@ -187,6 +318,22 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
+        function fd_pwrite(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, offset: FileSize, nwritten: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1743
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pwrite
+            var result;
+            if (handle.fd_pwrite === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                result = await handle.fd_pwrite(new IovecArray(memory, ciovec_array_ptr, ciovec_array_len), offset);
+            } else {
+                result = handle.fd_pwrite(new IovecArray(memory, ciovec_array_ptr, ciovec_array_len), offset);
+            }
+            memory.write_usize(nwritten, 0, result as usize);
+            return ERRNO_SUCCESS;
+        })}
+
         function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
@@ -206,6 +353,8 @@ namespace wasi_snapshot_preview1 {
             memory.write_usize(nread_ptr, 0, nwritten as usize);
             return ERRNO_SUCCESS;
         })}
+
+        // TODO: more I/O
 
         function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
@@ -289,11 +438,24 @@ namespace wasi_snapshot_preview1 {
         })}
 
         return {
+            fd_advise,
+            fd_allocate,
             fd_close,
+            fd_datasync,
+            fd_fdstat_get,
+            fd_fdstat_set_flags,
+            fd_fdstat_set_rights,
             fd_filestat_get,
+            fd_filestat_set_size,
+            fd_filestat_set_times,
+            fd_pread,
             fd_prestat_dir_name,
             fd_prestat_get,
+            fd_pwrite,
             fd_read,
+
+            // TODO: more I/O
+
             fd_write,
             path_create_directory,
             path_filestat_get,
