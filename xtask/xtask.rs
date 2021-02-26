@@ -36,7 +36,6 @@ fn build(args: Args) {
        exec("cargo fetch --manifest-path examples/Cargo.toml");
 
        // debug
-       exec("cargo check --frozen --workspace");
        exec("cargo build --frozen --workspace --all-targets");
        exec("cargo test  --frozen --workspace --all-targets");
        if has_nightly() {
