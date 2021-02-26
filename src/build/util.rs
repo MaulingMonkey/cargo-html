@@ -9,14 +9,20 @@ pub fn header(title: &'static str) { TL.with(|tl| {
     tl.any_this_header.set(false);
 })}
 
-pub fn run(mut cmd: Command) { TL.with(|tl| {
+pub fn run(mut cmd: Command) {
+    force_header();
+    status!("Running", "{:?}", cmd);
+    cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
+}
+
+pub fn force_header() -> bool { TL.with(|tl| {
     if !tl.any_this_header.get() {
         println!("\u{001B}[30;102m{:^1$}\u{001B}[0m", tl.header.get(), crate::HEADER_W);
         tl.any_this_header.set(true);
+        true
+    } else {
+        false
     }
-
-    status!("Running", "{:?}", cmd);
-    cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
 })}
 
 pub fn any_this_header() -> bool { TL.with(|tl| tl.any_this_header.get()) }

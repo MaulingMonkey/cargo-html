@@ -72,7 +72,7 @@ pub(crate) fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
 
     for config in args.configs.iter().copied() {
         for pkg in metadata.selected_packages_cargo_web() {
-            if !any_this_header() {
+            if force_header() {
                 let rustc_ver = mmrbi::rustc::version().unwrap_or_else(|err| fatal!("unable to determine rustc version: {}", err));
                 if rustc_ver.is_at_least(1, 48, 0) { warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+: https://github.com/koute/stdweb/issues/411"); }
             }
