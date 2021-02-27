@@ -11,6 +11,9 @@ type Inode = u64 & { _not_real: "inode" };
 /** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#linkcount)\] Number of hard links to an inode. */
 type LinkCount = u64;
 
+/** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#filedelta)\] Relative offset within a file. */
+type FileDelta = i64;
+
 /** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#filesize)\] Non-negative file size or length of a region within a file. */
 type FileSize = u64;
 

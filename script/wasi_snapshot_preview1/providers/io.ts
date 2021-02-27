@@ -410,7 +410,51 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         }
 
-        // TODO: more I/O
+        function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_seek
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1780
+            var result;
+            if (handle.fd_seek === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            } else if (handle.async) {
+                result = await handle.fd_seek(offset, whence);
+            } else {
+                result = handle.fd_seek(offset, whence);
+            }
+            memory.write_u64(new_offset, 0, result);
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_sync(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_sync
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1788
+            if (handle.fd_sync === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            } else if (handle.async) {
+                await handle.fd_sync();
+            } else {
+                handle.fd_sync();
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_tell(fd: Fd, offset: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_tell
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1791
+            var result;
+            if (handle.fd_tell === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            } else if (handle.async) {
+                result = await handle.fd_tell();
+            } else {
+                result = handle.fd_tell();
+            }
+            memory.write_u64(offset, 0, result);
+            return ERRNO_SUCCESS;
+        })}
 
         function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
@@ -432,6 +476,8 @@ namespace wasi_snapshot_preview1 {
             memory.write_usize(nwritten_ptr, 0, nwritten as usize);
             return ERRNO_SUCCESS;
         })}
+
+        // TODO: more I/O
 
         function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1802
@@ -511,10 +557,13 @@ namespace wasi_snapshot_preview1 {
             fd_read,
             fd_readdir,
             fd_renumber,
+            fd_seek,
+            fd_sync,
+            fd_tell,
+            fd_write,
 
             // TODO: more I/O
 
-            fd_write,
             path_create_directory,
             path_filestat_get,
             path_open,

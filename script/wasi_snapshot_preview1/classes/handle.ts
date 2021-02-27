@@ -20,10 +20,13 @@ namespace wasi_snapshot_preview1 {
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): number;
         fd_read?(iovec: IovecArray): number;
         fd_readdir?(cookie: DirCookie, maxbytes: usize): DirEnt[];
+        fd_seek?(offset: FileDelta, whence: Whence): FileSize;
+        fd_sync?(): void;
+        fd_tell?(): FileSize;
+        fd_write?(ciovec: CIovecArray): number;
 
         // TODO: more I/O
 
-        fd_write?(ciovec: CIovecArray): number;
         path_create_directory?(path: string): void;
         path_filestat_get?(flags: LookupFlags, path: string): FileStat;
         path_open?(dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Handle;
@@ -50,10 +53,13 @@ namespace wasi_snapshot_preview1 {
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): Promise<number>;
         fd_read?(iovec: IovecArray): Promise<number>;
         fd_readdir?(cookie: DirCookie, maxbytes: usize): Promise<DirEnt[]>;
+        fd_seek?(offset: FileDelta, whence: Whence): Promise<FileSize>;
+        fd_sync?(): Promise<void>;
+        fd_tell?(): Promise<FileSize>;
+        fd_write?(ciovec: CIovecArray): Promise<number>;
 
         // TODO: more I/O
 
-        fd_write?(ciovec: CIovecArray): Promise<number>;
         path_create_directory?(path: string): Promise<void>;
         path_filestat_get?(flags: LookupFlags, path: string): Promise<FileStat>;
         path_open?(dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Promise<Handle | HandleAsync>;
