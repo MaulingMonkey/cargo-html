@@ -90,6 +90,16 @@ namespace wasi.fs {
             };
         }
 
+        fd_filestat_set_size(size: FileSize) {
+            if (!this.write) throw ERRNO_BADF;
+            else if (size > BigInt(this.file.length)) this.fd_allocate(0n as FileSize, size);
+            else if (size < this.file.length) {
+                const smol = Number(size);
+                for (let i=smol; i<this.file.length; ++i) this.file.data[i] = 0;
+                this.file.length = smol;
+            }
+        }
+
         fd_read(iovec: IovecArray): usize {
             if (!this.file.readable) throw ERRNO_NOTCAPABLE;
 

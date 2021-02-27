@@ -208,14 +208,8 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_filestat_set_size = function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, RIGHTS_FD_FILESTAT_SET_SIZE, async e => {
-            if (e.handle.fd_filestat_set_size === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            } else if (e.handle.async) {
-                await e.handle.fd_filestat_set_size(size);
-            } else {
-                e.handle.fd_filestat_set_size(size);
-            }
+            const r = e.handle.fd_filestat_set_size(size);
+            if (e.handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 

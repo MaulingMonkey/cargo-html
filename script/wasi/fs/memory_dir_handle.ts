@@ -55,6 +55,8 @@ namespace wasi.fs {
             };
         }
 
+        fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
+
         fd_prestat_dir_name(): Uint8Array {
             if (this.prestat === undefined) throw ERRNO_NOTCAPABLE;
             return this.prestat;

@@ -63,8 +63,8 @@ namespace wasi {
 
         debug(): string { return "ConReader"; }
 
-        async fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) { throw ERRNO_PIPE; }
-        async fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_PIPE; }
+        async fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) { throw ERRNO_SPIPE; }
+        async fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_SPIPE; }
         async fd_close() {}
         async fd_datasync() {}
 
@@ -90,6 +90,8 @@ namespace wasi {
                 change_time:    0n as TimeStamp,
             };
         }
+
+        async fd_filestat_set_size(size: FileSize) { throw ERRNO_SPIPE; }
 
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());
