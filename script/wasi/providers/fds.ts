@@ -171,14 +171,17 @@ namespace wasi {
 
         i.wasi_snapshot_preview1.fd_fdstat_get = function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
             var result : FdStat;
-            if (e.handle.fd_fdstat_get === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            } else if (e.handle.async) {
+            if (e.handle.async) {
                 result = await e.handle.fd_fdstat_get();
             } else {
                 result = e.handle.fd_fdstat_get();
             }
+            result = {
+                filetype:           result.filetype,
+                flags:              result.flags,
+                rights_base:        (result.rights_base         & e.rights_base     ) as Rights,
+                rights_inheriting:  (result.rights_inheriting   & e.rights_inherit  ) as Rights,
+            };
             write_fdstat(memory, buf, 0 as usize, result);
             return ERRNO_SUCCESS;
         })}

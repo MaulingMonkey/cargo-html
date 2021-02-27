@@ -26,6 +26,15 @@ namespace wasi {
         fd_close() {}
         fd_datasync() {}
 
+        fd_fdstat_get(): FdStat {
+            return {
+                filetype:           FILETYPE_UNKNOWN,
+                flags:              FDFLAGS_NONE, // XXX?
+                rights_base:        RIGHTS_ALL_PIPE,
+                rights_inheriting:  RIGHTS_NONE,
+            };
+        }
+
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;
             var text = "";

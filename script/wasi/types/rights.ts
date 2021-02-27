@@ -110,4 +110,109 @@ namespace wasi {
 
     /** The right to invoke sock_shutdown. */
     export const RIGHTS_SOCK_SHUTDOWN = <Rights>BigInt(1 << 28);
+
+    /** All rights that apply to directories. */
+    export const RIGHTS_ALL_DIR = rights(
+        // RIGHTS_FD_ADVISE,
+        // RIGHTS_FD_ALLOCATE,
+        RIGHTS_FD_DATASYNC,
+        RIGHTS_FD_FDSTAT_SET_FLAGS,
+        RIGHTS_FD_FILESTAT_GET,
+        // RIGHTS_FD_FILESTAT_SET_SIZE,
+        RIGHTS_FD_FILESTAT_SET_TIMES,
+        // RIGHTS_FD_READ,
+        RIGHTS_FD_READDIR,
+        // RIGHTS_FD_SEEK,
+        RIGHTS_FD_SYNC,
+        // RIGHTS_FD_TELL,
+        // RIGHTS_FD_WRITE,
+
+        RIGHTS_PATH_CREATE_DIRECTORY,
+        RIGHTS_PATH_CREATE_FILE,
+        RIGHTS_PATH_FILESTAT_GET,
+        RIGHTS_PATH_FILESTAT_SET_SIZE,
+        RIGHTS_PATH_FILESTAT_SET_TIMES,
+        RIGHTS_PATH_LINK_SOURCE,
+        RIGHTS_PATH_LINK_TARGET,
+        RIGHTS_PATH_OPEN,
+        RIGHTS_PATH_READLINK,
+        RIGHTS_PATH_REMOVE_DIRECTORY,
+        RIGHTS_PATH_RENAME_SOURCE,
+        RIGHTS_PATH_RENAME_TARGET,
+        RIGHTS_PATH_SYMLINK,
+        RIGHTS_PATH_UNLINK_FILE,
+
+        // RIGHTS_POLL_FD_READWRITE,
+        // RIGHTS_SOCK_SHUTDOWN,
+    );
+
+    /** All rights that apply to files. */
+    export const RIGHTS_ALL_FILE = rights(
+        RIGHTS_FD_ADVISE,
+        RIGHTS_FD_ALLOCATE,
+        RIGHTS_FD_DATASYNC,
+        RIGHTS_FD_FDSTAT_SET_FLAGS,
+        RIGHTS_FD_FILESTAT_GET,
+        RIGHTS_FD_FILESTAT_SET_SIZE,
+        RIGHTS_FD_FILESTAT_SET_TIMES,
+        RIGHTS_FD_READ,
+        RIGHTS_FD_READDIR,
+        RIGHTS_FD_SEEK,
+        RIGHTS_FD_SYNC,
+        RIGHTS_FD_TELL,
+        RIGHTS_FD_WRITE,
+
+        // RIGHTS_PATH_CREATE_DIRECTORY,
+        // RIGHTS_PATH_CREATE_FILE,
+        // RIGHTS_PATH_FILESTAT_GET,
+        // RIGHTS_PATH_FILESTAT_SET_SIZE,
+        // RIGHTS_PATH_FILESTAT_SET_TIMES,
+        // RIGHTS_PATH_LINK_SOURCE,
+        // RIGHTS_PATH_LINK_TARGET,
+        // RIGHTS_PATH_OPEN,
+        // RIGHTS_PATH_READLINK,
+        // RIGHTS_PATH_REMOVE_DIRECTORY,
+        // RIGHTS_PATH_RENAME_SOURCE,
+        // RIGHTS_PATH_RENAME_TARGET,
+        // RIGHTS_PATH_SYMLINK,
+        // RIGHTS_PATH_UNLINK_FILE,
+
+        RIGHTS_POLL_FD_READWRITE,
+        // RIGHTS_SOCK_SHUTDOWN,
+    );
+
+    /** All rights that apply to pipes. */
+    export const RIGHTS_ALL_PIPE = rights(
+        // RIGHTS_FD_ADVISE,
+        // RIGHTS_FD_ALLOCATE,
+        RIGHTS_FD_DATASYNC,
+        RIGHTS_FD_FDSTAT_SET_FLAGS,
+        // RIGHTS_FD_FILESTAT_GET,
+        // RIGHTS_FD_FILESTAT_SET_SIZE,
+        // RIGHTS_FD_FILESTAT_SET_TIMES,
+        RIGHTS_FD_READ,
+        // RIGHTS_FD_READDIR,
+        // RIGHTS_FD_SEEK,
+        RIGHTS_FD_SYNC,
+        // RIGHTS_FD_TELL,
+        RIGHTS_FD_WRITE,
+
+        // RIGHTS_PATH_CREATE_DIRECTORY,
+        // RIGHTS_PATH_CREATE_FILE,
+        // RIGHTS_PATH_FILESTAT_GET,
+        // RIGHTS_PATH_FILESTAT_SET_SIZE,
+        // RIGHTS_PATH_FILESTAT_SET_TIMES,
+        // RIGHTS_PATH_LINK_SOURCE,
+        // RIGHTS_PATH_LINK_TARGET,
+        // RIGHTS_PATH_OPEN,
+        // RIGHTS_PATH_READLINK,
+        // RIGHTS_PATH_REMOVE_DIRECTORY,
+        // RIGHTS_PATH_RENAME_SOURCE,
+        // RIGHTS_PATH_RENAME_TARGET,
+        // RIGHTS_PATH_SYMLINK,
+        // RIGHTS_PATH_UNLINK_FILE,
+
+        RIGHTS_POLL_FD_READWRITE,
+        // RIGHTS_SOCK_SHUTDOWN,
+    );
 }

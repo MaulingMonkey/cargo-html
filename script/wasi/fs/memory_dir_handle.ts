@@ -29,6 +29,15 @@ namespace wasi.fs {
         fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_ISDIR; }
         fd_datasync() {} // TODO: sync fs if it has persistence?
 
+        fd_fdstat_get(): FdStat {
+            return {
+                filetype:           FILETYPE_DIRECTORY,
+                flags:              FDFLAGS_NONE, // XXX?
+                rights_base:        RIGHTS_ALL_DIR,
+                rights_inheriting:  RIGHTS_ALL,
+            };
+        }
+
         fd_filestat_get(): FileStat {
             return {
                 dev:            0n as Device,

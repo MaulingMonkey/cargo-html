@@ -67,6 +67,15 @@ namespace wasi {
         async fd_close() {}
         async fd_datasync() {}
 
+        async fd_fdstat_get(): Promise<FdStat> {
+            return {
+                filetype:           FILETYPE_CHARACTER_DEVICE,
+                flags:              FDFLAGS_NONE, // XXX?
+                rights_base:        RIGHTS_ALL_PIPE,
+                rights_inheriting:  RIGHTS_NONE,
+            };
+        }
+
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());
             const nread = read.length;

@@ -8,7 +8,7 @@ namespace wasi {
         fd_allocate(offset: FileSize, len: FileSize): void;
         fd_close(): void;
         fd_datasync(): void;
-        fd_fdstat_get?(): FdStat;
+        fd_fdstat_get(): FdStat;
         fd_fdstat_set_flags?(flags: FdFlags): void;
         fd_filestat_get?(): FileStat;
         fd_filestat_set_size?(size: FileSize): void;
@@ -48,7 +48,7 @@ namespace wasi {
         fd_allocate(offset: FileSize, len: FileSize): Promise<void>;
         fd_close(): Promise<void>;
         fd_datasync(): Promise<void>;
-        fd_fdstat_get?(): Promise<FdStat>;
+        fd_fdstat_get(): Promise<FdStat>;
         fd_fdstat_set_flags?(flags: FdFlags): Promise<void>;
         fd_filestat_get?(): Promise<FileStat>;
         fd_filestat_set_size?(size: FileSize): Promise<void>;

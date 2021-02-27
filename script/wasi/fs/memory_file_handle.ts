@@ -47,6 +47,15 @@ namespace wasi.fs {
         }
         fd_datasync() {} // TODO: sync fs if it has persistence?
 
+        fd_fdstat_get(): FdStat {
+            return {
+                filetype:           FILETYPE_DIRECTORY,
+                flags:              FDFLAGS_NONE, // XXX?
+                rights_base:        RIGHTS_ALL_FILE,
+                rights_inheriting:  RIGHTS_NONE,
+            };
+        }
+
         fd_tell(): FileSize {
             return BigInt(this.position) as FileSize;
         }
