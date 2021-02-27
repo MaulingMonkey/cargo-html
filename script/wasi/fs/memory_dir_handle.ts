@@ -78,6 +78,33 @@ namespace wasi.fs {
             };
         }
 
+        fd_readdir(cookie: DirCookie, maxbytes: number): DirEnt[] {
+            if (maxbytes <= 0)                      throw ERRNO_INVAL;
+            if (cookie >= Number.MAX_SAFE_INTEGER)  throw ERRNO_INVAL;
+
+            const r : DirEnt[] = [];
+            const entries = Object.entries(this.leaf.children);
+            const utf8 = new TextEncoder();
+
+            for (let i = Number(cookie); (i < entries.length) && (maxbytes > 0); ++i) {
+                const [name, e] = entries[i];
+                var type;
+                switch (e.type) {
+                    case "dir":     type = FILETYPE_DIRECTORY; break;
+                    case "file":    type = FILETYPE_REGULAR_FILE; break;
+                }
+                r.push({
+                    ino:    0n as Inode,
+                    name:   utf8.encode(name),
+                    next:   BigInt(i+1) as DirCookie,
+                    type,
+                });
+                maxbytes -= DIRENT_SIZE + name.length;
+            }
+
+            return r;
+        }
+
         path_create_directory(path: string) {
             const dirs = [...this.dirs];
 

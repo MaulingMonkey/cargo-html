@@ -25,7 +25,7 @@ namespace wasi {
     export interface DirEnt {
         /** The offset of the next directory entry stored in this directory. */     next:   DirCookie,
         /** The serial number of the file referred to by this directory entry. */   ino:    Inode,
-        /** The length of the name of the directory entry. */                       name:   string,
+        /** The length of the name of the directory entry. */                       name:   Uint8Array,
         /** The type of the file referred to by this directory entry. */            type:   FileType,
     }
 

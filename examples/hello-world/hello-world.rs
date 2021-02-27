@@ -33,6 +33,15 @@ fn main() {
     assert!(std::fs::read_to_string("./path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
     assert!(std::fs::read_to_string("/path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
 
+    for e in std::fs::read_dir("/").unwrap() {
+        let e = e.unwrap();
+        println!("{} {}", if e.path().is_dir() { "dir " } else { "file" }, e.path().display());
+    }
+    for e in std::fs::read_dir("/home").unwrap() {
+        let e = e.unwrap();
+        println!("{} {}", if e.path().is_dir() { "dir " } else { "file" }, e.path().display());
+    }
+
     std::thread::yield_now();
     std::thread::sleep(std::time::Duration::from_secs(1));
 

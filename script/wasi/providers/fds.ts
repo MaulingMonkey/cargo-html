@@ -275,26 +275,30 @@ namespace wasi {
             if (e.handle.async) dirents = await e.handle.fd_readdir(cookie, buf_len);
             else                dirents = e.handle.fd_readdir(cookie, buf_len);
 
-            const dirent_header = new DataView(new Uint8Array(DIRENT_SIZE));
+            let used = 0;
+            const dirent_header = new DataView(new ArrayBuffer(DIRENT_SIZE));
             dirents.forEach(src => {
                 if (buf_len <= 0) return;
-                const name = new TextEncoder().encode(src.name);
 
                 dirent_header.setBigUint64(  0, src.next, true);
                 dirent_header.setBigUint64(  8, src.ino,  true);
-                dirent_header.setUint32(    16, name.length, true);
+                dirent_header.setUint32(    16, src.name.length, true);
                 dirent_header.setUint8(     20, src.type);
 
                 var n = Math.min(buf_len, DIRENT_SIZE);
                 for (let i=0; i<n; ++i) memory.write_u8(buf, i, dirent_header.getUint8(i) as u8);
                 buf     = (buf + n) as ptr;
                 buf_len = (buf_len - n) as usize;
+                used    += n;
 
-                var n = Math.min(buf_len, name.length);
-                for (let i=0; i<n; ++i) memory.write_u8(buf, i, name[i] as u8);
+                var n = Math.min(buf_len, src.name.length);
+                for (let i=0; i<n; ++i) memory.write_u8(buf, i, src.name[i] as u8);
                 buf     = (buf + n) as ptr;
                 buf_len = (buf_len - n) as usize;
+                used    += n;
             });
+
+            memory.write_usize(buf_used, +0, used as usize);
 
             return ERRNO_SUCCESS;
         })}
