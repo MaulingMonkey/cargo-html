@@ -107,7 +107,7 @@ namespace wasi_snapshot_preview1 {
 
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
-        function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1692
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_advise
             if (handle.fd_advise === undefined) {
@@ -121,7 +121,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1695
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_allocate
             if (handle.fd_allocate === undefined) {
@@ -135,7 +135,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_close(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_close(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1698
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_close
             if (handle.fd_close === undefined) {
@@ -150,7 +150,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1701
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_datasync
             if (handle.fd_datasync === undefined) {
@@ -165,7 +165,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1704
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_get
             var result : FdStat;
@@ -181,7 +181,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1707
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_flags
             if (handle.fd_fdstat_set_flags === undefined) {
@@ -195,7 +195,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_set_rights(fd: Fd, rights: Rights): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_fdstat_set_rights(fd: Fd, rights: Rights): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1710
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_rights
             if (handle.fd_fdstat_set_rights === undefined) {
@@ -209,7 +209,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1717
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_get
 
@@ -226,7 +226,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1719
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_size
             if (handle.fd_filestat_set_size === undefined) {
@@ -240,7 +240,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1722
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_times
             if (handle.fd_filestat_set_times === undefined) {
@@ -254,7 +254,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_pread(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, offset: FileSize, nread: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_pread(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, offset: FileSize, nread: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1730
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pread
             var result;
@@ -270,7 +270,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1741
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_dir_name
 
@@ -292,7 +292,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1739
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_get
 
@@ -309,7 +309,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_pwrite(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, offset: FileSize, nwritten: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_pwrite(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, offset: FileSize, nwritten: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1743
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pwrite
             var result;
@@ -325,7 +325,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1752
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
 
@@ -345,7 +345,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_readdir(fd: Fd, buf: ptr, buf_len: usize, cookie: DirCookie, buf_used: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_readdir(fd: Fd, buf: ptr, buf_len: usize, cookie: DirCookie, buf_used: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1755
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_readdir
             var result;
@@ -401,7 +401,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         }
 
-        function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_seek
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1780
             var result;
@@ -417,7 +417,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_sync(fd: Fd): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_sync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_sync
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1788
             if (handle.fd_sync === undefined) {
@@ -431,7 +431,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_tell(fd: Fd, offset: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_tell(fd: Fd, offset: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_tell
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1791
             var result;
@@ -447,7 +447,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
+        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
             // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_write
             // https://nodejs.org/api/wasi.html
