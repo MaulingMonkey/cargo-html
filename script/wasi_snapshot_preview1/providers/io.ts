@@ -391,6 +391,25 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
+        function fd_renumber(from: Fd, to: Fd): Errno {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1771
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_renumber
+
+            if (!(from in FDS)) return ERRNO_BADF;
+
+            // TODO: other implementations seem to allow clobbering `to`.
+            // perhaps I should instead try to close this FD?
+            // what if FDS[to] isn't closable or throws an error?
+            // should I make fd_close support mandatory for `Handle`?
+            // should I forbid falliable fd_close?
+            // should I ignore failing fd_close?
+            if (to in FDS) return ERRNO_PERM;
+
+            FDS[to] = FDS[from];
+            delete FDS[from];
+            return ERRNO_SUCCESS;
+        }
+
         // TODO: more I/O
 
         function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
@@ -491,6 +510,7 @@ namespace wasi_snapshot_preview1 {
             fd_pwrite,
             fd_read,
             fd_readdir,
+            fd_renumber,
 
             // TODO: more I/O
 
