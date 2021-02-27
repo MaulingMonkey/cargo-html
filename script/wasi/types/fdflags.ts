@@ -7,6 +7,8 @@ namespace wasi {
 
 
 
+    export const FDFLAGS_NONE = <FdFlags>0;
+
     /** Append mode: Data written to the file is always appended to the file's end. */
     export const FDFLAGS_APPEND = <FdFlags>(1 << 0);
 

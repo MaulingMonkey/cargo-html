@@ -7,6 +7,8 @@ namespace wasi {
 
 
 
+    export const OFLAGS_NONE = <OFlags>0;
+
     /** Create file if it does not exist. */
     export const OFLAGS_CREAT = <OFlags>(1 << 0);
 

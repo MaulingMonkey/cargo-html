@@ -2,15 +2,15 @@ namespace wasi {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function io(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
+    export function fds(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
         const trace = true;
 
-        const DIR_TEMP = new fs.temp.Dir("/temp/", {});
-        const DIR_HOME = new fs.temp.Dir("/home/", {});
-        const DIR_ROOT = new fs.temp.Dir("/", {
-            "temp": { node: DIR_TEMP },
-            "home": { node: DIR_HOME },
-        });
+        const FS = new io.memory.FileSystem();
+        const root = FS.init_dir("/");
+        //root.writeable = false;
+        const temp = FS.init_dir("/temp/");
+        temp.listable = false;
+        const home = FS.init_dir("/home/");
 
         interface FdEntry {
             handle:         Handle | HandleAsync;
@@ -22,8 +22,8 @@ namespace wasi {
             // root and cwd preopened handles
             // stable vs nightly rust treat this differently for inferring the CWD, but DIR_ROOT should be portable
             // https://github.com/WebAssembly/wasi-libc/blob/5ccebd3130ef6e384474d921d0c24ebf5403ae1a/libc-bottom-half/sources/getcwd.c#L10
-            3: { handle: new fs.temp.DirectoryHandle(DIR_ROOT, "/"), rights_base: RIGHTS_ALL, rights_inherit: RIGHTS_ALL },
-            4: { handle: new fs.temp.DirectoryHandle(DIR_ROOT, "."), rights_base: RIGHTS_ALL, rights_inherit: RIGHTS_ALL },
+            3: { handle: new wasi.fs.MemoryDirHandle(FS, [root], "/"), rights_base: RIGHTS_ALL, rights_inherit: RIGHTS_ALL },
+            4: { handle: new wasi.fs.MemoryDirHandle(FS, [root], "."), rights_base: RIGHTS_ALL, rights_inherit: RIGHTS_ALL },
         };
 
         const RIGHTS_CONIN = rights(
@@ -425,22 +425,24 @@ namespace wasi {
             return ERRNO_SUCCESS;
         })}
 
-        i.wasi_snapshot_preview1.fd_write = function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, RIGHTS_FD_WRITE, async e => {
-            if (e.handle.fd_write === undefined) {
-                if (trace) console.error("handle doesn't implement operation");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
+        i.wasi_snapshot_preview1.fd_write = function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno {
+            return wrap_fd(fd, RIGHTS_FD_WRITE, async e => {
+                if (e.handle.fd_write === undefined) {
+                    if (trace) console.error("handle doesn't implement operation");
+                    return _ERRNO_FUNC_MISSING; // handle does not support operation
+                }
 
-            const ciovec = new IovecArray(memory, ciovec_array_ptr, ciovec_array_len);
-            var nwritten = 0;
-            if (e.handle.async) {
-                nwritten = await e.handle.fd_write(ciovec);
-            } else {
-                nwritten = e.handle.fd_write(ciovec);
-            }
-            memory.write_usize(nwritten_ptr, 0, nwritten as usize);
-            return ERRNO_SUCCESS;
-        })}
+                const ciovec = new IovecArray(memory, ciovec_array_ptr, ciovec_array_len);
+                var nwritten = 0;
+                if (e.handle.async) {
+                    nwritten = await e.handle.fd_write(ciovec);
+                } else {
+                    nwritten = e.handle.fd_write(ciovec);
+                }
+                memory.write_usize(nwritten_ptr, 0, nwritten as usize);
+                return ERRNO_SUCCESS;
+            })
+        }
 
         i.wasi_snapshot_preview1.path_create_directory = function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno {
             return wrap_path(fd, RIGHTS_PATH_CREATE_DIRECTORY, undefined, path_ptr, path_len, async (e, path) => {
