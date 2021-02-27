@@ -105,15 +105,6 @@ namespace wasi_snapshot_preview1 {
             }, ERRNO_ASYNCIFY);
         }
 
-        function write_prestat(ptr: ptr, off: usize, prestat: PreStat) {
-            memory.write_u8(ptr, off+ 0, prestat.tag);
-            switch (prestat.tag) {
-                case 0:
-                    memory.write_usize(ptr, off+ 4, prestat.u_dir_pr_name_len || (0 as usize));
-                    break;
-            }
-        }
-
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
         function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async (handle) => {
@@ -314,7 +305,7 @@ namespace wasi_snapshot_preview1 {
             } else {
                 result = handle.fd_prestat_get();
             }
-            write_prestat(buf, 0 as usize, result);
+            write_prestat(memory, buf, 0 as usize, result);
             return ERRNO_SUCCESS;
         })}
 
