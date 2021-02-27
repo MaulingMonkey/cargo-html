@@ -36,6 +36,8 @@ fn main() {
     std::thread::yield_now();
     std::thread::sleep(std::time::Duration::from_secs(1));
 
+    println!("\u{001B}[30;102m{:^1$}\u{001B}[0m", "Hello, world!", 76);
+
     print!("What's your name? ");
     std::io::stdout().flush().unwrap();
 
