@@ -12,29 +12,36 @@ namespace wasi {
             "home": { node: DIR_HOME },
         });
 
-        const FDS : { [fd: number]: (Handle | HandleAsync | undefined) } = {
+        interface FdEntry {
+            handle: Handle | HandleAsync;
+        }
+
+        const FDS : { [fd: number]: (FdEntry | undefined) } = {
             // root and cwd preopened handles
             // stable vs nightly rust treat this differently for inferring the CWD, but DIR_ROOT should be portable
             // https://github.com/WebAssembly/wasi-libc/blob/5ccebd3130ef6e384474d921d0c24ebf5403ae1a/libc-bottom-half/sources/getcwd.c#L10
-            3: new fs.temp.DirectoryHandle(DIR_ROOT, "/"),
-            4: new fs.temp.DirectoryHandle(DIR_ROOT, "."),
+            3: { handle: new fs.temp.DirectoryHandle(DIR_ROOT, "/") },
+            4: { handle: new fs.temp.DirectoryHandle(DIR_ROOT, ".") },
         };
 
         switch (settings.stdin || (domtty ? "dom" : "prompt")) {
             case "badfd":   break;
             case "prompt":  break; // TODO: proper prompt device
-            case "dom":     FDS[0] = ConReader.try_create({
-                                mode:       settings.domtty?.mode   || "line-buffered",
-                                listen_to:  settings.domtty?.listen || document,
-                                input:      settings.domtty?.input  || "cargo-html-console-input",
-                                echo:       (text) => domtty ? domtty.write(text) : undefined,
-                            }); break;
+            case "dom":
+                const stdin = ConReader.try_create({
+                    mode:       settings.domtty?.mode   || "line-buffered",
+                    listen_to:  settings.domtty?.listen || document,
+                    input:      settings.domtty?.input  || "cargo-html-console-input",
+                    echo:       (text) => domtty ? domtty.write(text) : undefined,
+                });
+                if (stdin) FDS[0] = { handle: stdin };
+                break;
         }
 
         const stdout = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-log"),   "#FFF", domtty);
         const stderr = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-error"), "#F44", domtty);
-        if (stdout) FDS[1] = stdout;
-        if (stderr) FDS[2] = stderr;
+        if (stdout) FDS[1] = { handle: stdout };
+        if (stderr) FDS[2] = { handle: stderr };
 
         // XXX: WASI recommends randomizing FDs, but I want optional deterministic behavior.
         let _next_fd = 0x1000;
@@ -43,10 +50,10 @@ namespace wasi {
             if (_next_fd > 0x3FFFFFFF) _next_fd = 0x1000;
             return _next_fd ^ 0xFF; // shuffle low bits around some
         }
-        function alloc_handle_fd(handle: Handle | HandleAsync): Fd {
+        function alloc_fd(entry: FdEntry): Fd {
             var fd = 0;
             while ((fd = advance_fd()) in FDS) {}
-            FDS[fd] = handle;
+            FDS[fd] = entry;
             return fd as Fd;
         }
 
@@ -61,14 +68,14 @@ namespace wasi {
         function wrap_fd(fd: Fd, op: (handle: Handle | HandleAsync) => Promise<Errno>): Errno {
             const name = trace ? get_io_caller_name() : undefined;
             return asyncifier.asyncify(async () => {
-                const handle = FDS[fd];
-                if (handle === undefined) {
+                const fdent = FDS[fd];
+                if (fdent === undefined) {
                     if (trace) console.error("%s(fd=%d, ...) failed: ERRNO_BADF", name, fd);
                     return ERRNO_BADF; // handle does not exist
                 }
                 let ret : Errno;
                 try {
-                    ret = await op(handle);
+                    ret = await op(fdent.handle);
                 } catch (errno) {
                     if (typeof errno === "number") {
                         ret = errno as Errno;
@@ -76,7 +83,7 @@ namespace wasi {
                         throw errno;
                     }
                 }
-                if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, entry=%s, ...) failed: ERRNO_%s", name, fd, handle.debug(), errno_string(ret));
+                if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, entry=%s, ...) failed: ERRNO_%s", name, fd, fdent.handle.debug(), errno_string(ret));
                 return ret;
             }, ERRNO_ASYNCIFY);
         }
@@ -85,14 +92,14 @@ namespace wasi {
             const name = trace ? get_io_caller_name() : undefined;
             return asyncifier.asyncify(async () => {
                 const path = memory.read_string(path_ptr, +0 as usize, path_len);
-                const handle = FDS[fd];
-                if (handle === undefined) {
+                const fdent = FDS[fd];
+                if (fdent === undefined) {
                     if (trace) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_BADF", name, fd, path);
                     return ERRNO_BADF; // handle does not exist
                 }
                 let ret : Errno;
                 try {
-                    ret = await op(handle, path);
+                    ret = await op(fdent.handle, path);
                 } catch (errno) {
                     if (typeof errno === "number") {
                         ret = errno as Errno;
@@ -445,17 +452,17 @@ namespace wasi {
                 return ERRNO_ACCESS; // handle does not support operation
             }
             const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
-            const new_handle = FDS[new_fd];
-            if (new_handle === undefined) {
+            const new_fdent = FDS[new_fd];
+            if (new_fdent === undefined) {
                 if (trace) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
                 return ERRNO_BADF; // handle does not exist
             } else if (old_handle.async) {
-                await old_handle.path_link(old_flags, old_path, new_handle, new_path);
-            } else if (new_handle.async) {
+                await old_handle.path_link(old_flags, old_path, new_fdent.handle, new_path);
+            } else if (new_fdent.handle.async) {
                 if (trace) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_XDEV (new_fd is async, old_fd isn't)", old_fd, old_path, new_fd, new_path);
                 return ERRNO_XDEV;
             } else {
-                old_handle.path_link(old_flags, old_path, new_handle, new_path);
+                old_handle.path_link(old_flags, old_path, new_fdent.handle, new_path);
             }
             return ERRNO_SUCCESS;
         })}
@@ -477,9 +484,9 @@ namespace wasi {
             }
             var out_fd : Fd;
             if (handle.async) {
-                out_fd = alloc_handle_fd(await handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
+                out_fd = alloc_fd({ handle: await handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags) });
             } else {
-                out_fd = alloc_handle_fd(handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
+                out_fd = alloc_fd({ handle: handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags) });
             }
             memory.write_u32(opened_fd, +0, out_fd);
             return ERRNO_SUCCESS;
@@ -519,17 +526,17 @@ namespace wasi {
                 return ERRNO_ACCESS;
             }
             const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
-            const new_handle = FDS[new_fd];
-            if (new_handle === undefined) {
+            const new_fdent = FDS[new_fd];
+            if (new_fdent === undefined) {
                 if (trace) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
                 return ERRNO_BADF; // handle does not exist
             } else if (old_handle.async) {
-                await old_handle.path_rename(old_path, new_handle, new_path);
-            } else if (new_handle.async) {
+                await old_handle.path_rename(old_path, new_fdent.handle, new_path);
+            } else if (new_fdent.handle.async) {
                 if (trace) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_XDEV (new_fd is async, old_fd isn't)", old_fd, old_path, new_fd, new_path);
                 return ERRNO_XDEV;
             } else {
-                old_handle.path_rename(old_path, new_handle, new_path);
+                old_handle.path_rename(old_path, new_fdent.handle, new_path);
             }
             return ERRNO_SUCCESS;
         })}
