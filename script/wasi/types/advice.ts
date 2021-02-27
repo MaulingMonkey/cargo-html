@@ -24,4 +24,8 @@ namespace wasi {
 
     /** The application expects to access the specified data once and then not reuse it thereafter. */
     export const ADVICE_NOREUSE    = <Advice>5;
+
+    export function advice_validate(advice: Advice) {
+        if (!((0 <= advice) && (advice <= 5))) throw ERRNO_INVAL;
+    }
 }

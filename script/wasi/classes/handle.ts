@@ -4,7 +4,7 @@ namespace wasi {
 
         debug(): string;
 
-        fd_advise?(offset: FileSize, len: FileSize, advice: Advice): void;
+        fd_advise(offset: FileSize, len: FileSize, advice: Advice): void;
         fd_allocate?(offset: FileSize, len: FileSize): void;
         fd_close?(): void;
         fd_datasync?(): void;
@@ -44,7 +44,7 @@ namespace wasi {
 
         debug(): string;
 
-        fd_advise?(offset: FileSize, len: FileSize, advice: Advice): Promise<void>;
+        fd_advise(offset: FileSize, len: FileSize, advice: Advice): Promise<void>;
         fd_allocate?(offset: FileSize, len: FileSize): Promise<void>;
         fd_close?(): Promise<void>;
         fd_datasync?(): Promise<void>;

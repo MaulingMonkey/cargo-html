@@ -142,10 +142,7 @@ namespace wasi {
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
         i.wasi_snapshot_preview1.fd_advise = function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, RIGHTS_FD_ADVISE, async e => {
-            if (e.handle.fd_advise === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
+            advice_validate(advice);
             const r = e.handle.fd_advise(offset, len, advice);
             if (e.handle.async) await r;
             return ERRNO_SUCCESS;

@@ -33,6 +33,8 @@ namespace wasi.fs {
             }
         }
 
+        fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
+
         fd_tell(): FileSize {
             return BigInt(this.position) as FileSize;
         }

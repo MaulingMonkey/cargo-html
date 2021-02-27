@@ -25,6 +25,8 @@ namespace wasi.fs {
             // noop
         }
 
+        fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
+
         fd_filestat_get(): FileStat {
             return {
                 dev:            0n as Device,
