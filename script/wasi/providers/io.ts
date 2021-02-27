@@ -81,7 +81,7 @@ namespace wasi {
             }, ERRNO_ASYNCIFY);
         }
 
-        function wrap_path(fd: Fd, path_ptr: ptr, path_len: usize, op: (handle: Handle | HandleAsync, path: string) => Promise<Errno>): Errno {
+        function wrap_path(fd: Fd, _lookup: LookupFlags | undefined, path_ptr: ptr, path_len: usize, op: (handle: Handle | HandleAsync, path: string) => Promise<Errno>): Errno {
             const name = trace ? get_io_caller_name() : undefined;
             return asyncifier.asyncify(async () => {
                 const path = memory.read_string(path_ptr, +0 as usize, path_len);
@@ -111,11 +111,9 @@ namespace wasi {
             if (handle.fd_advise === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_advise(offset, len, advice);
-            } else {
-                handle.fd_advise(offset, len, advice);
             }
+            const r = handle.fd_advise(offset, len, advice);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
@@ -123,11 +121,9 @@ namespace wasi {
             if (handle.fd_allocate === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_allocate(offset, len);
-            } else {
-                handle.fd_allocate(offset, len);
             }
+            const r = handle.fd_allocate(offset, len);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
@@ -135,11 +131,9 @@ namespace wasi {
             if (handle.fd_close === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_close();
-            } else {
-                handle.fd_close();
             }
+            const r = handle.fd_close();
+            if (handle.async) await r;
             delete FDS[fd];
             return ERRNO_SUCCESS;
         })}
@@ -148,11 +142,9 @@ namespace wasi {
             if (handle.fd_datasync === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_datasync();
-            } else {
-                handle.fd_datasync();
             }
+            const r = handle.fd_datasync();
+            if (handle.async) await r;
             delete FDS[fd];
             return ERRNO_SUCCESS;
         })}
@@ -175,11 +167,9 @@ namespace wasi {
             if (handle.fd_fdstat_set_flags === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_fdstat_set_flags(flags);
-            } else {
-                handle.fd_fdstat_set_flags(flags);
             }
+            const r = handle.fd_fdstat_set_flags(flags);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
@@ -187,11 +177,9 @@ namespace wasi {
             if (handle.fd_fdstat_set_rights === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
-            } else if (handle.async) {
-                await handle.fd_fdstat_set_rights(rights);
-            } else {
-                handle.fd_fdstat_set_rights(rights);
             }
+            const r = handle.fd_fdstat_set_rights(rights);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
@@ -380,11 +368,9 @@ namespace wasi {
             if (handle.fd_sync === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS;
-            } else if (handle.async) {
-                await handle.fd_sync();
-            } else {
-                handle.fd_sync();
-            }
+            };
+            const r = handle.fd_sync();
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
@@ -404,7 +390,7 @@ namespace wasi {
 
         i.wasi_snapshot_preview1.fd_write = function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_write === undefined) {
-                if (trace) console.error("fd_write(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
+                if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS; // handle does not support operation
             }
 
@@ -419,24 +405,20 @@ namespace wasi {
             return ERRNO_SUCCESS;
         })}
 
-        // TODO: more I/O
-
-        i.wasi_snapshot_preview1.path_create_directory = function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
+        i.wasi_snapshot_preview1.path_create_directory = function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, undefined, path_ptr, path_len, async (handle, path) => {
             if (handle.path_create_directory === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS;
-            } else if (handle.async) {
-                await handle.path_create_directory(path);
-            } else {
-                handle.path_create_directory(path);
             }
+            const r = await handle.path_create_directory(path);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
-        i.wasi_snapshot_preview1.path_filestat_get = function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
+        i.wasi_snapshot_preview1.path_filestat_get = function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_path(fd, flags, path_ptr, path_len, async (handle, path) => {
             var stat : FileStat;
             if (handle.path_filestat_get === undefined) {
-                if (trace) console.error("path_filestat_get(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
+                if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS; // handle does not support operation
             } else if (handle.async) {
                 stat = await handle.path_filestat_get(flags, path);
@@ -444,6 +426,37 @@ namespace wasi {
                 stat = handle.path_filestat_get(flags, path);
             }
             write_filestat(memory, buf, 0 as usize, stat);
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_filestat_set_times = function path_filestat_set_times(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_path(fd, flags, path_ptr, path_len, async (handle, path) => {
+            if (handle.path_filestat_set_times === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS; // handle does not support operation
+            }
+            const r = handle.path_filestat_set_times(flags, path, access_time, modified_time, fst_flags);;
+            if (handle.async) await r;
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_link = function path_link(old_fd: Fd, old_flags: LookupFlags, old_path_ptr: ptr, old_path_len: usize, new_fd: Fd, new_path_ptr: ptr, new_path_len: usize): Errno { return wrap_path(old_fd, old_flags, old_path_ptr, old_path_len, async (old_handle, old_path) => {
+            if (old_handle.path_link === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS; // handle does not support operation
+            }
+            const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
+            const new_handle = FDS[new_fd];
+            if (new_handle === undefined) {
+                if (trace) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
+                return ERRNO_BADF; // handle does not exist
+            } else if (old_handle.async) {
+                await old_handle.path_link(old_flags, old_path, new_handle, new_path);
+            } else if (new_handle.async) {
+                if (trace) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_XDEV (new_fd is async, old_fd isn't)", old_fd, old_path, new_fd, new_path);
+                return ERRNO_XDEV;
+            } else {
+                old_handle.path_link(old_flags, old_path, new_handle, new_path);
+            }
             return ERRNO_SUCCESS;
         })}
 
@@ -457,20 +470,125 @@ namespace wasi {
             fs_rights_inheriting:   Rights,
             fdflags:                FdFlags,
             opened_fd:              ptr,
-        ): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
+        ): Errno { return wrap_path(fd, dirflags, path_ptr, path_len, async (handle, path) => {
             if (handle.path_open === undefined) {
                 if (trace) console.error("path_open(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
                 return ERRNO_ACCESS; // handle does not support operation
             }
-
             var out_fd : Fd;
             if (handle.async) {
                 out_fd = alloc_handle_fd(await handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
             } else {
                 out_fd = alloc_handle_fd(handle.path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags));
             }
-
             memory.write_u32(opened_fd, +0, out_fd);
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_readlink = function path_readlink(fd: Fd, path_ptr: ptr, path_len: usize, buf: ptr, buf_len: usize, buf_used: ptr): Errno { return wrap_path(fd, undefined, path_ptr, path_len, async (handle, path) => {
+            memory.write_usize(buf_used, 0, 0 as usize);
+            var result;
+            if (handle.path_readlink === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            } else if (handle.async) {
+                result = await handle.path_readlink(path);
+            } else {
+                result = handle.path_readlink(path);
+            }
+            const r = new TextEncoder().encode(result);
+            const n = Math.min(buf_len, r.length);
+            for (let i=0; i<n; ++i) memory.write_u8(buf, i, r[i] as u8);
+            memory.write_usize(buf_used, 0, n as usize);
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_remove_directory = function path_remove_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, undefined, path_ptr, path_len, async (handle, path) => {
+            if (handle.path_remove_directory === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            }
+            const r = handle.path_remove_directory(path);
+            if (handle.async) await r;
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_rename = function path_rename(old_fd: Fd, old_path_ptr: ptr, old_path_len: usize, new_fd: Fd, new_path_ptr: ptr, new_path_len: usize): Errno { return wrap_path(old_fd, undefined, old_path_ptr, old_path_len, async (old_handle, old_path) => {
+            if (old_handle.path_rename === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            }
+            const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
+            const new_handle = FDS[new_fd];
+            if (new_handle === undefined) {
+                if (trace) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
+                return ERRNO_BADF; // handle does not exist
+            } else if (old_handle.async) {
+                await old_handle.path_rename(old_path, new_handle, new_path);
+            } else if (new_handle.async) {
+                if (trace) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_XDEV (new_fd is async, old_fd isn't)", old_fd, old_path, new_fd, new_path);
+                return ERRNO_XDEV;
+            } else {
+                old_handle.path_rename(old_path, new_handle, new_path);
+            }
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_symlink = function path_symlink(old_path_ptr: ptr, old_path_len: usize, fd: Fd, new_path_ptr: ptr, new_path_len: usize): Errno { return wrap_fd(fd, async handle => {
+            if (handle.path_symlink === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            }
+            const old_path = memory.read_string(old_path_ptr, +0 as usize, old_path_len);
+            const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
+            const r = handle.path_symlink(old_path, new_path);
+            if (handle.async) await r;
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.path_unlink_file = function path_unlink_file(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, undefined, path_ptr, path_len, async (handle, path) => {
+            if (handle.path_unlink_file === undefined) {
+                if (trace) console.error("handle doesn't implement operation");
+                return ERRNO_ACCESS;
+            }
+            const r = handle.path_unlink_file(path);
+            if (handle.async) await r;
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.sock_recv = function sock_recv(fd: Fd, ri_data_ptr: ptr, ri_data_len: usize, ri_flags: RiFlags, ro_datalen: ptr, ro_flags: ptr): Errno { return wrap_fd(fd, async handle => {
+            memory.write_usize(ro_datalen, +0, 0 as usize);
+            memory.write_u16(  ro_flags,   +0, 0 as RoFlags);
+            if (handle.sock_recv === undefined) return ERRNO_NOTSOCK;
+            var result;
+            if (handle.async) {
+                result = await handle.sock_recv(new IovecArray(memory, ri_data_ptr, ri_data_len), ri_flags);
+            } else {
+                result = handle.sock_recv(new IovecArray(memory, ri_data_ptr, ri_data_len), ri_flags);
+            }
+            const [len, flags] = result;
+            memory.write_usize(ro_datalen, +0, len  );
+            memory.write_u16(  ro_flags,   +0, flags);
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.sock_send = function sock_send(fd: Fd, si_data_ptr: ptr, si_data_len: usize, si_flags: SiFlags, so_datalen: ptr): Errno { return wrap_fd(fd, async handle => {
+            memory.write_usize(so_datalen, +0, 0 as usize);
+            if (handle.sock_send === undefined) return ERRNO_NOTSOCK;
+            var result;
+            if (handle.async) {
+                result = await handle.sock_send(new IovecArray(memory, si_data_ptr, si_data_len), si_flags);
+            } else {
+                result = handle.sock_send(new IovecArray(memory, si_data_ptr, si_data_len), si_flags);
+            }
+            memory.write_usize(so_datalen, +0, result);
+            return ERRNO_SUCCESS;
+        })}
+
+        i.wasi_snapshot_preview1.sock_shutdown = function sock_shutdown(fd: Fd, how: SdFlags): Errno { return wrap_fd(fd, async handle => {
+            if (handle.sock_shutdown === undefined) return ERRNO_NOTSOCK;
+            const r = handle.sock_shutdown(how);
+            if (handle.async) await r;
             return ERRNO_SUCCESS;
         })}
     }

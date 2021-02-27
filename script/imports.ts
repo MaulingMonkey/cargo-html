@@ -233,7 +233,7 @@ namespace wasi {
             /**
              * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_link),
              * [wasi=0.10.2](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1825)\]
-             * Create a hard link. Note: This is similar to [`linkat`](https://pubs.opengroup.org/onlinepubs/009695399/functions/linkat.html) in POSIX.
+             * Create a hard link. Note: This is similar to [`linkat`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/link.html) in POSIX.
              */
             path_link?: (old_fd: Fd, old_flags: LookupFlags, old_path_ptr: ptr, old_path_len: usize, new_fd: Fd, new_path_ptr: ptr, new_path_len: usize) => Errno,
 
@@ -250,7 +250,7 @@ namespace wasi {
             /**
              * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_readlink),
              * [wasi=0.10.2](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1854)\]
-             * Read the contents of a symbolic link. Note: This is similar to [`readlinkat`](https://pubs.opengroup.org/onlinepubs/009695399/functions/readlinkat.html) in POSIX.
+             * Read the contents of a symbolic link. Note: This is similar to [`readlinkat`](https://pubs.opengroup.org/onlinepubs/009695399/functions/readlink.html) in POSIX.
              */
             path_readlink?: (fd: Fd, path_ptr: ptr, path_len: usize, buf: ptr, buf_len: usize, buf_used: ptr) => Errno,
 
@@ -267,7 +267,7 @@ namespace wasi {
              * [wasi=0.10.2](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1868)\]
              * Rename a file or directory. Note: This is similar to [`renameat`](https://pubs.opengroup.org/onlinepubs/009695399/functions/renameat.html) in POSIX.
              */
-            path_rename?: (fd: Fd, old_path_ptr: ptr, old_path_len: usize, new_fd: Fd, new_path_ptr: ptr, new_path_len: usize) => Errno,
+            path_rename?: (old_fd: Fd, old_path_ptr: ptr, old_path_len: usize, new_fd: Fd, new_path_ptr: ptr, new_path_len: usize) => Errno,
 
             /**
              * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_symlink),

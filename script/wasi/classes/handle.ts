@@ -24,12 +24,20 @@ namespace wasi {
         fd_sync?(): void;
         fd_tell?(): FileSize;
         fd_write?(ciovec: CIovecArray): number;
-
-        // TODO: more I/O
-
         path_create_directory?(path: string): void;
         path_filestat_get?(flags: LookupFlags, path: string): FileStat;
+        path_filestat_set_times?(flags: LookupFlags, path: string, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): void;
+        path_link?(/* this: old_fd, */ old_flags: LookupFlags, old_path: string, new_handle: Handle, new_path: string): void;
         path_open?(dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Handle;
+        path_readlink?(path: string): string;
+        path_remove_directory?(path: string): void;
+        path_rename?(old_path: string, new_handle: Handle, new_path: string): void;
+        path_symlink?(old_path: string, /* this: fd, */ new_path: string): void;
+        path_unlink_file?(path: string): void;
+        // TODO: poll_oneoff options?
+        sock_recv?(ri_data: IovecArray, ri_flags: RiFlags): [usize, RoFlags];
+        sock_send?(si_data: CIovecArray, si_flags: SiFlags): usize;
+        sock_shutdown?(how: SdFlags): void;
     }
 
     export interface HandleAsync {
@@ -57,11 +65,19 @@ namespace wasi {
         fd_sync?(): Promise<void>;
         fd_tell?(): Promise<FileSize>;
         fd_write?(ciovec: CIovecArray): Promise<number>;
-
-        // TODO: more I/O
-
         path_create_directory?(path: string): Promise<void>;
         path_filestat_get?(flags: LookupFlags, path: string): Promise<FileStat>;
+        path_filestat_set_times?(flags: LookupFlags, path: string, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Promise<void>;
+        path_link?(/* this: old_fd, */ old_flags: LookupFlags, old_path: string, new_handle: Handle | HandleAsync, new_path: string): Promise<void>;
         path_open?(dirflags: LookupFlags, path: string, oflags: OFlags, fs_rights_base: Rights, fs_rights_inheriting: Rights, fdflags: FdFlags): Promise<Handle | HandleAsync>;
+        path_readlink?(path: string): Promise<string>;
+        path_remove_directory?(path: string): Promise<void>;
+        path_rename?(old_path: string, new_handle: Handle | HandleAsync, new_path: string): Promise<void>;
+        path_symlink?(old_path: string, /* this: fd, */ new_path: string): Promise<void>;
+        path_unlink_file?(path: string): Promise<void>;
+        // TODO: poll_oneoff options?
+        sock_recv?(ri_data: IovecArray, ri_flags: RiFlags): Promise<[usize, RoFlags]>;
+        sock_send?(si_data: CIovecArray, si_flags: SiFlags): Promise<usize>;
+        sock_shutdown?(how: SdFlags): Promise<void>;
     }
 }
