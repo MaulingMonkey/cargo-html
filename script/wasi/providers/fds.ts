@@ -156,10 +156,6 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_close = function fd_close(fd: Fd): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
-            if (e.handle.fd_close === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
             const r = e.handle.fd_close();
             if (e.handle.async) await r;
             delete FDS[fd];
@@ -362,21 +358,17 @@ namespace wasi {
             return ERRNO_SUCCESS;
         })}
 
-        i.wasi_snapshot_preview1.fd_renumber = function fd_renumber(from: Fd, to: Fd): Errno {
+        i.wasi_snapshot_preview1.fd_renumber = function fd_renumber(from: Fd, to: Fd): Errno { return asyncifier.asyncify(async () => {
             if (!(from in FDS)) return ERRNO_BADF;
-
-            // TODO: other implementations seem to allow clobbering `to`.
-            // perhaps I should instead try to close this FD?
-            // what if FDS[to] isn't closable or throws an error?
-            // should I make fd_close support mandatory for `Handle`?
-            // should I forbid falliable fd_close?
-            // should I ignore failing fd_close?
-            if (to in FDS) return ERRNO_PERM;
-
+            const e = FDS[to];
+            if (e !== undefined) {
+                const r = e.handle.fd_close();
+                if (e.handle.async) await r;
+            }
             FDS[to] = FDS[from];
             delete FDS[from];
             return ERRNO_SUCCESS;
-        }
+        }, ERRNO_ASYNCIFY)}
 
         i.wasi_snapshot_preview1.fd_seek = function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
             const rights = ((offset === 0n) && (whence === WHENCE_CUR)) ? RIGHTS_FD_TELL : RIGHTS_FD_SEEK;
