@@ -18,9 +18,10 @@ class MemoryLE {
         this.memory = memory;
     }
 
-    read_u8(   ptr: ptr, offset: number): u8       { return new DataView(this.memory.buffer).getUint8( ptr + offset      ) as u8; }
-    read_u16(  ptr: ptr, offset: number): u16      { return new DataView(this.memory.buffer).getUint16(ptr + offset, true) as u16; }
-    read_u32(  ptr: ptr, offset: number): u32      { return new DataView(this.memory.buffer).getUint32(ptr + offset, true) as u32; }
+    read_u8(   ptr: ptr, offset: number): u8       { return new DataView(this.memory.buffer).getUint8(    ptr + offset      ) as u8; }
+    read_u16(  ptr: ptr, offset: number): u16      { return new DataView(this.memory.buffer).getUint16(   ptr + offset, true) as u16; }
+    read_u32(  ptr: ptr, offset: number): u32      { return new DataView(this.memory.buffer).getUint32(   ptr + offset, true) as u32; }
+    read_u64(  ptr: ptr, offset: number): u64      { return new DataView(this.memory.buffer).getBigUint64(ptr + offset, true) as u64; }
     read_usize(ptr: ptr, offset: number): usize    { return this.read_u32(  ptr, offset) as any; }
     read_ptr(  ptr: ptr, offset: number): ptr      { return this.read_usize(ptr, offset) as any; }
 
@@ -39,27 +40,15 @@ class MemoryLE {
         return [lo, hi];
     }
 
-    read_u64(  ptr: ptr, offset: number): u64 {
-        let dv = new DataView(this.memory.buffer);
-        let lo = BigInt(dv.getUint32(ptr + offset + 0, true) as u32);
-        let hi = BigInt(dv.getUint32(ptr + offset + 4, true) as u32);
-        return (hi * BigInt(0x100000000) + lo) as u64;
-    }
-
     read_string(ptr: ptr, offset: usize, size: usize): string { return new TextDecoder().decode(this.slice8(ptr, offset, size)); }
 
     write_u8(      ptr: ptr, offset: number, value: u8     ) { new DataView(this.memory.buffer).setUint8( ptr + offset, value      ); }
     write_u16(     ptr: ptr, offset: number, value: u16    ) { new DataView(this.memory.buffer).setUint16(ptr + offset, value, true); }
     write_u32(     ptr: ptr, offset: number, value: u32    ) { new DataView(this.memory.buffer).setUint32(ptr + offset, value, true); }
+    write_u64(     ptr: ptr, offset: number, value: u64    ) { new DataView(this.memory.buffer).setBigUint64(ptr + offset, value, true); }
     write_usize(   ptr: ptr, offset: number, value: usize  ) { this.write_u32(  ptr, offset, value as any); }
     write_ptr(     ptr: ptr, offset: number, value: ptr    ) { this.write_usize(ptr, offset, value as any); }
     write_u64_pair(ptr: ptr, offset: number, [lo, hi]: [u32, u32]) {
-        this.write_u32(ptr, offset+0, lo);
-        this.write_u32(ptr, offset+4, hi);
-    }
-    write_u64(     ptr: ptr, offset: number, value: u64) {
-        let lo = Number(value & 0xFFFFFFFFn) as u32;
-        let hi = Number(value >> 32n) as u32;
         this.write_u32(ptr, offset+0, lo);
         this.write_u32(ptr, offset+4, hi);
     }
