@@ -198,7 +198,10 @@ namespace wasi.fs {
                         case "file":
                             if (directory) throw ERRNO_NOTDIR;
                             const h = new MemoryFileHandle(n, write);
-                            if (trunc) n.length = 0;
+                            if (trunc) {
+                                for (let k=0; k<n.length; ++k) n.data[k] = 0;
+                                n.length = 0;
+                            }
                             if (append) h.position = n.length;
                             handle = h;
                             break;
