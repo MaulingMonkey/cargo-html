@@ -45,6 +45,7 @@ namespace wasi.fs {
                 this.file.data = next_data;
             }
         }
+        fd_datasync() {} // TODO: sync fs if it has persistence?
 
         fd_tell(): FileSize {
             return BigInt(this.position) as FileSize;

@@ -163,10 +163,6 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_datasync = function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, RIGHTS_FD_DATASYNC, async e => {
-            if (e.handle.fd_datasync === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
             const r = e.handle.fd_datasync();
             if (e.handle.async) await r;
             delete FDS[fd];

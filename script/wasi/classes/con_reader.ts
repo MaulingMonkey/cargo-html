@@ -65,6 +65,7 @@ namespace wasi {
         async fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) { throw ERRNO_PIPE; }
         async fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_PIPE; }
         async fd_close() {}
+        async fd_datasync() {}
 
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());

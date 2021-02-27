@@ -24,6 +24,7 @@ namespace wasi {
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) { throw ERRNO_PIPE; }
         fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_PIPE; }
         fd_close() {}
+        fd_datasync() {}
 
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;
