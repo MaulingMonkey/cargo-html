@@ -1,6 +1,4 @@
-namespace wasi_snapshot_preview1 {}
-
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     /**
      * A super basic `wasi_snapshot_preview1` syscall provider.
      * All provided syscalls are implemented as:

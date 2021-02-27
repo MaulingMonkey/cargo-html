@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     type Mode = "raw" | "line-buffered";
 
     interface ConReaderSettings {

@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     /**
      * Provide `args_*` and `environ_*` syscalls.
      *

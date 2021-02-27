@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     /**
      * Provide the `proc_*` syscalls.  This has two available `style`s:
      *

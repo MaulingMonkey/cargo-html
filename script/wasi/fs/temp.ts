@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1.fs.temp {
+namespace wasi.fs.temp {
     interface Entry {
         node:       Dir | File;
         // timestamps

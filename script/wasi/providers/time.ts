@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     type Eventtype = u8;
     const EVENTTYPE_CLOCK       = <Eventtype>0;
     const EVENTTYPE_FD_READ     = <Eventtype>1;

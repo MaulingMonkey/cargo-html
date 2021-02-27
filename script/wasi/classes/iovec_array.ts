@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     export type CIovecArray = IovecArray;
     export class IovecArray {
         readonly memory:    MemoryLE;

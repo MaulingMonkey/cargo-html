@@ -1,4 +1,4 @@
-namespace wasi_snapshot_preview1 {
+namespace wasi {
     export class TextStreamWriter implements Handle {
         readonly async = false;
         readonly io : (text: string) => void;
