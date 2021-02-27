@@ -3,6 +3,8 @@ namespace wasi {
         readonly async = false;
         readonly io : (text: string) => void;
 
+        fdflags = FDFLAGS_NONE;
+
         static from_output(output: Output, color_hint: string, domtty: DomTty | undefined): TextStreamWriter | undefined {
             switch (output) {
                 case "badfd":           return undefined;
@@ -29,11 +31,13 @@ namespace wasi {
         fd_fdstat_get(): FdStat {
             return {
                 filetype:           FILETYPE_UNKNOWN,
-                flags:              FDFLAGS_NONE, // XXX?
+                flags:              this.fdflags,
                 rights_base:        RIGHTS_ALL_PIPE,
                 rights_inheriting:  RIGHTS_NONE,
             };
         }
+
+        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;

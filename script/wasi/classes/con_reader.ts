@@ -22,9 +22,10 @@ namespace wasi {
         readonly async = true;
 
         private readonly settings : ConReaderSettings;
-        private readonly pending_io : { max: number, callback: ((input: number[]) => void) }[] = [];
+        private readonly pending_io : { max: number, resolve: ((input: number[]) => void), reject: ((reason: any) => any) }[] = [];
         private readonly input : HTMLElement | null;
         private buf : number[] = [];
+        private fdflags = FDFLAGS_NONE;
 
         constructor(settings: ConReaderSettings) {
             this.settings = settings;
@@ -70,11 +71,13 @@ namespace wasi {
         async fd_fdstat_get(): Promise<FdStat> {
             return {
                 filetype:           FILETYPE_CHARACTER_DEVICE,
-                flags:              FDFLAGS_NONE, // XXX?
+                flags:              this.fdflags,
                 rights_base:        RIGHTS_ALL_PIPE,
                 rights_inheriting:  RIGHTS_NONE,
             };
         }
+
+        async fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());
@@ -91,8 +94,8 @@ namespace wasi {
         }
 
         private read(max: number): Promise<number[]> {
-            return new Promise((callback) => {
-                this.pending_io.push({max, callback});
+            return new Promise((resolve, reject) => {
+                this.pending_io.push({max, resolve, reject});
                 this.dispatch();
             });
         }
@@ -107,14 +110,19 @@ namespace wasi {
         }
 
         private dispatch() {
-            while (this.buf.length > 0 && this.pending_io.length > 0) {
+            while (this.pending_io.length > 0 && (this.buf.length > 0)) {
                 const io = this.pending_io.shift();
                 if (io === undefined) continue;
                 const nread = Math.min(this.buf.length, io.max);
                 const read = this.buf.slice(0, nread);
                 const after = this.buf.slice(nread);
                 this.buf = after;
-                (io.callback)(read);
+                (io.resolve)(read);
+            }
+            if (this.fdflags & FDFLAGS_NONBLOCK) for(;;) {
+                const io = this.pending_io.shift();
+                if (io === undefined) return;
+                io.reject(ERRNO_AGAIN);
             }
         }
 

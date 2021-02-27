@@ -6,6 +6,7 @@ namespace wasi.fs {
 
         position    = 0;
         blocking    = true;
+        fdflags     = FDFLAGS_NONE;
 
         debug(): string { return `MemoryFileHandle` }
 
@@ -50,11 +51,13 @@ namespace wasi.fs {
         fd_fdstat_get(): FdStat {
             return {
                 filetype:           FILETYPE_DIRECTORY,
-                flags:              FDFLAGS_NONE, // XXX?
+                flags:              this.fdflags,
                 rights_base:        RIGHTS_ALL_FILE,
                 rights_inheriting:  RIGHTS_NONE,
             };
         }
+
+        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
         fd_tell(): FileSize {
             return BigInt(this.position) as FileSize;
@@ -102,6 +105,7 @@ namespace wasi.fs {
 
         fd_write(ciovec: CIovecArray): usize {
             if (!this.write) throw ERRNO_NOTCAPABLE;
+            if (this.fdflags & FDFLAGS_APPEND) this.position = this.file.length;
 
             const total = Math.min(0xFFFFFFFF, ciovec.total_bytes());
             const max = this.position + total;

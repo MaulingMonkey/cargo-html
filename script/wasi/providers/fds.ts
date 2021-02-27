@@ -187,10 +187,6 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_fdstat_set_flags = function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, RIGHTS_FD_FDSTAT_SET_FLAGS, async e => {
-            if (e.handle.fd_fdstat_set_flags === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
             const r = e.handle.fd_fdstat_set_flags(flags);
             if (e.handle.async) await r;
             return ERRNO_SUCCESS;

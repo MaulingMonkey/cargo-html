@@ -7,6 +7,8 @@ namespace wasi.fs {
         //readonly path:      string;
         readonly prestat:   Uint8Array | undefined;
 
+        fdflags = FDFLAGS_NONE;
+
         //debug(): string { return `MemoryDirHandle(\`${this.path}\`)`; }
         debug(): string { return `MemoryDirHandle`; }
 
@@ -32,11 +34,13 @@ namespace wasi.fs {
         fd_fdstat_get(): FdStat {
             return {
                 filetype:           FILETYPE_DIRECTORY,
-                flags:              FDFLAGS_NONE, // XXX?
+                flags:              this.fdflags,
                 rights_base:        RIGHTS_ALL_DIR,
                 rights_inheriting:  RIGHTS_ALL,
             };
         }
+
+        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
         fd_filestat_get(): FileStat {
             return {
@@ -199,6 +203,7 @@ namespace wasi.fs {
                             handle = h;
                             break;
                     }
+                    handle.fd_fdstat_set_flags(fdflags);
                     return handle;
                 } else {
                     switch (name) {
@@ -221,7 +226,9 @@ namespace wasi.fs {
             }
 
             // empty path
-            return new MemoryDirHandle(this.fs, dirs);
+            const d = new MemoryDirHandle(this.fs, dirs);
+            d.fd_fdstat_set_flags(fdflags);
+            return d;
         }
     }
 }
