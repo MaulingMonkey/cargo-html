@@ -26,6 +26,7 @@ namespace wasi.fs {
         }
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
+        fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_ISDIR; }
 
         fd_filestat_get(): FileStat {
             return {

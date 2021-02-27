@@ -149,10 +149,7 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_allocate = function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, RIGHTS_FD_ALLOCATE, async e => {
-            if (e.handle.fd_allocate === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            }
+            if (len === 0n) throw ERRNO_INVAL;
             const r = e.handle.fd_allocate(offset, len);
             if (e.handle.async) await r;
             return ERRNO_SUCCESS;

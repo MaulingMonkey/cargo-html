@@ -34,6 +34,17 @@ namespace wasi.fs {
         }
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
+        fd_allocate(offset: FileSize, len: FileSize) {
+            if (!this.write) throw ERRNO_BADF;
+            const maxb = offset + len;
+            if (maxb >= Number.MAX_SAFE_INTEGER) throw ERRNO_FBIG;
+            const max = Number(maxb);
+            if (max > this.file.data.length) {
+                const next_data = new Uint8Array(Math.max(max, 2 * Math.max(128, this.file.data.length)));
+                for (let i=0; i<this.file.data.length; ++i) next_data[i] = this.file.data[i];
+                this.file.data = next_data;
+            }
+        }
 
         fd_tell(): FileSize {
             return BigInt(this.position) as FileSize;
