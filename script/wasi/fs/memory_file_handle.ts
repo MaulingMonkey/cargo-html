@@ -1,6 +1,7 @@
 namespace wasi.fs {
     export class MemoryFileHandle implements Handle {
         readonly async = false;
+        readonly fs:    io.memory.FileSystem;
         readonly file:  io.memory.File;
         readonly write: boolean;
 
@@ -10,7 +11,7 @@ namespace wasi.fs {
 
         debug(): string { return `MemoryFileHandle` }
 
-        constructor(file: io.memory.File, write: boolean) {
+        constructor(fs: io.memory.FileSystem, file: io.memory.File, write: boolean) {
             if (write && !file.writeable) throw ERRNO_ROFS;
 
             if (write) {
@@ -22,8 +23,9 @@ namespace wasi.fs {
                 ++file.readers;
             }
 
-            this.file = file;
-            this.write = write;
+            this.fs     = fs;
+            this.file   = file;
+            this.write  = write;
         }
 
         fd_close() {
@@ -84,9 +86,9 @@ namespace wasi.fs {
                 filetype:       FILETYPE_REGULAR_FILE,
                 nlink:          0n as LinkCount,
                 size:           BigInt(this.file.length) as FileSize,
-                access_time:    0n as TimeStamp,
-                modified_time:  0n as TimeStamp,
-                change_time:    0n as TimeStamp,
+                access_time:    this.file.last_access_time,
+                modified_time:  this.file.last_modified_time,
+                change_time:    this.file.last_change_time,
             };
         }
 
@@ -98,6 +100,14 @@ namespace wasi.fs {
                 for (let i=smol; i<this.file.length; ++i) this.file.data[i] = 0;
                 this.file.length = smol;
             }
+        }
+
+        fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) {
+            const now = this.fs.now();
+            if      (fst_flags & FSTFLAGS_ATIM)     this.file.last_access_time = access_time;
+            else if (fst_flags & FSTFLAGS_ATIM_NOW) this.file.last_access_time = now;
+            if      (fst_flags & FSTFLAGS_MTIM)     this.file.last_modified_time = modified_time;
+            else if (fst_flags & FSTFLAGS_MTIM_NOW) this.file.last_modified_time = now;
         }
 
         fd_read(iovec: IovecArray): usize {

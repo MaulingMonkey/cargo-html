@@ -1,13 +1,18 @@
 namespace io.memory {
     export class FileSystem {
         next_node_id: number = 2;
+        private readonly _init = this.now();
         readonly root: Dir = {
-            type:       "dir",
-            node:       1,
-            children:   {},
-            listable:   true,
-            readable:   true,
-            writeable:  true,
+            type:               "dir",
+            node:               1,
+            children:           {},
+            created_time:       this._init,
+            last_access_time:   this._init,
+            last_modified_time: this._init,
+            last_change_time:   this._init,
+            listable:           true,
+            readable:           true,
+            writeable:          true,
         };
 
         init_dir(path: string): Dir {
@@ -22,13 +27,18 @@ namespace io.memory {
                 let name = path.substring(slash+1, next_slash);
                 const existing = dir.children[name];
                 if (existing === undefined) {
+                    const now = this.now();
                     dir = dir.children[name] = {
-                        type:       "dir",
-                        node:       this.next_node_id++,
-                        children:   {},
-                        listable:   true,
-                        readable:   true,
-                        writeable:  true,
+                        type:               "dir",
+                        node:               this.next_node_id++,
+                        children:           {},
+                        created_time:       now,
+                        last_access_time:   now,
+                        last_modified_time: now,
+                        last_change_time:   now,
+                        listable:           true,
+                        readable:           true,
+                        writeable:          true,
                     };
                 } else if (existing.type === "dir") {
                     dir = existing;
@@ -51,17 +61,26 @@ namespace io.memory {
             for (let i=0; i<length; ++i) data[i] = src.charCodeAt(i);
 
             if (name in parent.children) throw `init_file: \`${path}\` already exists`;
+            const now = this.now();
             const file = parent.children[name] = {
-                type:       "file",
-                node:       this.next_node_id++,
+                type:               "file",
+                node:               this.next_node_id++,
                 data,
                 length,
-                readers:    0,
-                writers:    0,
-                readable:   true,
-                writeable:  true,
+                created_time:       now,
+                last_access_time:   now,
+                last_modified_time: now,
+                last_change_time:   now,
+                readers:            0,
+                writers:            0,
+                readable:           true,
+                writeable:          true,
             };
             return file;
+        }
+
+        now(): wasi.TimeStamp {
+            return 0n as wasi.TimeStamp;
         }
 
         // ...
@@ -76,6 +95,12 @@ namespace io.memory {
         // core data
         data:       Uint8Array;
         length:     number;
+
+        // meta data
+        created_time:       wasi.TimeStamp,
+        last_access_time:   wasi.TimeStamp,
+        last_modified_time: wasi.TimeStamp,
+        last_change_time:   wasi.TimeStamp,
 
         // locks
         readers:    number;
@@ -93,6 +118,12 @@ namespace io.memory {
 
         // core data
         children: { [name: string]: Node };
+
+        // meta data
+        created_time:       wasi.TimeStamp,
+        last_access_time:   wasi.TimeStamp,
+        last_modified_time: wasi.TimeStamp,
+        last_change_time:   wasi.TimeStamp,
 
         // access control
         listable:   boolean;

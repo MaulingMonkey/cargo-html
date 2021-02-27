@@ -12,7 +12,7 @@ namespace wasi {
         fd_fdstat_set_flags(flags: FdFlags): void;
         fd_filestat_get(): FileStat;
         fd_filestat_set_size(size: FileSize): void;
-        fd_filestat_set_times?(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): void;
+        fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): void;
         fd_pread?(iovec: IovecArray, offset: FileSize): number;
         fd_prestat_dir_name?(): Uint8Array;
         fd_prestat_get?(): PreStat;
@@ -52,7 +52,7 @@ namespace wasi {
         fd_fdstat_set_flags(flags: FdFlags): Promise<void>;
         fd_filestat_get(): Promise<FileStat>;
         fd_filestat_set_size(size: FileSize): Promise<void>;
-        fd_filestat_set_times?(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Promise<void>;
+        fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Promise<void>;
         fd_pread?(iovec: IovecArray, offset: FileSize): Promise<number>;
         fd_prestat_dir_name?(): Promise<Uint8Array>;
         fd_prestat_get?(): Promise<PreStat>;

@@ -53,6 +53,7 @@ namespace wasi {
         }
 
         fd_filestat_set_size(size: FileSize) { throw ERRNO_SPIPE; }
+        fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) { throw ERRNO_SPIPE; }
 
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;

@@ -28,7 +28,7 @@ namespace wasi.fs {
         }
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
-        fd_allocate(offset: FileSize, len: FileSize) { throw ERRNO_ISDIR; }
+        fd_allocate(_offset: FileSize, _len: FileSize) { throw ERRNO_ISDIR; }
         fd_datasync() {} // TODO: sync fs if it has persistence?
 
         fd_fdstat_get(): FdStat {
@@ -49,13 +49,21 @@ namespace wasi.fs {
                 filetype:       FILETYPE_DIRECTORY,
                 nlink:          0n as LinkCount,
                 size:           0n as FileSize,
-                access_time:    0n as TimeStamp,
-                modified_time:  0n as TimeStamp,
-                change_time:    0n as TimeStamp,
+                access_time:    this.leaf.last_access_time,
+                modified_time:  this.leaf.last_modified_time,
+                change_time:    this.leaf.last_change_time,
             };
         }
 
         fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
+
+        fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) {
+            const now = this.fs.now();
+            if      (fst_flags & FSTFLAGS_ATIM)     this.leaf.last_access_time = access_time;
+            else if (fst_flags & FSTFLAGS_ATIM_NOW) this.leaf.last_access_time = now;
+            if      (fst_flags & FSTFLAGS_MTIM)     this.leaf.last_modified_time = modified_time;
+            else if (fst_flags & FSTFLAGS_MTIM_NOW) this.leaf.last_modified_time = now;
+        }
 
         fd_prestat_dir_name(): Uint8Array {
             if (this.prestat === undefined) throw ERRNO_NOTCAPABLE;
@@ -82,13 +90,18 @@ namespace wasi.fs {
                             const dir = dirs[dirs.length-1];
                             if (name in dir.children) throw ERRNO_EXIST;
                             if (!(dir.writeable)) throw ERRNO_ROFS;
+                            const now = this.fs.now();
                             dir.children[name] = {
-                                type: "dir",
-                                node: this.fs.next_node_id++,
-                                children:   {},
-                                listable:   true,
-                                readable:   true,
-                                writeable:  true,
+                                type:               "dir",
+                                node:               this.fs.next_node_id++,
+                                children:           {},
+                                created_time:       now,
+                                last_access_time:   now,
+                                last_modified_time: now,
+                                last_change_time:   now,
+                                listable:           true,
+                                readable:           true,
+                                writeable:          true,
                             };
                             break;
                     }
@@ -167,24 +180,34 @@ namespace wasi.fs {
                             else if (!creat) throw ERRNO_NOENT;
                             else if (!parent.writeable) throw ERRNO_ROFS;
                             else if (directory) {
+                                const now = this.fs.now();
                                 n = parent.children[name] = {
-                                    type:       "dir",
-                                    node:       this.fs.next_node_id++,
-                                    children:   {},
-                                    listable:   true,
-                                    readable:   true,
-                                    writeable:  true,
+                                    type:               "dir",
+                                    node:               this.fs.next_node_id++,
+                                    children:           {},
+                                    created_time:       now,
+                                    last_access_time:   now,
+                                    last_modified_time: now,
+                                    last_change_time:   now,
+                                    listable:           true,
+                                    readable:           true,
+                                    writeable:          true,
                                 };
                             } else {
+                                const now = this.fs.now();
                                 n = parent.children[name] = {
-                                    type:       "file",
-                                    node:       this.fs.next_node_id++,
-                                    data:       new Uint8Array(128),
-                                    length:     0,
-                                    readable:   true,
-                                    writeable:  true,
-                                    readers:    0,
-                                    writers:    0,
+                                    type:               "file",
+                                    node:               this.fs.next_node_id++,
+                                    data:               new Uint8Array(128),
+                                    length:             0,
+                                    created_time:       now,
+                                    last_access_time:   now,
+                                    last_modified_time: now,
+                                    last_change_time:   now,
+                                    readable:           true,
+                                    writeable:          true,
+                                    readers:            0,
+                                    writers:            0,
                                 };
                             }
                             break;
@@ -199,7 +222,7 @@ namespace wasi.fs {
                             break;
                         case "file":
                             if (directory) throw ERRNO_NOTDIR;
-                            const h = new MemoryFileHandle(n, write);
+                            const h = new MemoryFileHandle(this.fs, n, write);
                             if (trunc) {
                                 for (let k=0; k<n.length; ++k) n.data[k] = 0;
                                 n.length = 0;

@@ -92,6 +92,7 @@ namespace wasi {
         }
 
         async fd_filestat_set_size(size: FileSize) { throw ERRNO_SPIPE; }
+        async fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) { throw ERRNO_SPIPE; }
 
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());

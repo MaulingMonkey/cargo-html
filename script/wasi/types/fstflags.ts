@@ -18,4 +18,8 @@ namespace wasi {
 
     /** Adjust the last data modification timestamp to the time of clock clockid::realtime. */
     export const FSTFLAGS_MTIM_NOW = <FstFlags>(1 << 3);
+
+    export function validate_fst_flags(flags: FstFlags) {
+        if ((flags & 0xF) !== flags) throw ERRNO_INVAL;
+    }
 }

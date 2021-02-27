@@ -214,14 +214,9 @@ namespace wasi {
         })}
 
         i.wasi_snapshot_preview1.fd_filestat_set_times = function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, RIGHTS_FD_FILESTAT_SET_TIMES, async e => {
-            if (e.handle.fd_filestat_set_times === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            } else if (e.handle.async) {
-                await e.handle.fd_filestat_set_times(access_time, modified_time, fst_flags);
-            } else {
-                e.handle.fd_filestat_set_times(access_time, modified_time, fst_flags);
-            }
+            validate_fst_flags(fst_flags);
+            const r = e.handle.fd_filestat_set_times(access_time, modified_time, fst_flags);
+            if (e.handle.async) await r;
             return ERRNO_SUCCESS;
         })}
 
