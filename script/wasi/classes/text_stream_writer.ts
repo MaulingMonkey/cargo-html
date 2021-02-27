@@ -39,6 +39,19 @@ namespace wasi {
 
         fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
+        fd_filestat_get(): FileStat {
+            return {
+                dev:            0n as Device,
+                ino:            0n as Inode,
+                filetype:       FILETYPE_UNKNOWN,
+                nlink:          0n as LinkCount,
+                size:           0n as FileSize,
+                access_time:    0n as TimeStamp,
+                modified_time:  0n as TimeStamp,
+                change_time:    0n as TimeStamp,
+            };
+        }
+
         fd_write(ciovec: CIovecArray): number {
             var nwritten = 0;
             var text = "";

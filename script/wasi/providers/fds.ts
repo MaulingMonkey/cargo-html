@@ -171,11 +171,8 @@ namespace wasi {
 
         i.wasi_snapshot_preview1.fd_fdstat_get = function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
             var result : FdStat;
-            if (e.handle.async) {
-                result = await e.handle.fd_fdstat_get();
-            } else {
-                result = e.handle.fd_fdstat_get();
-            }
+            if (e.handle.async) result = await e.handle.fd_fdstat_get();
+            else                result = e.handle.fd_fdstat_get();
             result = {
                 filetype:           result.filetype,
                 flags:              result.flags,
@@ -204,14 +201,8 @@ namespace wasi {
 
         i.wasi_snapshot_preview1.fd_filestat_get = function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, RIGHTS_FD_FILESTAT_GET, async e => {
             var result : FileStat;
-            if (e.handle.fd_filestat_get === undefined) {
-                if (trace) console.error("operation not implemented");
-                return _ERRNO_FUNC_MISSING; // handle does not support operation
-            } else if (e.handle.async) {
-                result = await e.handle.fd_filestat_get();
-            } else {
-                result = e.handle.fd_filestat_get();
-            }
+            if (e.handle.async) result = await e.handle.fd_filestat_get();
+            else                result = e.handle.fd_filestat_get();
             write_filestat(memory, buf, 0 as usize, result);
             return ERRNO_SUCCESS;
         })}

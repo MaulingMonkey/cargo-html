@@ -78,6 +78,18 @@ namespace wasi {
         }
 
         async fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
+        async fd_filestat_get(): Promise<FileStat> {
+            return {
+                dev:            0n as Device,
+                ino:            0n as Inode,
+                filetype:       FILETYPE_CHARACTER_DEVICE,
+                nlink:          0n as LinkCount,
+                size:           0n as FileSize,
+                access_time:    0n as TimeStamp,
+                modified_time:  0n as TimeStamp,
+                change_time:    0n as TimeStamp,
+            };
+        }
 
         async fd_read(iovec: IovecArray): Promise<number> {
             const read = await this.read(iovec.total_bytes());
