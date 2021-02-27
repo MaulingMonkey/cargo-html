@@ -45,16 +45,15 @@ namespace wasi_snapshot_preview1 {
      * *    `"zero"`                - Pretend it's Jan 1st, 1970, and that all execution is instantanious.
      * *    `"nondeterministic"`    - Allow the real world to leak in, code to self-measure, and [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
      */
-    export function time(memory: MemoryLE, {sleep, clock}: { sleep: "disabled" | "skip" | "busy-wait" | Asyncifier, clock: "disabled" | "zero" | "nondeterministic" }) {
+    export function time(i: Imports, memory: MemoryLE, {sleep, clock}: { sleep: "disabled" | "skip" | "busy-wait" | Asyncifier, clock: "disabled" | "zero" | "nondeterministic" }) {
         var real_start = 0;
         try { real_start = Date.now(); } catch (e) {}
 
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#sched_yield
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907
-        var sched_yield : () => Errno;
         switch (sleep) {
             case "disabled":
-                sched_yield = function sched_yield_disabled(): Errno {
+                i.wasi_snapshot_preview1.sched_yield = function sched_yield_disabled(): Errno {
                     console.error("sched_yield: sleeping has been disabled");
                     debugger;
                     return ERRNO_NOTCAPABLE;
@@ -62,10 +61,10 @@ namespace wasi_snapshot_preview1 {
                 break;
             case "skip":
             case "busy-wait":
-                sched_yield = function sched_yield_skip(): Errno { return ERRNO_SUCCESS; }
+                i.wasi_snapshot_preview1.sched_yield = function sched_yield_skip(): Errno { return ERRNO_SUCCESS; }
                 break;
             default:
-                sched_yield = function sched_yield_async(): Errno { return sleep.asyncify(async () => {
+                i.wasi_snapshot_preview1.sched_yield = function sched_yield_async(): Errno { return sleep.asyncify(async () => {
                     await sleep_ms_async(0);
                     return ERRNO_SUCCESS;
                 }, ERRNO_ASYNCIFY)}
@@ -138,17 +137,16 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         }
 
-        var poll_oneoff : (in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr) => Errno;
         switch (sleep) {
             case "disabled":
-                poll_oneoff = function poll_oneoff_disabled(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+                i.wasi_snapshot_preview1.poll_oneoff = function poll_oneoff_disabled(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
                     console.error("poll_oneoff: sleeping has been disabled");
                     debugger;
                     return ERRNO_NOTCAPABLE;
                 };
                 break;
             case "skip":
-                poll_oneoff = function poll_oneoff_skip(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+                i.wasi_snapshot_preview1.poll_oneoff = function poll_oneoff_skip(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
                     try {
                         if (in_nsubs == 0) return ERRNO_SUCCESS;
                         const parsed = parse_poll_oneoff(in_subs, out_events, in_nsubs, out_nevents_ptr);
@@ -163,7 +161,7 @@ namespace wasi_snapshot_preview1 {
                 };
                 break;
             case "busy-wait":
-                poll_oneoff = function poll_oneoff_busy_wait(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+                i.wasi_snapshot_preview1.poll_oneoff = function poll_oneoff_busy_wait(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
                     try {
                         if (in_nsubs == 0) return ERRNO_SUCCESS;
                         const parsed = parse_poll_oneoff(in_subs, out_events, in_nsubs, out_nevents_ptr);
@@ -178,7 +176,7 @@ namespace wasi_snapshot_preview1 {
                 };
                 break;
             default:
-                poll_oneoff = function poll_oneoff_async(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
+                i.wasi_snapshot_preview1.poll_oneoff = function poll_oneoff_async(in_subs: ptr, out_events: ptr, in_nsubs: usize, out_nevents_ptr: ptr): Errno {
                     return sleep.asyncify(async () => {
                         try {
                             if (in_nsubs == 0) return ERRNO_SUCCESS;
@@ -195,7 +193,5 @@ namespace wasi_snapshot_preview1 {
                 };
                 break;
         }
-
-        return { sched_yield, poll_oneoff };
     }
 }

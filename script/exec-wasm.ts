@@ -35,28 +35,26 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     // Setup WASM environment
     const wasm_exports = {}; // we need to be able to resolve imports to not yet defined exports
     const memory : MemoryLE = new MemoryLE(<any>undefined);
-    const imports = Object.assign({
-        wasi_snapshot_preview1: Object.assign({},
-            Object.assign({},
-                wasi_snapshot_preview1.nyi      (),
-                wasi_snapshot_preview1.env      (memory, args, settings.env || {}),
-                wasi_snapshot_preview1.random   (memory, settings.random || determinism),
-            ),
-            Object.assign({},
-                wasi_snapshot_preview1.time     (memory, { sleep: settings.sleep === "nondeterministic" ? (asyncifier || "busy-wait") : (settings.sleep || "busy-wait"), clock: settings.clock || determinism }),
-                wasi_snapshot_preview1.signals  (memory, domtty, settings),
-            ),
-        ),
-    }, (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") ? __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports) : {});
-    if (asyncifier !== undefined) Object.assign(
-        imports.wasi_snapshot_preview1,
-        wasi_snapshot_preview1.io(memory, asyncifier, domtty, settings),
-    );
+    const imports : Imports = {
+        env:                    {},
+        wasi_snapshot_preview1: {},
+    };
+
+    wasi_snapshot_preview1.nyi      (imports);
+    wasi_snapshot_preview1.env      (imports, memory, args, settings.env || {});
+    wasi_snapshot_preview1.random   (imports, memory, settings.random || determinism);
+    wasi_snapshot_preview1.time     (imports, memory, { sleep: settings.sleep === "nondeterministic" ? (asyncifier || "busy-wait") : (settings.sleep || "busy-wait"), clock: settings.clock || determinism });
+    wasi_snapshot_preview1.signals  (imports, memory, domtty, settings);
+    if (asyncifier !== undefined)   wasi_snapshot_preview1.io(imports, memory, asyncifier, domtty, settings);
     // XXX: need non-async I/O options
+
+    if (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") {
+        Object.assign(imports, __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports));
+    }
 
 
     // Instantiate and hook WASM
-    const inst = await WebAssembly.instantiate(compiled, imports);
+    const inst = await WebAssembly.instantiate(compiled, imports as any);
     const exports = <Exports><unknown>inst.exports;
     Object.assign(wasm_exports, exports);
     memory.memory = exports.memory;
@@ -71,7 +69,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
         } else {
             exports._start();
         }
-        imports.wasi_snapshot_preview1.proc_exit(0);
+        imports.wasi_snapshot_preview1.proc_exit!(0 as u32);
     } catch (e) {
         switch (e) {
             case "exit":

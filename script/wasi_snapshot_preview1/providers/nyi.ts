@@ -13,13 +13,13 @@ namespace wasi_snapshot_preview1 {
      * This allows you to run programs that require not yet implemented syscalls
      * until you reach the point of actually trying to call one of them.
      */
-    export function nyi() {
+    export function nyi(i: Imports) {
         function nyi(): Errno {
             debugger;
             return ERRNO_NOTCAPABLE;
         }
 
-        return {
+        Object.assign(i.wasi_snapshot_preview1, {
             args_get:                   function args_get                   (): Errno { return nyi(); },
             args_sizes_get:             function args_sizes_get             (): Errno { return nyi(); },
             environ_get:                function environ_get                (): Errno { return nyi(); },
@@ -48,7 +48,7 @@ namespace wasi_snapshot_preview1 {
             fd_tell:                    function fd_tell                    (): Errno { return nyi(); },
             fd_write:                   function fd_write                   (): Errno { return nyi(); },
             path_create_directory:      function path_create_directory      (): Errno { return nyi(); },
-            path_filestats_get:         function path_filestats_get         (): Errno { return nyi(); },
+            path_filestat_get:          function path_filestat_get          (): Errno { return nyi(); },
             path_filestat_set_times:    function path_filestat_set_times    (): Errno { return nyi(); },
             path_link:                  function path_link                  (): Errno { return nyi(); },
             path_open:                  function path_open                  (): Errno { return nyi(); },
@@ -65,6 +65,6 @@ namespace wasi_snapshot_preview1 {
             sock_recv:                  function sock_recv                  (): Errno { return nyi(); },
             sock_send:                  function sock_send                  (): Errno { return nyi(); },
             sock_shutdown:              function sock_shutdown              (): Errno { return nyi(); },
-        };
+        });
     }
 }

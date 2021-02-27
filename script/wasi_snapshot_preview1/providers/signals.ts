@@ -14,7 +14,7 @@ namespace wasi_snapshot_preview1 {
      *
      * A future implementation should probably provider Asyncifier support to let execution paused by `SIGNAL_STOP` etc. to resume if so desired.
      */
-    export function signals(_memory: MemoryLE, domtty: DomTty | undefined, settings: Settings) {
+    export function signals(i: Imports, _memory: MemoryLE, domtty: DomTty | undefined, settings: Settings) {
         const trace_exit_0 = TextStreamWriter.from_output(settings.trace_exit_0 || settings.stdout || (domtty ? "dom" : "console-log"  ), "#888", domtty);
         const trace_exit_n = TextStreamWriter.from_output(settings.trace_exit_n || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);
         const trace_signal = TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);
@@ -24,17 +24,13 @@ namespace wasi_snapshot_preview1 {
             throw fatal ? "fatal-signal" : "stop-signal";
         }
 
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#proc_exit
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1901
-        function proc_exit(code: number): never {
+        i.wasi_snapshot_preview1.proc_exit = function proc_exit(code: number): never {
             if (code === 0) trace_exit_0?.io(`process exited with code ${code}`);
             else            trace_exit_n?.io(`process exited with code ${code}`);
             throw "exit";
         }
 
-        // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#proc_raise
-        // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1904
-        function proc_raise(code: Signal): Errno {
+        i.wasi_snapshot_preview1.proc_raise = function proc_raise(code: Signal): Errno {
             switch (code) {
                 case SIGNAL_NONE:   return ERRNO_INVAL;
                 case SIGNAL_HUP:    sig("HUP",  true);
@@ -88,7 +84,5 @@ namespace wasi_snapshot_preview1 {
 
             return ERRNO_INVAL;
         }
-
-        return { proc_exit, proc_raise };
     }
 }

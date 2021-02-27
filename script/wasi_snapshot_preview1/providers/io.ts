@@ -2,7 +2,7 @@ namespace wasi_snapshot_preview1 {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function io(memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
+    export function io(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
         const trace = true;
 
         const DIR_TEMP = new fs.temp.Dir("/temp/", {});
@@ -107,9 +107,7 @@ namespace wasi_snapshot_preview1 {
 
         /////////////////////////////////////////////////// SYSCALLS ///////////////////////////////////////////////////
 
-        function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1692
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_advise
+        i.wasi_snapshot_preview1.fd_advise = function fd_advise(fd: Fd, offset: FileSize, len: FileSize, advice: Advice): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_advise === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -121,9 +119,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1695
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_allocate
+        i.wasi_snapshot_preview1.fd_allocate = function fd_allocate(fd: Fd, offset: FileSize, len: FileSize): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_allocate === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -135,9 +131,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_close(fd: Fd): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1698
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_close
+        i.wasi_snapshot_preview1.fd_close = function fd_close(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_close === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -150,9 +144,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1701
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_datasync
+        i.wasi_snapshot_preview1.fd_datasync = function fd_datasync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_datasync === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -165,9 +157,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1704
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_get
+        i.wasi_snapshot_preview1.fd_fdstat_get = function fd_fdstat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             var result : FdStat;
             if (handle.fd_fdstat_get === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -181,9 +171,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1707
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_flags
+        i.wasi_snapshot_preview1.fd_fdstat_set_flags = function fd_fdstat_set_flags(fd: Fd, flags: FdFlags): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_fdstat_set_flags === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -195,9 +183,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_fdstat_set_rights(fd: Fd, rights: Rights): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1710
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_fdstat_set_rights
+        i.wasi_snapshot_preview1.fd_fdstat_set_rights = function fd_fdstat_set_rights(fd: Fd, rights: Rights): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_fdstat_set_rights === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -209,10 +195,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1717
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_get
-
+        i.wasi_snapshot_preview1.fd_filestat_get = function fd_filestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             var result : FileStat;
             if (handle.fd_filestat_get === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -226,9 +209,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1719
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_size
+        i.wasi_snapshot_preview1.fd_filestat_set_size = function fd_filestat_set_size(fd: Fd, size: FileSize): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_filestat_set_size === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -240,9 +221,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1722
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_set_times
+        i.wasi_snapshot_preview1.fd_filestat_set_times = function fd_filestat_set_times(fd: Fd, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_filestat_set_times === undefined) {
                 if (trace) console.error("operation not implemented");
                 return ERRNO_ACCESS; // handle does not support operation
@@ -254,9 +233,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_pread(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, offset: FileSize, nread: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1730
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pread
+        i.wasi_snapshot_preview1.fd_pread = function fd_pread(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, offset: FileSize, nread: ptr): Errno { return wrap_fd(fd, async handle => {
             var result;
             if (handle.fd_pread === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -270,10 +247,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1741
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_dir_name
-
+        i.wasi_snapshot_preview1.fd_prestat_dir_name = function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, async handle => {
             var result : Uint8Array;
             if (handle.fd_prestat_dir_name === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -292,10 +266,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1739
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_prestat_get
-
+        i.wasi_snapshot_preview1.fd_prestat_get = function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, async handle => {
             var result : PreStat;
             if (handle.fd_prestat_get === undefined) {
                 if (trace) console.error("fd_prestat_get(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
@@ -309,9 +280,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_pwrite(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, offset: FileSize, nwritten: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1743
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_pwrite
+        i.wasi_snapshot_preview1.fd_pwrite = function fd_pwrite(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, offset: FileSize, nwritten: ptr): Errno { return wrap_fd(fd, async handle => {
             var result;
             if (handle.fd_pwrite === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -325,10 +294,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1752
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
-
+        i.wasi_snapshot_preview1.fd_read = function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_read === undefined) {
                 if (trace) console.error("fd_read(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
                 return ERRNO_ACCESS; // handle does not support operation
@@ -345,9 +311,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_readdir(fd: Fd, buf: ptr, buf_len: usize, cookie: DirCookie, buf_used: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1755
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_readdir
+        i.wasi_snapshot_preview1.fd_readdir = function fd_readdir(fd: Fd, buf: ptr, buf_len: usize, cookie: DirCookie, buf_used: ptr): Errno { return wrap_fd(fd, async handle => {
             var result;
             if (handle.fd_readdir === undefined) {
                 if (trace) console.error("operation not implemented");
@@ -382,10 +346,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_renumber(from: Fd, to: Fd): Errno {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1771
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_renumber
-
+        i.wasi_snapshot_preview1.fd_renumber = function fd_renumber(from: Fd, to: Fd): Errno {
             if (!(from in FDS)) return ERRNO_BADF;
 
             // TODO: other implementations seem to allow clobbering `to`.
@@ -401,9 +362,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         }
 
-        function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_seek
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1780
+        i.wasi_snapshot_preview1.fd_seek = function fd_seek(fd: Fd, offset: FileDelta, whence: Whence, new_offset: ptr): Errno { return wrap_fd(fd, async handle => {
             var result;
             if (handle.fd_seek === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
@@ -417,9 +376,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_sync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_sync
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1788
+        i.wasi_snapshot_preview1.fd_sync = function fd_sync(fd: Fd): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_sync === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS;
@@ -431,9 +388,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_tell(fd: Fd, offset: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_tell
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1791
+        i.wasi_snapshot_preview1.fd_tell = function fd_tell(fd: Fd, offset: ptr): Errno { return wrap_fd(fd, async handle => {
             var result;
             if (handle.fd_tell === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
@@ -447,11 +402,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1796
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_write
-            // https://nodejs.org/api/wasi.html
-
+        i.wasi_snapshot_preview1.fd_write = function fd_write(fd: Fd, ciovec_array_ptr: ptr, ciovec_array_len: usize, nwritten_ptr: ptr): Errno { return wrap_fd(fd, async handle => {
             if (handle.fd_write === undefined) {
                 if (trace) console.error("fd_write(%d, ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd);
                 return ERRNO_ACCESS; // handle does not support operation
@@ -470,9 +421,7 @@ namespace wasi_snapshot_preview1 {
 
         // TODO: more I/O
 
-        function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1802
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_create_directory
+        i.wasi_snapshot_preview1.path_create_directory = function path_create_directory(fd: Fd, path_ptr: ptr, path_len: usize): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
             if (handle.path_create_directory === undefined) {
                 if (trace) console.error("handle doesn't implement operation");
                 return ERRNO_ACCESS;
@@ -484,9 +433,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1805
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_filestat_get
+        i.wasi_snapshot_preview1.path_filestat_get = function path_filestat_get(fd: Fd, flags: LookupFlags, path_ptr: ptr, path_len: usize, buf: ptr): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
             var stat : FileStat;
             if (handle.path_filestat_get === undefined) {
                 if (trace) console.error("path_filestat_get(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
@@ -500,7 +447,7 @@ namespace wasi_snapshot_preview1 {
             return ERRNO_SUCCESS;
         })}
 
-        function path_open(
+        i.wasi_snapshot_preview1.path_open = function path_open(
             fd:                     Fd,
             dirflags:               LookupFlags,
             path_ptr:               ptr,
@@ -511,9 +458,6 @@ namespace wasi_snapshot_preview1 {
             fdflags:                FdFlags,
             opened_fd:              ptr,
         ): Errno { return wrap_path(fd, path_ptr, path_len, async (handle, path) => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1352
-            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#path_open
-
             if (handle.path_open === undefined) {
                 if (trace) console.error("path_open(%d, ..., \"%s\", ...) failed: ERRNO_ACCESS (handle doesn't implement operation)", fd, path);
                 return ERRNO_ACCESS; // handle does not support operation
@@ -529,35 +473,5 @@ namespace wasi_snapshot_preview1 {
             memory.write_u32(opened_fd, +0, out_fd);
             return ERRNO_SUCCESS;
         })}
-
-        return {
-            fd_advise,
-            fd_allocate,
-            fd_close,
-            fd_datasync,
-            fd_fdstat_get,
-            fd_fdstat_set_flags,
-            fd_fdstat_set_rights,
-            fd_filestat_get,
-            fd_filestat_set_size,
-            fd_filestat_set_times,
-            fd_pread,
-            fd_prestat_dir_name,
-            fd_prestat_get,
-            fd_pwrite,
-            fd_read,
-            fd_readdir,
-            fd_renumber,
-            fd_seek,
-            fd_sync,
-            fd_tell,
-            fd_write,
-
-            // TODO: more I/O
-
-            path_create_directory,
-            path_filestat_get,
-            path_open,
-        };
     }
 }

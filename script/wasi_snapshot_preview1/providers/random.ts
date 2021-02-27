@@ -29,7 +29,7 @@ namespace wasi_snapshot_preview1 {
      *      Potentially incredibly useful for bug repros.
      *      Potentially incredibly insecure.
      */
-    export function random(memory: MemoryLE, style: "disabled" | "insecure-nondeterministic" | "nondeterministic") {
+    export function random(i: Imports, memory: MemoryLE, style: "disabled" | "insecure-nondeterministic" | "nondeterministic") {
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#random_get
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1914
 
@@ -44,9 +44,15 @@ namespace wasi_snapshot_preview1 {
         }
 
         switch (style) {
-            case "disabled":                    return {};
-            case "insecure-nondeterministic":   return { random_get: ("crypto" in self) ? random_get_crypto : insecure_random_get_math_random };
-            case "nondeterministic":            console.assert("crypto" in self); return { random_get: random_get_crypto };
+            case "disabled":
+                break;
+            case "insecure-nondeterministic":
+                i.wasi_snapshot_preview1.random_get = ("crypto" in self) ? random_get_crypto : insecure_random_get_math_random;
+                break;
+            case "nondeterministic":
+                console.assert("crypto" in self);
+                i.wasi_snapshot_preview1.random_get = random_get_crypto;
+                break;
         }
     }
 }
