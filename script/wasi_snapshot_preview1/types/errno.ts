@@ -184,7 +184,7 @@ const ERRNO_NOTRECOVERABLE      = <Errno>56;
 /** Not a socket. */
 const ERRNO_NOTSOCK             = <Errno>57;
 
-/** Not supported, or operatin not supported on socket. */
+/** Not supported, or operation not supported on socket. */
 const ERRNO_NOTSUP              = <Errno>58;
 
 /** Inappropriate I/O control operation. */
