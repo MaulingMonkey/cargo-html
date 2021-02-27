@@ -102,7 +102,7 @@ namespace wasi {
              * [wasi=0.10.2](https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1710)\]
              * Adjust the rights associated with a file descriptor. This can only be used to remove rights, and returns `ERRNO_NOTCAPABLE` if called in a way that would attempt to add rights.
              */
-            fd_fdstat_set_rights?: (fd: Fd, rights: Rights) => Errno,
+            fd_fdstat_set_rights?: (fd: Fd, rights_base: Rights, rights_inheriting: Rights) => Errno,
 
             /**
              * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_filestat_get),

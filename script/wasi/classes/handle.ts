@@ -10,7 +10,6 @@ namespace wasi {
         fd_datasync?(): void;
         fd_fdstat_get?(): FdStat;
         fd_fdstat_set_flags?(flags: FdFlags): void;
-        fd_fdstat_set_rights?(rights: Rights): void;
         fd_filestat_get?(): FileStat;
         fd_filestat_set_size?(size: FileSize): void;
         fd_filestat_set_times?(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): void;
@@ -51,7 +50,6 @@ namespace wasi {
         fd_datasync?(): Promise<void>;
         fd_fdstat_get?(): Promise<FdStat>;
         fd_fdstat_set_flags?(flags: FdFlags): Promise<void>;
-        fd_fdstat_set_rights?(rights: Rights): Promise<void>;
         fd_filestat_get?(): Promise<FileStat>;
         fd_filestat_set_size?(size: FileSize): Promise<void>;
         fd_filestat_set_times?(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Promise<void>;

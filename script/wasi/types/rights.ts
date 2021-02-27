@@ -5,7 +5,24 @@ namespace wasi {
      */
     export type Rights = u64 & { _not_real: "rights" };
 
+    export function rights(...rights: Rights[]): Rights {
+        let r = 0n;
+        rights.forEach(r2 => {
+            switch (typeof r2) {
+                case "bigint":  r |= r2; break;
+                default:        console.error("BUG: invalid rights type"); debugger; break;
+            }
+        });
+        return r as Rights;
+    }
 
+
+
+    /** No rights bits */
+    export const RIGHTS_NONE = <Rights>0n;
+
+    /** All rights bits */
+    export const RIGHTS_ALL = <Rights>0xFFFFFFFFFFFFFFFFn;
 
     /** The right to invoke `fd_datasync`. If `path_open` is set, includes the right to invoke `path_open` with `fdflags::dsync`. */
     export const RIGHTS_FD_DATASYNC = <Rights>BigInt(1 << 0);

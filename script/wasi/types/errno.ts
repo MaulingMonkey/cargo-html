@@ -245,6 +245,12 @@ namespace wasi {
     /** Extension: Execution has been paused through asyncification. */
     export const ERRNO_ASYNCIFY            = <Errno>9001;
 
+
+
+    export const _ERRNO_RIGHTS_FAILED       = ERRNO_NOTCAPABLE;
+    export const _ERRNO_FUNC_MISSING        = ERRNO_NOTCAPABLE;
+
+
     export function errno_string(errno: Errno): string | undefined {
         switch (errno) {
             case ERRNO_SUCCESS:         return "SUCCESS";
