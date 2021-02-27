@@ -19,6 +19,7 @@ namespace wasi_snapshot_preview1 {
         fd_prestat_get?(): PreStat;
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): number;
         fd_read?(iovec: IovecArray): number;
+        fd_readdir?(cookie: DirCookie, maxbytes: usize): DirEnt[];
 
         // TODO: more I/O
 
@@ -48,6 +49,7 @@ namespace wasi_snapshot_preview1 {
         fd_prestat_get?(): Promise<PreStat>;
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): Promise<number>;
         fd_read?(iovec: IovecArray): Promise<number>;
+        fd_readdir?(cookie: DirCookie, maxbytes: usize): Promise<DirEnt[]>;
 
         // TODO: more I/O
 

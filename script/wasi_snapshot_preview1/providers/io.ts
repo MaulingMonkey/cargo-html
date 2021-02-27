@@ -335,7 +335,7 @@ namespace wasi_snapshot_preview1 {
         })}
 
         function fd_read(fd: Fd, iovec_array_ptr: ptr, iovec_array_len: usize, nread_ptr: ptr): Errno { return wrap_fd(fd, async (handle) => {
-            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1754
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1752
             // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_read
 
             if (handle.fd_read === undefined) {
@@ -351,6 +351,43 @@ namespace wasi_snapshot_preview1 {
                 nwritten = handle.fd_read(iovec);
             }
             memory.write_usize(nread_ptr, 0, nwritten as usize);
+            return ERRNO_SUCCESS;
+        })}
+
+        function fd_readdir(fd: Fd, buf: ptr, buf_len: usize, cookie: DirCookie, buf_used: ptr): Errno { return wrap_fd(fd, async (handle) => {
+            // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1755
+            // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#fd_readdir
+            var result;
+            if (handle.fd_readdir === undefined) {
+                if (trace) console.error("operation not implemented");
+                return ERRNO_ACCESS; // handle does not support operation
+            } else if (handle.async) {
+                result = await handle.fd_readdir(cookie, buf_len);
+            } else {
+                result = handle.fd_readdir(cookie, buf_len);
+            }
+
+            const dirent_header = new DataView(new Uint8Array(DIRENT_SIZE));
+            result.forEach(src => {
+                if (buf_len <= 0) return;
+                const name = new TextEncoder().encode(src.name);
+
+                dirent_header.setBigUint64(  0, src.next, true);
+                dirent_header.setBigUint64(  8, src.ino,  true);
+                dirent_header.setUint32(    16, name.length, true);
+                dirent_header.setUint8(     20, src.type);
+
+                var n = Math.min(buf_len, DIRENT_SIZE);
+                for (let i=0; i<n; ++i) memory.write_u8(buf, i, dirent_header.getUint8(i) as u8);
+                buf     = (buf + n) as ptr;
+                buf_len = (buf_len - n) as usize;
+
+                var n = Math.min(buf_len, name.length);
+                for (let i=0; i<n; ++i) memory.write_u8(buf, i, name[i] as u8);
+                buf     = (buf + n) as ptr;
+                buf_len = (buf_len - n) as usize;
+            });
+
             return ERRNO_SUCCESS;
         })}
 
@@ -453,6 +490,7 @@ namespace wasi_snapshot_preview1 {
             fd_prestat_get,
             fd_pwrite,
             fd_read,
+            fd_readdir,
 
             // TODO: more I/O
 
