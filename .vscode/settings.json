@@ -3,6 +3,9 @@
     "files.exclude": {
         "/**/.git": true,
         "/**/Cargo.lock": true,
-        "/target/*/*/*": true,
+
+        "**/target/**/{.*,*.d,*.pdb,*.json,*.TAG}": true,
+        "**/target/{debug,release}/{.fingerprint,build,deps,examples,incremental}": true,
+        "examples/target/{debug,release,wasm32*}": true,
     }
 }
