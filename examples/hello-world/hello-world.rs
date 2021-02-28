@@ -35,6 +35,10 @@ fn main() {
     assert!(std::fs::read_to_string("./path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
     assert!(std::fs::read_to_string("/path/to/some/subdir/asdf4.txt").unwrap() == "example text 4");
 
+    std::fs::rename("/home", "/homer").unwrap();
+    std::fs::rename("/homer", "/home").unwrap();
+    std::fs::rename("/homer", "/home").err().unwrap();
+
     for e in std::fs::read_dir("/").unwrap() {
         let e = e.unwrap();
         println!("{} {}", if e.path().is_dir() { "dir " } else { "file" }, e.path().display());

@@ -301,7 +301,25 @@ namespace wasi.fs {
 
         // TODO: path_readlink?
 
-        // TODO: path_rename
+        path_rename(old_path: string, new_handle: Handle, new_path: string) {
+            const old_handle = this;
+            if (!(new_handle instanceof MemoryDirHandle)) throw ERRNO_XDEV;
+            if (old_handle.fs !== new_handle.fs) throw ERRNO_XDEV; // inodes might collide
+
+            let [old_parents, old_name] = this      .path_parents_name(old_path);
+            let [new_parents, new_name] = new_handle.path_parents_name(new_path);
+            if (old_name === ".") { const leaf = old_parents.pop()!; const dir = old_parents[old_parents.length-1]; const n = find_node(dir, leaf); if (n === undefined) throw ERRNO_IO; old_name = n; }
+            if (new_name === ".") { const leaf = new_parents.pop()!; const dir = new_parents[new_parents.length-1]; const n = find_node(dir, leaf); if (n === undefined) throw ERRNO_IO; new_name = n; }
+            const old_dir = old_parents.pop();
+            const new_dir = new_parents.pop();
+            if (!old_dir) throw ERRNO_NOTDIR;
+            if (!new_dir) throw ERRNO_NOTDIR;
+            if (!(old_name in old_dir.children)) throw ERRNO_NOENT;
+            if (  new_name in new_dir.children ) throw ERRNO_EXIST; // XXX: Should this clobber instead?
+            const n = old_dir.children[old_name];
+            delete old_dir.children[old_name];
+            new_dir.children[new_name] = n;
+        }
 
         // TODO: path_symlink
 
@@ -331,6 +349,12 @@ namespace wasi.fs {
         const p = sanitize_path(path).split("/");
         const leaf = p.pop()!;
         return [p, leaf];
+    }
+
+    function find_node(dir: io.memory.Dir | undefined, node: io.memory.Node): string | undefined {
+        if (!dir) return undefined;
+        for (const name in dir.children) if (dir.children[name] === node) return name;
+        return undefined;
     }
 
     // XXX: wasi.ERRNO_INVAL might not be defined yet
