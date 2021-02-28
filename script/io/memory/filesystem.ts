@@ -79,9 +79,9 @@ namespace io.memory {
             return file;
         }
 
-        now(): wasi.TimeStamp {
-            return 0n as wasi.TimeStamp;
-        }
+        now(): wasi.TimeStamp { return 0n as wasi.TimeStamp; }  // TODO: proper system timestamps
+        file_commit() {}                                        // TODO: A file had it's last writer closed, should probably checkpoint / try to save data
+        sync() {}                                               // TODO: async syncronization for e.g. remote server sync?  How does this play with sync `Handle`s?
 
         // ...
     }

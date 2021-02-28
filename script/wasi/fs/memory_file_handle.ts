@@ -30,17 +30,17 @@ namespace wasi.fs {
 
         fd_close() {
             if (this.write) {
-                --this.file.writers;
+                if (--this.file.writers === 0) this.fs.file_commit();
             } else {
                 --this.file.readers;
             }
         }
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
-        fd_datasync() {} // TODO: sync fs if it has persistence?
+        fd_datasync() { this.fs.sync(); }
         fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
         fd_tell(): FileSize { return BigInt(this.position) as FileSize; }
-        fd_sync() {} // TODO: sync fs if it has persistence?
+        fd_sync() { this.fs.sync(); }
 
         fd_allocate(offset: FileSize, len: FileSize) {
             if (!this.write) throw ERRNO_BADF;

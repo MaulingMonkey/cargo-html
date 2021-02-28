@@ -23,10 +23,10 @@ namespace wasi.fs {
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
         fd_allocate(_offset: FileSize, _len: FileSize) { throw ERRNO_ISDIR; }
-        fd_datasync() {} // TODO: sync fs if it has persistence?
+        fd_datasync() { this.fs.sync(); }
         fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
         fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
-        fd_sync() {} // TODO: sync fs if it has persistence?
+        fd_sync() { this.fs.sync(); }
 
         fd_fdstat_get(): FdStat {
             return {
@@ -152,6 +152,8 @@ namespace wasi.fs {
             }
         }
 
+        // TODO: path_link?
+
         path_open(dirflags: LookupFlags, path: string, oflags: OFlags, _fs_rights_base: Rights, _fs_rights_inheriting: Rights, fdflags: FdFlags): wasi.Handle {
             const dirs = [...this.dirs];
 
@@ -275,5 +277,17 @@ namespace wasi.fs {
             d.fd_fdstat_set_flags(fdflags);
             return d;
         }
+
+        // TODO: path_readlink?
+
+        // TODO: path_remove_directory
+
+        // TODO: path_rename
+
+        // TODO: path_symlink
+
+        // TODO: path_unlik_file
+
+        // TODO: polling?
     }
 }
