@@ -232,16 +232,18 @@ namespace wasi {
         i.wasi_snapshot_preview1.fd_prestat_dir_name = function fd_prestat_dir_name(fd: Fd, path: ptr, path_len: usize): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
             if (e.handle.prestat_dir === undefined) return ERRNO_NOTCAPABLE;
             const name : Uint8Array = e.handle.prestat_dir;
+            console.assert(name[name.length-1] === 0); // name should've been preterminated with `\0`
             if (path_len < name.length) return ERRNO_NAMETOOLONG;
-            for (var i=0; i<name.length; ++i)           memory.write_u8(path, i, name[i] as u8);
-            for (var i=name.length; i<path_len; ++i)    memory.write_u8(path, name.length, 0 as u8);
+            for (var i=0; i<name.length; ++i) memory.write_u8(path, i, name[i] as u8);
             return ERRNO_SUCCESS;
         })}
 
         i.wasi_snapshot_preview1.fd_prestat_get = function fd_prestat_get(fd: Fd, buf: ptr): Errno { return wrap_fd(fd, RIGHTS_NONE, async e => {
             if (e.handle.prestat_dir === undefined) return ERRNO_NOTCAPABLE;
+            const name : Uint8Array = e.handle.prestat_dir;
+            console.assert(name[name.length-1] === 0); // name should've been preterminated with `\0`
             memory.write_u8     (buf, 0, 0 as u8); // PREOPENTYPE_DIR: https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#preopentype
-            memory.write_usize  (buf, 4, e.handle.prestat_dir.length as usize); // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-prestat_dir-record
+            memory.write_usize  (buf, 4, name.length as usize); // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#prestat_dir
             return ERRNO_SUCCESS;
         })}
 

@@ -16,7 +16,7 @@ namespace wasi.fs {
             this.fs     = fs;
             this.dirs   = dirs;
             this.leaf   = leaf;
-            if (prestat !== undefined) this.prestat_dir = new TextEncoder().encode(prestat);
+            if (prestat !== undefined) this.prestat_dir = new TextEncoder().encode(prestat+"\0");
         }
 
         fd_close() {} // noop
