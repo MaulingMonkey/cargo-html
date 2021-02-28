@@ -85,6 +85,8 @@ class DomTty {
     }
 
     private out_raw(text: string, color_hint?: string) {
+        const autoscroll = this.output.scrollHeight - Math.abs(this.output.scrollTop) - 1 <= this.output.clientHeight;
+
         if (text.indexOf("\x07") !== -1) beep();
         if (this.color !== undefined || this.background !== undefined) {
             const span = document.createElement("span");
@@ -100,6 +102,8 @@ class DomTty {
         } else {
             this.output.insertBefore(document.createTextNode(text), this.input);
         }
+
+        if (autoscroll) this.output.scrollTop = this.output.scrollHeight + 1 - this.output.clientHeight;
     }
 
     private color:              string | undefined = undefined;
