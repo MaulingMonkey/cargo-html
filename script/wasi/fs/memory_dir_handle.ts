@@ -64,7 +64,7 @@ namespace wasi.fs {
             if (cookie >= Number.MAX_SAFE_INTEGER)  throw ERRNO_INVAL;
 
             const r : DirEnt[] = [];
-            const entries = Object.entries(this.leaf.children);
+            const entries = Object.entries(this.leaf.children); // TODO: fix this source of non-deterministic enumeration? sort by filename?
             const utf8 = new TextEncoder();
 
             for (let i = Number(cookie); (i < entries.length) && (maxbytes > 0); ++i) {
@@ -89,50 +89,51 @@ namespace wasi.fs {
         path_create_directory(path: string) {
             const dirs = [...this.dirs];
 
-            path.split("/").forEach((name, i, components) => {
-                if (i === components.length - 1) {
-                    switch (name) {
-                        case "":    throw ERRNO_EXIST;
-                        case ".":   throw ERRNO_EXIST;
-                        case "..":  throw ERRNO_EXIST;
-                        default:
-                            const dir = dirs[dirs.length-1];
-                            if (name in dir.children) throw ERRNO_EXIST;
-                            if (!(dir.writeable)) throw ERRNO_ROFS;
-                            const now = this.fs.now();
-                            dir.children[name] = {
-                                type:               "dir",
-                                node:               this.fs.next_node_id++,
-                                children:           {},
-                                created_time:       now,
-                                last_access_time:   now,
-                                last_modified_time: now,
-                                last_change_time:   now,
-                                listable:           true,
-                                readable:           true,
-                                writeable:          true,
-                            };
-                            break;
-                    }
-                } else {
-                    switch (name) {
-                        case "":
-                        case ".":
-                            throw ERRNO_EXIST;
-                        case "..":
-                            dirs.pop();
-                            if (dirs.length === 0) throw ERRNO_NOENT; // popped root
-                            break;
-                        default:
-                            const dir = dirs[dirs.length-1];
-                            const child = dir.children[name];
-                            if (!child) throw ERRNO_NOENT;
-                            if (child.type !== "dir") throw ERRNO_NOTDIR;
-                            dirs.push(child);
-                            break;
-                    }
+            const components = sanitize_path(path).split("/");
+            for (let i=0; i<components.length-1; ++i) {
+                const name = components[i];
+                switch (name) {
+                    case "":
+                    case ".":
+                        throw ERRNO_EXIST;
+                    case "..":
+                        dirs.pop();
+                        if (dirs.length === 0) throw ERRNO_NOENT; // popped root
+                        break;
+                    default:
+                        const dir = dirs[dirs.length-1];
+                        const child = dir.children[name];
+                        if (!child) throw ERRNO_NOENT;
+                        if (child.type !== "dir") throw ERRNO_NOTDIR;
+                        dirs.push(child);
+                        break;
                 }
-            });
+            }
+
+            const name = components[components.length-1];
+
+            switch (name) {
+                case ".":   throw ERRNO_EXIST;
+                case "..":  throw ERRNO_EXIST;
+                default:
+                    const dir = dirs[dirs.length-1];
+                    if (name in dir.children) throw ERRNO_EXIST;
+                    if (!(dir.writeable)) throw ERRNO_ROFS;
+                    const now = this.fs.now();
+                    dir.children[name] = {
+                        type:               "dir",
+                        node:               this.fs.next_node_id++,
+                        children:           {},
+                        created_time:       now,
+                        last_access_time:   now,
+                        last_modified_time: now,
+                        last_change_time:   now,
+                        listable:           true,
+                        readable:           true,
+                        writeable:          true,
+                    };
+                    break;
+            }
         }
 
         path_remove_directory(path: string) { this.path_remove(path, "dir", ERRNO_NOTDIR); }
@@ -140,9 +141,8 @@ namespace wasi.fs {
         private path_remove(path: string, type: string, wrongtype: Errno) {
             const nodes : io.memory.Node[] = [...this.dirs];
 
-            path.split("/").forEach((name, i, components) => {
+            sanitize_path(path).split("/").forEach(name => {
                 switch (name) {
-                    case "":
                     case ".":
                         // noop
                         break;
@@ -220,112 +220,103 @@ namespace wasi.fs {
 
             const write     = !!(_fs_rights_inheriting & RIGHTS_FD_WRITE);
 
-            const components = path.split("/");
-            for (let i=0; i<components.length; ++i) {
+            const components = sanitize_path(path).split("/");
+
+            for (let i=0; i<components.length-1; ++i) {
                 const name = components[i];
-                if (i === components.length - 1) {
-                    var n : io.memory.Node;
-                    switch (name) {
-                        case "":
-                        case ".":
-                            if (excl) throw ERRNO_EXIST;
-                            n = dirs[dirs.length - 1];
-                            break;
-                        case "..":
-                            dirs.pop();
-                            if (dirs.length === 0) throw ERRNO_NOENT; // popped root
-                            if (excl) throw ERRNO_EXIST;
-                            n = dirs[dirs.length - 1];
-                            break;
-                        default:
-                            const parent = dirs[dirs.length - 1];
-                            const existing = parent.children[name];
-                            if (existing) {
-                                if (excl) throw ERRNO_EXIST;
-                                if (directory && existing.type !== "dir") throw ERRNO_NOTDIR;
-                                n = existing;
-                            }
-                            else if (!creat) throw ERRNO_NOENT;
-                            else if (!parent.writeable) throw ERRNO_ROFS;
-                            else if (directory) {
-                                const now = this.fs.now();
-                                n = parent.children[name] = {
-                                    type:               "dir",
-                                    node:               this.fs.next_node_id++,
-                                    children:           {},
-                                    created_time:       now,
-                                    last_access_time:   now,
-                                    last_modified_time: now,
-                                    last_change_time:   now,
-                                    listable:           true,
-                                    readable:           true,
-                                    writeable:          true,
-                                };
-                            } else {
-                                const now = this.fs.now();
-                                n = parent.children[name] = {
-                                    type:               "file",
-                                    node:               this.fs.next_node_id++,
-                                    data:               new Uint8Array(128),
-                                    length:             0,
-                                    created_time:       now,
-                                    last_access_time:   now,
-                                    last_modified_time: now,
-                                    last_change_time:   now,
-                                    readable:           true,
-                                    writeable:          true,
-                                    readers:            0,
-                                    writers:            0,
-                                };
-                            }
-                            break;
-                    }
-                    var handle : wasi.Handle;
-                    switch (n.type) {
-                        case "dir":
-                            if (trunc) throw ERRNO_ISDIR;
-                            if (append) throw ERRNO_ISDIR;
-                            dirs.push(n);
-                            handle = new MemoryDirHandle(this.fs, dirs);
-                            break;
-                        case "file":
-                            if (directory) throw ERRNO_NOTDIR;
-                            const h = new MemoryFileHandle(this.fs, n, write);
-                            if (trunc) {
-                                for (let k=0; k<n.length; ++k) n.data[k] = 0;
-                                n.length = 0;
-                            }
-                            if (append) h.position = n.length;
-                            handle = h;
-                            break;
-                    }
-                    handle.fd_fdstat_set_flags(fdflags);
-                    return handle;
-                } else {
-                    switch (name) {
-                        case "":
-                        case ".":
-                            // noop
-                            break;
-                        case "..":
-                            dirs.pop();
-                            if (dirs.length === 0) throw ERRNO_NOENT; // popped root
-                            break;
-                        default:
-                            const dir = dirs[dirs.length-1];
-                            const child = dir.children[name];
-                            if (!child) throw ERRNO_NOENT;
-                            if (child.type !== "dir") throw ERRNO_NOTDIR;
-                            dirs.push(child);
-                            break;
-                    }
+                switch (name) {
+                    case "..":
+                        dirs.pop();
+                        if (dirs.length === 0) throw ERRNO_NOENT; // popped root
+                        break;
+                    default:
+                        const dir = dirs[dirs.length-1];
+                        const child = dir.children[name];
+                        if (!child) throw ERRNO_NOENT;
+                        if (child.type !== "dir") throw ERRNO_NOTDIR;
+                        dirs.push(child);
+                        break;
                 }
             }
 
-            // empty path
-            const d = new MemoryDirHandle(this.fs, dirs);
-            d.fd_fdstat_set_flags(fdflags);
-            return d;
+            const name = components[components.length-1];
+            var n : io.memory.Node;
+            switch (name) {
+                case ".":
+                    if (excl) throw ERRNO_EXIST;
+                    n = dirs[dirs.length - 1];
+                    break;
+                case "..":
+                    dirs.pop();
+                    if (dirs.length === 0) throw ERRNO_NOENT; // popped root
+                    if (excl) throw ERRNO_EXIST;
+                    n = dirs[dirs.length - 1];
+                    break;
+                default:
+                    const parent = dirs[dirs.length - 1];
+                    const existing = parent.children[name];
+                    if (existing) {
+                        if (excl) throw ERRNO_EXIST;
+                        if (directory && existing.type !== "dir") throw ERRNO_NOTDIR;
+                        n = existing;
+                    }
+                    else if (!creat) throw ERRNO_NOENT;
+                    else if (!parent.writeable) throw ERRNO_ROFS;
+                    else if (directory) {
+                        const now = this.fs.now();
+                        n = parent.children[name] = {
+                            type:               "dir",
+                            node:               this.fs.next_node_id++,
+                            children:           {},
+                            created_time:       now,
+                            last_access_time:   now,
+                            last_modified_time: now,
+                            last_change_time:   now,
+                            listable:           true,
+                            readable:           true,
+                            writeable:          true,
+                        };
+                    } else {
+                        const now = this.fs.now();
+                        n = parent.children[name] = {
+                            type:               "file",
+                            node:               this.fs.next_node_id++,
+                            data:               new Uint8Array(128),
+                            length:             0,
+                            created_time:       now,
+                            last_access_time:   now,
+                            last_modified_time: now,
+                            last_change_time:   now,
+                            readable:           true,
+                            writeable:          true,
+                            readers:            0,
+                            writers:            0,
+                        };
+                    }
+                    break;
+            }
+
+            var handle : wasi.Handle;
+            switch (n.type) {
+                case "dir":
+                    if (trunc) throw ERRNO_ISDIR;
+                    if (append) throw ERRNO_ISDIR;
+                    dirs.push(n);
+                    handle = new MemoryDirHandle(this.fs, dirs);
+                    break;
+                case "file":
+                    if (directory) throw ERRNO_NOTDIR;
+                    const h = new MemoryFileHandle(this.fs, n, write);
+                    if (trunc) {
+                        for (let k=0; k<n.length; ++k) n.data[k] = 0;
+                        n.length = 0;
+                    }
+                    if (append) h.position = n.length;
+                    handle = h;
+                    break;
+            }
+            handle.fd_fdstat_set_flags(fdflags);
+            return handle;
         }
 
         // TODO: path_readlink?
@@ -336,4 +327,41 @@ namespace wasi.fs {
 
         // TODO: polling?
     }
+
+    function throws(exception: any, expr: () => any): boolean {
+        try {
+            expr();
+            return false;
+        } catch (e) {
+            return e === exception;
+        }
+    }
+
+    // Note: does *not* remove ".."s!
+    function sanitize_path(path: string): string {
+        const a = path.replaceAll(/\/(\.?\/)+/g, "/"); // simplify "////././///.///" => "/"
+        const b = /^(\.\/)?(.+?)(\/.)?$/.exec(a); // simplify "./foo/." => "foo"
+        if (!b) throw wasi.ERRNO_INVAL;
+        const c = b[2];
+        if (c.startsWith("/") || c.endsWith("/")) throw wasi.ERRNO_INVAL; // reject "/foo", "bar/", "/"
+        return c;
+    }
+
+    // XXX: wasi.ERRNO_INVAL might not be defined yet
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("/")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("/foo")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("foo/")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("/foo/")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("//foo//")));
+    //console.assert(throws(wasi.ERRNO_INVAL, () => sanitize_path("/./foo/./")));
+    //console.assert(sanitize_path(".") === ".");
+    //console.assert(sanitize_path("./.") === ".");
+    //console.assert(sanitize_path(".//.") === ".");
+    //console.assert(sanitize_path("././.") === ".");
+    //console.assert(sanitize_path("foo") === "foo");
+    //console.assert(sanitize_path("./././/././foo/././//././/.") === "foo");
+    //console.assert(sanitize_path("./././/././foo/././//././/bar//././//././/.") === "foo/bar");
+    //console.assert(sanitize_path("./././/././.foo/././//././/.") === ".foo");
+    //console.assert(sanitize_path("./././/././.foo/././//././/.bar//././//././/.") === ".foo/.bar");
 }
