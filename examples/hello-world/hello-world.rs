@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::io::Write;
 
 fn main() {
+    let start = std::time::Instant::now();
+
     let mut hm = HashMap::new();
     hm.insert("foo", "bar");
     hm.insert("a", "b");
@@ -50,8 +52,14 @@ fn main() {
     std::fs::remove_dir("/path/to/some").unwrap();
     std::fs::remove_dir("/path/to").unwrap();
 
+    let init = std::time::Instant::now();
+    println!("took {:.02?} to init", init-start);
+
     std::thread::yield_now();
     std::thread::sleep(std::time::Duration::from_secs(1));
+
+    let sleep = std::time::Instant::now();
+    println!("took {:.02?} to sleep", sleep-init);
 
     println!("\u{001B}[30;102m{:^1$}\u{001B}[0m", "Hello, world!", 76);
 

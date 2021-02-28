@@ -41,13 +41,87 @@ namespace wasi {
      *
      * ### `clock` styles - **NOT YET IMPLEMENTED**
      *
-     * *    `"disabled"`            - Don't allow clocks to be queried.
+     * *    `"disabled"`            - Don't allow clocks to be queried (will return `ERRNO_NOTCAPABLE`.)
+     * *    `"debugger"`            - Like `"disabled"`, but also `debugger;` when syscalls are made.
      * *    `"zero"`                - Pretend it's Jan 1st, 1970, and that all execution is instantanious.
      * *    `"nondeterministic"`    - Allow the real world to leak in, code to self-measure, and [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
      */
-    export function time(i: Imports, memory: MemoryLE, {sleep, clock}: { sleep: "disabled" | "skip" | "busy-wait" | Asyncifier, clock: "disabled" | "zero" | "nondeterministic" }) {
-        var real_start = 0;
-        try { real_start = Date.now(); } catch (e) {}
+    export function time(i: Imports, memory: MemoryLE, {sleep, clock}: { sleep: "disabled" | "skip" | "busy-wait" | Asyncifier, clock: "disabled" | "debugger" | "zero" | "nondeterministic" }) {
+        var mono_total  = 0;
+        var prev_mono   = 0;
+        try { prev_mono = Date.now(); } catch (e) {}
+
+        console.log("sleep", sleep);
+        console.log("clock", clock);
+
+        switch (clock) {
+            case "disabled":
+            case "debugger":
+                var first_break = false;
+                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(_id: ClockID, out_resolution: ptr): Errno {
+                    if (!first_break) {
+                        console.error("clock_res_get: clock access has been disabled");
+                        first_break = true;
+                    }
+                    if (clock === "debugger") debugger;
+                    return ERRNO_INVAL;
+                };
+                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_disabled(_id: ClockID, precision: TimeStamp, out_time: ptr): Errno {
+                    if (!first_break) {
+                        console.error("clock_time_get: clock access has been disabled");
+                        first_break = true;
+                    }
+                    if (clock === "debugger") debugger;
+                    return ERRNO_INVAL;
+                };
+                break;
+            case "zero":
+                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
+                    validate_clockid(id);
+                    memory.write_u64(out_resolution, 0, 0xFFFFFFFFFFFFFFFFn as TimeStamp);
+                    return ERRNO_SUCCESS;
+                };
+                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_disabled(id: ClockID, precision: TimeStamp, out_time: ptr): Errno {
+                    validate_clockid(id);
+                    memory.write_u64(out_time, 0, 0n as TimeStamp);
+                    return ERRNO_SUCCESS;
+                };
+                break;
+            case "nondeterministic":
+                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
+                    switch (id) {
+                        case CLOCKID_MONOTONIC:
+                        case CLOCKID_REALTIME:
+                            memory.write_u64(out_resolution, 0, 1000000n as TimeStamp); // assume 1ms precision (spectre mitigations)
+                            return ERRNO_SUCCESS;
+                        case CLOCKID_PROCESS_CPUTIME_ID:
+                        case CLOCKID_THREAD_CPUTIME_ID:
+                        default:
+                            return ERRNO_INVAL;
+                    }
+                };
+                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_disabled(id: ClockID, _precision: TimeStamp, out_time: ptr): Errno {
+                    var now;
+                    try { now = Date.now(); } catch (e) { return ERRNO_INVAL; } // not supported on this thread?
+                    switch (id) {
+                        case CLOCKID_MONOTONIC:
+                            now = Date.now();
+                            if (now > prev_mono) mono_total += now - prev_mono;
+                            prev_mono = now;
+                            memory.write_u64(out_time, 0, 1000000n * BigInt(mono_total) as TimeStamp);
+                            return ERRNO_SUCCESS;
+                        case CLOCKID_REALTIME:
+                            now = Date.now();
+                            memory.write_u64(out_time, 0, 1000000n * BigInt(now) as TimeStamp);
+                            return ERRNO_SUCCESS;
+                        case CLOCKID_PROCESS_CPUTIME_ID:
+                        case CLOCKID_THREAD_CPUTIME_ID:
+                        default:
+                            return ERRNO_INVAL;
+                    }
+                };
+                break;
+        }
 
         // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#sched_yield
         // https://docs.rs/wasi/0.10.2+wasi-snapshot-preview1/src/wasi/lib_generated.rs.html#1907

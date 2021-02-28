@@ -30,4 +30,8 @@ namespace wasi {
      * The CPU-time clock associated with the current thread.
      */
     export const CLOCKID_THREAD_CPUTIME_ID = <ClockID>3;
+
+    export function validate_clockid(id: ClockID) {
+        if (!(0 <= id) && (id <= 3)) throw ERRNO_INVAL;
+    }
 }
