@@ -101,7 +101,7 @@ namespace wasi.fs {
         }
 
         fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) {
-            const now = this.fs.now();
+            const now = (fst_flags & (FSTFLAGS_ATIM_NOW | FSTFLAGS_MTIM_NOW)) ? this.fs.now() : (0n as TimeStamp);
             if      (fst_flags & FSTFLAGS_ATIM)     this.file.last_access_time = access_time;
             else if (fst_flags & FSTFLAGS_ATIM_NOW) this.file.last_access_time = now;
             if      (fst_flags & FSTFLAGS_MTIM)     this.file.last_modified_time = modified_time;

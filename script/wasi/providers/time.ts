@@ -74,6 +74,14 @@ namespace wasi {
                     if (clock === "debugger") debugger;
                     return ERRNO_INVAL;
                 };
+                i._cargo_html_shenannigans_do_not_use.file_time_now = function file_time_now(): TimeStamp {
+                    if (!first_break) {
+                        console.error("file time: clock access has been disabled");
+                        first_break = true;
+                    }
+                    if (clock === "debugger") debugger;
+                    return 0n as TimeStamp;
+                };
                 break;
             case "zero":
                 i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
@@ -86,6 +94,7 @@ namespace wasi {
                     memory.write_u64(out_time, 0, 0n as TimeStamp);
                     return ERRNO_SUCCESS;
                 };
+                i._cargo_html_shenannigans_do_not_use.file_time_now = () => 0n as TimeStamp;
                 break;
             case "nondeterministic":
                 i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
@@ -125,6 +134,7 @@ namespace wasi {
                             return ERRNO_INVAL;
                     }
                 };
+                i._cargo_html_shenannigans_do_not_use.file_time_now = () => BigInt(new Date().getTime()) * 1000000n as TimeStamp;
                 break;
         }
 

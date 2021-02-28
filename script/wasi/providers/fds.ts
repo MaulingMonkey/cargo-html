@@ -6,6 +6,11 @@ namespace wasi {
         const trace = true;
 
         const FS = new io.memory.FileSystem();
+        FS.now = () => {
+            if (i._cargo_html_shenannigans_do_not_use.file_time_now === undefined) return (0n as TimeStamp);
+            else return i._cargo_html_shenannigans_do_not_use.file_time_now();
+        };
+
         const root = FS.init_dir("/");
         //root.writeable = false;
         const temp = FS.init_dir("/temp/");

@@ -37,8 +37,9 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     const wasm_exports = {}; // we need to be able to resolve imports to not yet defined exports
     const memory : MemoryLE = new MemoryLE(<any>undefined);
     const imports : wasi.Imports = {
-        env:                    {},
-        wasi_snapshot_preview1: {},
+        env:                                    {},
+        _cargo_html_shenannigans_do_not_use:    {},
+        wasi_snapshot_preview1:                 {},
     };
 
     wasi.nyi      (imports);

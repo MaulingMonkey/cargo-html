@@ -7,6 +7,10 @@ namespace wasi {
         env: {
         },
 
+        _cargo_html_shenannigans_do_not_use: {
+            file_time_now?: () => TimeStamp,
+        },
+
         /** \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md)\] phases/snapshot */
         wasi_snapshot_preview1: {
             /**
