@@ -51,9 +51,6 @@ namespace wasi {
         var prev_mono   = 0;
         try { prev_mono = Date.now(); } catch (e) {}
 
-        console.log("sleep", sleep);
-        console.log("clock", clock);
-
         switch (clock) {
             case "disabled":
             case "debugger":
