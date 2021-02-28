@@ -92,6 +92,7 @@ namespace wasi.fs {
             path.split("/").forEach((name, i, components) => {
                 if (i === components.length - 1) {
                     switch (name) {
+                        case "":    throw ERRNO_EXIST;
                         case ".":   throw ERRNO_EXIST;
                         case "..":  throw ERRNO_EXIST;
                         default:
@@ -115,9 +116,9 @@ namespace wasi.fs {
                     }
                 } else {
                     switch (name) {
+                        case "":
                         case ".":
-                            // noop
-                            break;
+                            throw ERRNO_EXIST;
                         case "..":
                             dirs.pop();
                             if (dirs.length === 0) throw ERRNO_NOENT; // popped root
@@ -141,6 +142,7 @@ namespace wasi.fs {
 
             path.split("/").forEach((name, i, components) => {
                 switch (name) {
+                    case "":
                     case ".":
                         // noop
                         break;
@@ -224,6 +226,7 @@ namespace wasi.fs {
                 if (i === components.length - 1) {
                     var n : io.memory.Node;
                     switch (name) {
+                        case "":
                         case ".":
                             if (excl) throw ERRNO_EXIST;
                             n = dirs[dirs.length - 1];
@@ -300,6 +303,7 @@ namespace wasi.fs {
                     return handle;
                 } else {
                     switch (name) {
+                        case "":
                         case ".":
                             // noop
                             break;
