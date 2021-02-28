@@ -143,6 +143,15 @@ namespace wasi.fs {
             }
         }
 
+        path_filestat_set_times(flags: LookupFlags, path: string, access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) {
+            const existing = this.path_open(flags, path, OFLAGS_NONE, RIGHTS_FD_FILESTAT_SET_TIMES, RIGHTS_NONE, FDFLAGS_NONE);
+            try {
+                return existing.fd_filestat_set_times(access_time, modified_time, fst_flags);
+            } finally {
+                if (existing.fd_close) existing.fd_close();
+            }
+        }
+
         path_open(dirflags: LookupFlags, path: string, oflags: OFlags, _fs_rights_base: Rights, _fs_rights_inheriting: Rights, fdflags: FdFlags): wasi.Handle {
             const dirs = [...this.dirs];
 
