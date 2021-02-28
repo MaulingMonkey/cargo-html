@@ -13,6 +13,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
         `${document.location.origin}${document.location.pathname}`,
         ...(document.location.search ? decodeURI(document.location.search).substr(1).split(' ') : []) // TODO: quoted arg handling?
     ];
+    const sleep = settings.sleep || "nondeterministic";
 
 
     // Compile WASM
@@ -43,7 +44,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     wasi.nyi      (imports);
     wasi.env      (imports, memory, args, settings.env || {});
     wasi.random   (imports, memory, settings.random || determinism);
-    wasi.time     (imports, memory, { sleep: settings.sleep === "nondeterministic" ? (asyncifier || "busy-wait") : (settings.sleep || "busy-wait"), clock: settings.clock || determinism });
+    wasi.time     (imports, memory, { sleep: sleep == "nondeterministic" ? (asyncifier || "busy-wait") : sleep, clock: settings.clock || determinism });
     wasi.signals  (imports, memory, domtty, settings);
     if (asyncifier !== undefined)   wasi.fds(imports, memory, asyncifier, domtty, settings);
     // XXX: need non-async I/O options
