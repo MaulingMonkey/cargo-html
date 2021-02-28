@@ -37,6 +37,10 @@ namespace wasi.fs {
         }
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
+        fd_datasync() {} // TODO: sync fs if it has persistence?
+        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
+        fd_tell(): FileSize { return BigInt(this.position) as FileSize; }
+
         fd_allocate(offset: FileSize, len: FileSize) {
             if (!this.write) throw ERRNO_BADF;
             const maxb = offset + len;
@@ -48,7 +52,6 @@ namespace wasi.fs {
                 this.file.data = next_data;
             }
         }
-        fd_datasync() {} // TODO: sync fs if it has persistence?
 
         fd_fdstat_get(): FdStat {
             return {
@@ -57,12 +60,6 @@ namespace wasi.fs {
                 rights_base:        RIGHTS_ALL_FILE,
                 rights_inheriting:  RIGHTS_NONE,
             };
-        }
-
-        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
-
-        fd_tell(): FileSize {
-            return BigInt(this.position) as FileSize;
         }
 
         fd_seek(offset: FileDelta, whence: Whence): FileSize {

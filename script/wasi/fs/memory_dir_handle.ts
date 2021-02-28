@@ -1,35 +1,31 @@
 namespace wasi.fs {
     export class MemoryDirHandle implements Handle {
         readonly async = false;
-        readonly fs:        io.memory.FileSystem;
-        readonly dirs:      io.memory.Dir[] = [];
-        readonly leaf:      io.memory.Dir;
-        //readonly path:      string;
-        readonly prestat:   Uint8Array | undefined;
+        readonly fs:            io.memory.FileSystem;
+        readonly dirs:          io.memory.Dir[] = [];
+        readonly leaf:          io.memory.Dir;
+        readonly prestat_dir:   Uint8Array | undefined;
 
         fdflags = FDFLAGS_NONE;
 
-        //debug(): string { return `MemoryDirHandle(\`${this.path}\`)`; }
         debug(): string { return `MemoryDirHandle`; }
 
-        //constructor(fs: io.memory.FileSystem, dirs: io.memory.Dir[], path: string, prestat?: true) {
         constructor(fs: io.memory.FileSystem, dirs: io.memory.Dir[], prestat?: string) {
             const leaf = dirs[dirs.length - 1];
             if (leaf === undefined) throw `MemoryDirHandle: at least one directory must be specified in array`;
             this.fs     = fs;
             this.dirs   = dirs;
             this.leaf   = leaf;
-            //this.path   = path;
-            if (prestat !== undefined) this.prestat = new TextEncoder().encode(prestat);
+            if (prestat !== undefined) this.prestat_dir = new TextEncoder().encode(prestat);
         }
 
-        fd_close() {
-            // noop
-        }
+        fd_close() {} // noop
 
         fd_advise(_offset: FileSize, _len: FileSize, _advice: Advice) {}
         fd_allocate(_offset: FileSize, _len: FileSize) { throw ERRNO_ISDIR; }
         fd_datasync() {} // TODO: sync fs if it has persistence?
+        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
+        fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
 
         fd_fdstat_get(): FdStat {
             return {
@@ -39,8 +35,6 @@ namespace wasi.fs {
                 rights_inheriting:  RIGHTS_ALL,
             };
         }
-
-        fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
 
         fd_filestat_get(): FileStat {
             return {
@@ -55,7 +49,6 @@ namespace wasi.fs {
             };
         }
 
-        fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
 
         fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags) {
             const now = this.fs.now();
@@ -63,19 +56,6 @@ namespace wasi.fs {
             else if (fst_flags & FSTFLAGS_ATIM_NOW) this.leaf.last_access_time = now;
             if      (fst_flags & FSTFLAGS_MTIM)     this.leaf.last_modified_time = modified_time;
             else if (fst_flags & FSTFLAGS_MTIM_NOW) this.leaf.last_modified_time = now;
-        }
-
-        fd_prestat_dir_name(): Uint8Array {
-            if (this.prestat === undefined) throw ERRNO_NOTCAPABLE;
-            return this.prestat;
-        }
-
-        fd_prestat_get(): PreStat {
-            if (this.prestat === undefined) throw ERRNO_NOTCAPABLE;
-            return {
-                tag:                PREOPENTYPE_DIR,
-                u_dir_pr_name_len:  this.prestat.length as usize,
-            };
         }
 
         fd_readdir(cookie: DirCookie, maxbytes: number): DirEnt[] {

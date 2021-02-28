@@ -1,6 +1,7 @@
 namespace wasi {
     export interface Handle {
         readonly async: false;
+        readonly prestat_dir?: Uint8Array;
 
         debug(): string;
 
@@ -14,8 +15,6 @@ namespace wasi {
         fd_filestat_set_size(size: FileSize): void;
         fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): void;
         fd_pread?(iovec: IovecArray, offset: FileSize): number;
-        fd_prestat_dir_name?(): Uint8Array;
-        fd_prestat_get?(): PreStat;
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): number;
         fd_read?(iovec: IovecArray): number;
         fd_readdir?(cookie: DirCookie, maxbytes: usize): DirEnt[];
@@ -41,6 +40,7 @@ namespace wasi {
 
     export interface HandleAsync {
         readonly async: true;
+        readonly prestat_dir?: Uint8Array;
 
         debug(): string;
 
@@ -54,8 +54,6 @@ namespace wasi {
         fd_filestat_set_size(size: FileSize): Promise<void>;
         fd_filestat_set_times(access_time: TimeStamp, modified_time: TimeStamp, fst_flags: FstFlags): Promise<void>;
         fd_pread?(iovec: IovecArray, offset: FileSize): Promise<number>;
-        fd_prestat_dir_name?(): Promise<Uint8Array>;
-        fd_prestat_get?(): Promise<PreStat>;
         fd_pwrite?(ciovec: CIovecArray, offset: FileSize): Promise<number>;
         fd_read?(iovec: IovecArray): Promise<number>;
         fd_readdir?(cookie: DirCookie, maxbytes: usize): Promise<DirEnt[]>;
