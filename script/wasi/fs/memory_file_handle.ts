@@ -40,6 +40,7 @@ namespace wasi.fs {
         fd_datasync() {} // TODO: sync fs if it has persistence?
         fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
         fd_tell(): FileSize { return BigInt(this.position) as FileSize; }
+        fd_sync() {} // TODO: sync fs if it has persistence?
 
         fd_allocate(offset: FileSize, len: FileSize) {
             if (!this.write) throw ERRNO_BADF;

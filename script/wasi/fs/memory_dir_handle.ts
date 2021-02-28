@@ -26,6 +26,7 @@ namespace wasi.fs {
         fd_datasync() {} // TODO: sync fs if it has persistence?
         fd_fdstat_set_flags(fdflags: FdFlags) { this.fdflags = fdflags; }
         fd_filestat_set_size(size: FileSize) { throw ERRNO_ISDIR; }
+        fd_sync() {} // TODO: sync fs if it has persistence?
 
         fd_fdstat_get(): FdStat {
             return {
