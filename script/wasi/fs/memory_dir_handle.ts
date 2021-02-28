@@ -86,7 +86,7 @@ namespace wasi.fs {
             return r;
         }
 
-        path_create_directory(path: string) {
+        private path_parents_name(path: string): [io.memory.Dir[], string] {
             const dirs = [...this.dirs];
 
             const [parents, leaf] = sanitize_dirs_name(path);
@@ -105,6 +105,12 @@ namespace wasi.fs {
                         break;
                 }
             });
+
+            return [dirs, leaf];
+        }
+
+        path_create_directory(path: string) {
+            const [dirs, leaf] = this.path_parents_name(path);
 
             switch (leaf) {
                 case ".":   throw ERRNO_EXIST;
@@ -197,8 +203,6 @@ namespace wasi.fs {
         // TODO: path_link?
 
         path_open(dirflags: LookupFlags, path: string, oflags: OFlags, _fs_rights_base: Rights, _fs_rights_inheriting: Rights, fdflags: FdFlags): wasi.Handle {
-            const dirs = [...this.dirs];
-
             const follow_symlinks = !!(dirflags & LOOKUPFLAGS_SYMLINK_FOLLOW);
 
             const creat     = !!(oflags & OFLAGS_CREAT);
@@ -214,23 +218,7 @@ namespace wasi.fs {
 
             const write     = !!(_fs_rights_inheriting & RIGHTS_FD_WRITE);
 
-            const [parents, leaf] = sanitize_dirs_name(path);
-
-            parents.forEach(name => {
-                switch (name) {
-                    case "..":
-                        dirs.pop();
-                        if (dirs.length === 0) throw ERRNO_NOENT; // popped root
-                        break;
-                    default:
-                        const dir = dirs[dirs.length-1];
-                        const child = dir.children[name];
-                        if (!child) throw ERRNO_NOENT;
-                        if (child.type !== "dir") throw ERRNO_NOTDIR;
-                        dirs.push(child);
-                        break;
-                }
-            });
+            const [dirs, leaf] = this.path_parents_name(path);
 
             var n : io.memory.Node;
             switch (leaf) {
