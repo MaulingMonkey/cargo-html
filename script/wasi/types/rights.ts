@@ -2,6 +2,8 @@ namespace wasi {
     /**
      * \[[WASI](https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#rights)\]
      * File descriptor rights, determining which actions may be performed.
+     *
+     * In this codebase, said rights should be enforced at the `wasi.[providers.]fdio` level.
      */
     export type Rights = u64 & { _not_real: "rights" };
 
