@@ -105,13 +105,18 @@ namespace wasi {
                     try { now = Date.now(); } catch (e) { return ERRNO_INVAL; } // not supported on this thread?
                     switch (id) {
                         case CLOCKID_MONOTONIC:
-                            now = Date.now();
+                            now = Date.now(); // supposedly monotonically increasing, but let's enforce that anyways:
                             if (now > prev_mono) mono_total += now - prev_mono;
                             prev_mono = now;
                             memory.write_u64(out_time, 0, 1000000n * BigInt(mono_total) as TimeStamp);
                             return ERRNO_SUCCESS;
                         case CLOCKID_REALTIME:
-                            now = Date.now();
+                            // `Date.now()` may be monotonically increasing, but `getTime()` shouldn't be:
+                            // https://stackoverflow.com/questions/6233927/microsecond-timing-in-javascript
+                            //
+                            // Additionally, `getTime()` is in UTC, matching what CLOCKID_REALTIME expects.
+                            // The only mismatch here is that `getTime` returns *milli*seconds, and WASI expects *nano*seconds.
+                            now = new Date().getTime();
                             memory.write_u64(out_time, 0, 1000000n * BigInt(now) as TimeStamp);
                             return ERRNO_SUCCESS;
                         case CLOCKID_PROCESS_CPUTIME_ID:
