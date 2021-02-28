@@ -89,13 +89,9 @@ namespace wasi.fs {
         path_create_directory(path: string) {
             const dirs = [...this.dirs];
 
-            const components = sanitize_path(path).split("/");
-            for (let i=0; i<components.length-1; ++i) {
-                const name = components[i];
+            const [parents, leaf] = sanitize_dirs_name(path);
+            parents.forEach(name => {
                 switch (name) {
-                    case "":
-                    case ".":
-                        throw ERRNO_EXIST;
                     case "..":
                         dirs.pop();
                         if (dirs.length === 0) throw ERRNO_NOENT; // popped root
@@ -108,19 +104,17 @@ namespace wasi.fs {
                         dirs.push(child);
                         break;
                 }
-            }
+            });
 
-            const name = components[components.length-1];
-
-            switch (name) {
+            switch (leaf) {
                 case ".":   throw ERRNO_EXIST;
                 case "..":  throw ERRNO_EXIST;
                 default:
                     const dir = dirs[dirs.length-1];
-                    if (name in dir.children) throw ERRNO_EXIST;
+                    if (leaf in dir.children) throw ERRNO_EXIST;
                     if (!(dir.writeable)) throw ERRNO_ROFS;
                     const now = this.fs.now();
-                    dir.children[name] = {
+                    dir.children[leaf] = {
                         type:               "dir",
                         node:               this.fs.next_node_id++,
                         children:           {},
@@ -220,10 +214,9 @@ namespace wasi.fs {
 
             const write     = !!(_fs_rights_inheriting & RIGHTS_FD_WRITE);
 
-            const components = sanitize_path(path).split("/");
+            const [parents, leaf] = sanitize_dirs_name(path);
 
-            for (let i=0; i<components.length-1; ++i) {
-                const name = components[i];
+            parents.forEach(name => {
                 switch (name) {
                     case "..":
                         dirs.pop();
@@ -237,11 +230,10 @@ namespace wasi.fs {
                         dirs.push(child);
                         break;
                 }
-            }
+            });
 
-            const name = components[components.length-1];
             var n : io.memory.Node;
-            switch (name) {
+            switch (leaf) {
                 case ".":
                     if (excl) throw ERRNO_EXIST;
                     n = dirs[dirs.length - 1];
@@ -254,7 +246,7 @@ namespace wasi.fs {
                     break;
                 default:
                     const parent = dirs[dirs.length - 1];
-                    const existing = parent.children[name];
+                    const existing = parent.children[leaf];
                     if (existing) {
                         if (excl) throw ERRNO_EXIST;
                         if (directory && existing.type !== "dir") throw ERRNO_NOTDIR;
@@ -264,7 +256,7 @@ namespace wasi.fs {
                     else if (!parent.writeable) throw ERRNO_ROFS;
                     else if (directory) {
                         const now = this.fs.now();
-                        n = parent.children[name] = {
+                        n = parent.children[leaf] = {
                             type:               "dir",
                             node:               this.fs.next_node_id++,
                             children:           {},
@@ -278,7 +270,7 @@ namespace wasi.fs {
                         };
                     } else {
                         const now = this.fs.now();
-                        n = parent.children[name] = {
+                        n = parent.children[leaf] = {
                             type:               "file",
                             node:               this.fs.next_node_id++,
                             data:               new Uint8Array(128),
@@ -345,6 +337,12 @@ namespace wasi.fs {
         const c = b[2];
         if (c.startsWith("/") || c.endsWith("/")) throw wasi.ERRNO_INVAL; // reject "/foo", "bar/", "/"
         return c;
+    }
+
+    function sanitize_dirs_name(path: string): [string[], string] {
+        const p = sanitize_path(path).split("/");
+        const leaf = p.pop()!;
+        return [p, leaf];
     }
 
     // XXX: wasi.ERRNO_INVAL might not be defined yet
