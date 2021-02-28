@@ -25,6 +25,7 @@ class DomTty {
         this.mode   = settings.mode     || "line-buffered";
         this.output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
         this.input  = typeof settings.input  === "string" ? requireElementById(settings.input ) : settings.input;
+        if (!this.output.contains(this.input)) throw "DomTty expects the input preview element to be contained within the output element for cursor purpouses";
         // settings.listen
     }
 
@@ -66,9 +67,13 @@ class DomTty {
                 var m;
                 if      (null != (m = /^\x1B\[?25h/.exec(buf)))         this.show_cursor();
                 else if (null != (m = /^\x1B\[?25l/.exec(buf)))         this.hide_cursor();
+                else if (null != (m = /^\x1B\[(\d*)J/.exec(buf)))       this.erase_in_display(m[1]);
                 // not implemented: alternative screen buffers, bracketed paste mode
                 else if (null != (m = /^\x1B\[([0-9;:]*)m/.exec(buf)))  this.out_sgr(m[1].split(/[;:]/));
-                else if (null != (m = /^\x1B\[.*?[a-zA-Z]/.exec(buf)))  this.out_raw(m[1], color_hint); // invalid/unhandled escape sequence
+                else if (null != (m = /^\x1B\[.*?[a-zA-Z]/.exec(buf))) {
+                    console.warn("DomTty: unhandled escape sequence:", JSON.stringify(m[0]));
+                    this.out_raw(m[0], color_hint); // invalid/unhandled escape sequence
+                }
                 else                                                    break; // incomplete sequence
 
                 console.assert(m.index === 0);
@@ -227,6 +232,36 @@ class DomTty {
 
     private hide_cursor() {
         this.output.querySelectorAll(".cursor").forEach(c => (c as HTMLElement).style.display = "none");
+    }
+
+    private erase_in_display(n: string) {
+        const { input, output } = this;
+        const cursor = output.querySelector(".cursor");
+        switch (n) {
+            case "":
+            case "0":
+                // clear from cursor to end of screen
+                for (;;) {
+                    const child = output.lastChild;
+                    if (child === null || child === input || child.contains(input)) break;
+                    child.remove();
+                }
+                break;
+            case "1":
+                // clear from cursor to beginning of the screen
+                for (;;) {
+                    const child = output.firstChild;
+                    if (child === null || child === input || child.contains(input)) break;
+                    child.remove();
+                }
+                break;
+            case "2": // clear entire screen
+            case "3": // clear entire screen + erase scrollback buffer
+                output.textContent = "";
+                break;
+        }
+        if (!output.contains(input)) output.appendChild(input);
+        if (cursor && !output.contains(cursor)) output.appendChild(cursor);
     }
 
     private fg(color: Color, bright: boolean) { this.color      = this.vga(color, bright); }
