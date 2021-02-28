@@ -134,6 +134,52 @@ namespace wasi.fs {
             });
         }
 
+        path_remove_directory(path: string) { this.path_remove(path, "dir", ERRNO_NOTDIR); }
+        path_unlink_file(path: string) { this.path_remove(path, "file", ERRNO_ISDIR); }
+        private path_remove(path: string, type: string, wrongtype: Errno) {
+            const nodes : io.memory.Node[] = [...this.dirs];
+
+            path.split("/").forEach((name, i, components) => {
+                switch (name) {
+                    case ".":
+                        // noop
+                        break;
+                    case "..":
+                        nodes.pop();
+                        if (nodes.length === 0) throw ERRNO_NOENT; // popped root
+                        break;
+                    default:
+                        const dir = nodes[nodes.length-1];
+                        if (dir.type !== "dir") throw ERRNO_NOTDIR;
+                        const child = dir.children[name];
+                        if (!child) throw ERRNO_NOENT;
+                        nodes.push(child);
+                        break;
+                }
+            });
+
+            const target = nodes.pop();
+            const parent = nodes.pop();
+            if (!target || !parent) throw ERRNO_ACCESS; // can't remove root dir
+            if (parent.type !== "dir") throw ERRNO_NOTDIR; // bug?
+            if (target.type !== type) throw wrongtype;
+            if (target.type === "dir" && Object.keys(target.children).length > 0) throw ERRNO_NOTEMPTY;
+            const children = Object.entries(parent.children);
+            let removed = false;
+            for (let i=0; i<children.length; ++i) {
+                const [name, node] = children[i];
+                if (node === target) {
+                    delete parent.children[name];
+                    removed = true;
+                }
+            }
+            if (!removed) {
+                console.error("failed to remove %s (did the path `%s` escape the current directory and access a stale dir or something?)", type, path);
+                debugger;
+                throw ERRNO_IO;
+            }
+        }
+
         path_filestat_get(_flags: LookupFlags, path: string): FileStat {
             const existing = this.path_open(_flags, path, OFLAGS_NONE, RIGHTS_FD_FILESTAT_GET, RIGHTS_NONE, FDFLAGS_NONE);
             try {
@@ -280,13 +326,9 @@ namespace wasi.fs {
 
         // TODO: path_readlink?
 
-        // TODO: path_remove_directory
-
         // TODO: path_rename
 
         // TODO: path_symlink
-
-        // TODO: path_unlik_file
 
         // TODO: polling?
     }

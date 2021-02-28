@@ -42,6 +42,14 @@ fn main() {
         println!("{} {}", if e.path().is_dir() { "dir " } else { "file" }, e.path().display());
     }
 
+    assert!(std::fs::remove_dir("/path/to/some/subdir/asdf4.txt").is_err());    // not a dir
+    assert!(std::fs::remove_dir("/path/to/some/subdir/").is_err());             // not empty
+    assert!(std::fs::remove_file("/path/to/some/subdir/asdf5.txt").is_err());   // doesn't exist
+    std::fs::remove_file("/path/to/some/subdir/asdf4.txt").unwrap();
+    std::fs::remove_dir("/path/to/some/subdir").unwrap();
+    std::fs::remove_dir("/path/to/some").unwrap();
+    std::fs::remove_dir("/path/to").unwrap();
+
     std::thread::yield_now();
     std::thread::sleep(std::time::Duration::from_secs(1));
 
