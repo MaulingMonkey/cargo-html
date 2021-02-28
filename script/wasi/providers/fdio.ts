@@ -2,7 +2,7 @@ namespace wasi {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function fds(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
+    export function fdio(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
         const trace = true;
 
         const FS = new io.memory.FileSystem();

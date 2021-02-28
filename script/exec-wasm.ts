@@ -47,7 +47,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     wasi.random   (imports, memory, settings.random || determinism);
     wasi.time     (imports, memory, { sleep: sleep == "nondeterministic" ? (asyncifier || "busy-wait") : sleep, clock: settings.clock || determinism });
     wasi.signals  (imports, memory, domtty, settings);
-    if (asyncifier !== undefined)   wasi.fds(imports, memory, asyncifier, domtty, settings);
+    if (asyncifier !== undefined)   wasi.fdio(imports, memory, asyncifier, domtty, settings);
     // XXX: need non-async I/O options
 
     if (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") {
