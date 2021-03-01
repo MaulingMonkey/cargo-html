@@ -103,28 +103,28 @@
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world",
-            "url":                      "${workspaceFolder}/examples/target/cargo-html/debug/wasm_bindgen_world.html",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • chrome • release",
             "type":                     "chrome",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
-            "url":                      "${workspaceFolder}/examples/target/cargo-html/release/wasm_bindgen_world.html",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • firefox • debug",
             "type":                     "firefox",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world",
-            "file":                     "${workspaceFolder}/examples/target/cargo-html/debug/wasm_bindgen_world.html",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • firefox • release",
             "type":                     "firefox",
             "request":                  "launch",
             "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
-            "file":                     "${workspaceFolder}/examples/target/cargo-html/release/wasm_bindgen_world.html",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-world.html",
         },
 
 
