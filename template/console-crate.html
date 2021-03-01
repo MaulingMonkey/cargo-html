@@ -5,18 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{TARGET_NAME}</title>
     <style>
-        #cargo-html-console {
+        body {
+            padding:        0;
+            margin:         0;
             background:     #000;
             color:          #FFF;
+            overflow:       hidden;
+            width:          100vw;
+            height:         100vh;
+            display:        flex;
+            flex-direction: column;
+            font-family:    'Courier New', Courier, monospace;
+        }
+
+        body > *                    { flex-grow: 0; }
+        body > #cargo-html-console  { flex-grow: 1; }
+        body > h1                   { text-align: center; }
+
+        #cargo-html-console {
             white-space:    pre-wrap;
             display:        block;
-            width:          100em;
-            height:         50em;
-            max-width:      90vw;
-            max-height:     calc(90vh - 7em);
-            text-align:     left;
             padding:        0.2em 0.5em;
             overflow-y:     auto;
+        }
+
+        #cargo-html-console::-webkit-scrollbar {
+            background:     #000;
+            width:          10px;
+        }
+
+        #cargo-html-console::-webkit-scrollbar-thumb {
+            background:     #DDD;
+            border-radius:  5px;
         }
 
         @keyframes blink {
@@ -44,10 +64,8 @@
         }
     </style>
 </head><body>
-    <center>
-        <h1>{TARGET_NAME}</h1>
-        <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span class="cursor noselect">█</span></code>
-    </center>
+    <h1>{TARGET_NAME}</h1>
+    <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span class="cursor noselect">█</span></code>
     <script src="script.js"></script>
     <script>
         // TODO: replace this with a placeholder that feeds from Cargo.toml's metadata
