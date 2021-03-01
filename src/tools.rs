@@ -1,5 +1,7 @@
 use mmrbi::*;
 
+use std::io;
+
 
 
 pub(crate) fn install_toolchains() {
@@ -67,8 +69,15 @@ pub(crate) fn find_install_wasm_opt() -> Command {
 }
 
 pub(crate) fn find_install_wasm_pack() -> Command {
-    let min = "0.9.1";
-    mmrbi::wasm_pack::install_at_least(min).unwrap_or_else(|err| fatal!("unable to install wasm-pack {}: {}", min, err));
+    let installed = mmrbi::wasm_pack::version();
+    if installed.as_ref().map_or(false, |v| v.is_at_least(0,9,1)) { return Command::new("wasm-pack"); } // already up to date
+    status!("Installing", "wasm-pack 0.9.1+");
+    match installed {
+        Err(err)        if err.kind() == io::ErrorKind::NotFound => info!("wasm-pack not installed"),
+        Err(err)        => info!("wasm-pack --version error: {:?}", err),
+        Ok(installed)   => info!("wasm-pack {} < 0.9.1", installed.version),
+    }
+    Command::new("cargo").arg("install").arg("--version").arg("^0.9.1").arg("wasm-pack").status0().unwrap_or_else(|err| fatal!("error installing wasm-pack: {}", err));
     Command::new("wasm-pack")
 }
 
