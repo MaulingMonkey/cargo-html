@@ -27,34 +27,41 @@ namespace wasi {
         private buf : number[] = [];
         private fdflags = FDFLAGS_NONE;
 
-        constructor(settings: ConReaderSettings) {
+        constructor(settings: ConReaderSettings, tty: XTermTty | DomTty) {
             this.settings = settings;
 
-            if (typeof settings.listen_to === "string") {
-                const e = document.getElementById(settings.listen_to);
-                if (!e) throw `ConReader: no such element: #${settings.listen_to}`;
-                e.addEventListener("keydown",  ev => this.keydown(ev));
-                e.addEventListener("keypress", ev => this.keypress(ev));
-            } else if (settings.listen_to instanceof Document) {
-                settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
-                settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
-            } else {
-                settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
-                settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
-            }
+            if (tty instanceof DomTty) {
+                if (typeof settings.listen_to === "string") {
+                    const e = document.getElementById(settings.listen_to);
+                    if (!e) throw `ConReader: no such element: #${settings.listen_to}`;
+                    e.addEventListener("keydown",  ev => this.keydown(ev));
+                    e.addEventListener("keypress", ev => this.keypress(ev));
+                } else if (settings.listen_to instanceof Document) {
+                    settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
+                    settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
+                } else {
+                    settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
+                    settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
+                }
 
-            if (typeof settings.input === "string") {
-                this.input = document.getElementById(settings.input);
-                if (this.input === null) throw `ConReader: no such element: #${settings.input}`;
-            } else {
-                this.input = settings.input;
-                if (this.input === null && settings.mode !== "raw") throw `ConReader: linebuffered mode requires an input element`;
+                if (typeof settings.input === "string") {
+                    this.input = document.getElementById(settings.input);
+                    if (this.input === null) throw `ConReader: no such element: #${settings.input}`;
+                } else {
+                    this.input = settings.input;
+                    if (this.input === null && settings.mode !== "raw") throw `ConReader: linebuffered mode requires an input element`;
+                }
+            } else { // instanceof XTermTty
+                this.input = null;
+                settings.echo = () => {};
+                tty.listen(data => this.write(data));
             }
         }
 
-        static try_create(settings: ConReaderSettings): ConReader | undefined {
+        static try_create(settings: ConReaderSettings, tty: XTermTty | DomTty | undefined): ConReader | undefined {
+            if (tty === undefined) return undefined;
             try {
-                return new ConReader(settings);
+                return new ConReader(settings, tty);
             } catch (e) {
                 console.error(e);
                 return undefined;

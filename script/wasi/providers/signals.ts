@@ -14,7 +14,7 @@ namespace wasi {
      *
      * A future implementation should probably provider Asyncifier support to let execution paused by `SIGNAL_STOP` etc. to resume if so desired.
      */
-    export function signals(i: Imports, _memory: MemoryLE, domtty: DomTty | undefined, settings: Settings) {
+    export function signals(i: Imports, _memory: MemoryLE, domtty: XTermTty | DomTty | undefined, settings: Settings) {
         const trace_exit_0 = TextStreamWriter.from_output(settings.trace_exit_0 || settings.stdout || (domtty ? "dom" : "console-log"  ), "#888", domtty);
         const trace_exit_n = TextStreamWriter.from_output(settings.trace_exit_n || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);
         const trace_signal = TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);

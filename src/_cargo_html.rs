@@ -86,7 +86,9 @@ fn build(args: Arguments) {
             template_js.push_str(include_str!("../template/script.js"));
             template_js.push_str("\r\n</script>");
 
-            let template_html = include_str!("../template/console-crate.html")
+            let template_html = include_str!("../template/console-crate.html");
+            //let template_html = include_str!("../template/xterm-crate.html");
+            let template_html = template_html
                 .replace("{CONFIG}", config.as_str())
                 .replace("{TARGET_NAME}", &target)
                 .replace("<script src=\"script.js\"></script>", &template_js);

@@ -8,7 +8,7 @@ declare function __cargo_html_wasmbindgen_bundler_js(importer: (path: string) =>
 async function exec_base64_wasm(settings: Settings, wasm: string) {
     // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";
-    const domtty = DomTty.new(settings);
+    const tty = XTermTty.new(settings) || DomTty.new(settings);
     const args = settings.args || [
         `${document.location.origin}${document.location.pathname}`,
         ...(document.location.search ? decodeURI(document.location.search).substr(1).split(' ') : []) // TODO: quoted arg handling?
@@ -46,8 +46,8 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     wasi.env      (imports, memory, args, settings.env || {});
     wasi.random   (imports, memory, settings.random || determinism);
     wasi.time     (imports, memory, { sleep: sleep == "nondeterministic" ? (asyncifier || "busy-wait") : sleep, clock: settings.clock || determinism });
-    wasi.signals  (imports, memory, domtty, settings);
-    if (asyncifier !== undefined)   wasi.fdio(imports, memory, asyncifier, domtty, settings);
+    wasi.signals  (imports, memory, tty, settings);
+    if (asyncifier !== undefined)   wasi.fdio(imports, memory, asyncifier, tty, settings);
     // XXX: need non-async I/O options
 
     if (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") {
@@ -79,12 +79,12 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
             case "stop-signal":
                 break;
             default:
-                const trace_uncaught = wasi.TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (domtty ? "dom" : "console-error"), "#F44", domtty);
+                const trace_uncaught = wasi.TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (tty ? "dom" : "console-error"), "#F44", tty);
                 trace_uncaught?.io(`process terminated by uncaught JavaScript exception:\n${e}`);
                 throw e;
         }
     } finally {
-        domtty?.shutdown();
+        tty?.shutdown();
     }
 }
 

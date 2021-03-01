@@ -2,7 +2,7 @@ namespace wasi {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function fdio(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, domtty: DomTty | undefined, settings: Settings) {
+    export function fdio(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, tty: XTermTty | DomTty | undefined, settings: Settings) {
         const trace = true;
 
         const FS = new io.memory.FileSystem();
@@ -43,7 +43,7 @@ namespace wasi {
             //RIGHTS_POLL_FD_READWRITE, // TODO
         );
 
-        switch (settings.stdin || (domtty ? "dom" : "prompt")) {
+        switch (settings.stdin || (tty ? "dom" : "prompt")) {
             case "badfd":   break;
             case "prompt":  break; // TODO: proper prompt device
             case "dom":
@@ -51,8 +51,8 @@ namespace wasi {
                     mode:       settings.domtty?.mode   || "line-buffered",
                     listen_to:  settings.domtty?.listen || document,
                     input:      settings.domtty?.input  || "cargo-html-console-input",
-                    echo:       (text) => domtty ? domtty.write(text) : undefined,
-                });
+                    echo:       (text) => tty ? tty.write(text) : undefined,
+                }, tty);
                 if (stdin) FDS[0] = { handle: stdin,rights_base: RIGHTS_CONIN, rights_inherit: RIGHTS_NONE };
                 break;
         }
@@ -69,8 +69,8 @@ namespace wasi {
             //RIGHTS_POLL_FD_READWRITE, // TODO
         );
 
-        const stdout = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-log"),   "#FFF", domtty);
-        const stderr = TextStreamWriter.from_output(settings.stdout || (domtty ? "dom" : "console-error"), "#F44", domtty);
+        const stdout = TextStreamWriter.from_output(settings.stdout || (tty ? "dom" : "console-log"),   "#FFF", tty);
+        const stderr = TextStreamWriter.from_output(settings.stdout || (tty ? "dom" : "console-error"), "#F44", tty);
         if (stdout) FDS[1] = { handle: stdout, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
         if (stderr) FDS[2] = { handle: stderr, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
 

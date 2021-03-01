@@ -5,15 +5,15 @@ namespace wasi {
 
         fdflags = FDFLAGS_NONE;
 
-        static from_output(output: Output, color_hint: string, domtty: DomTty | undefined): TextStreamWriter | undefined {
+        static from_output(output: Output, color_hint: string, tty: XTermTty | DomTty | undefined): TextStreamWriter | undefined {
             switch (output) {
                 case "badfd":           return undefined;
                 case "null":            return new TextStreamWriter(_ => {});
                 case "console-error":   return new TextStreamWriter(text => console.error("%s", text)); // TODO: join/buffer lines?
                 case "console-log":     return new TextStreamWriter(text => console.log  ("%s", text)); // TODO: join/buffer lines?
                 case "dom":
-                    if (domtty === undefined) throw "output === \"dom\", but no domtty was provided";
-                    return new TextStreamWriter(text => domtty!.write(text, color_hint));
+                    if (tty === undefined) throw "output === \"dom\", but no tty was provided";
+                    return new TextStreamWriter(text => tty!.write(text, color_hint));
             }
         }
 

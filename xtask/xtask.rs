@@ -79,19 +79,19 @@ fn run(args: Args) {
 
 
 fn pre_build() {
-    if cfg!(windows) {
-        // XXX: NPM installs tsc as a .cmd or .bat which Command::new() can't directly launch without resorting to shenannigans
-        exec(r"cmd /C tsc --build script/tsconfig.json");
-    } else {
-        exec(r"tsc --build script/tsconfig.json");
-    }
+    exec(r"npm install --prefer-offline --audit=false");
+    exec(r"node_modules/.bin/tsc --build script/tsconfig.json");
 }
 
 
 
 fn exec(cmd: &str) {
-    let mut cmd = Command::parse(cmd).unwrap();
-    status!("Running", "{}", cmd);
+    status!("Running", "`{}`", cmd);
+    let mut cmd = if cfg!(windows) {
+        Command::parse(format!("cmd /C call {}", cmd))
+    } else {
+        Command::parse(cmd)
+    }.unwrap();
     cmd.status0().unwrap_or_else(|err| fatal!("{:?} failed: {}", cmd, err));
 }
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{TARGET_NAME}</title>
+    <!-- XXX: these paths assume `examples/target/cargo-html/{debug,release}/` -->
+    <link rel="stylesheet" href="../../../../node_modules/xterm/css/xterm.css" />
+    <script src="../../../../node_modules/xterm/lib/xterm.js"></script>
+    <script src="../../../../node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script src="../../../../node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js"></script>
+    <style>
+        body {
+            background-color: black;
+            padding:    0;
+            margin:     0;
+            overflow:   hidden;
+        }
+
+        #cargo-html-console {
+            padding:    0;
+            margin:     0;
+            width:      100vw;
+            height:     100vh;
+            overflow:   hidden;
+        }
+    </style>
+</head><body>
+    <div id="cargo-html-console"></div>
+    <script src="script.js"></script>
+    <script>
+        // TODO: replace this with a placeholder that feeds from Cargo.toml's metadata
+        main({
+            domtty: { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" },
+            env: { "CARGO_HTML": "1", "RUST": "1" },
+        });
+    </script>
+</body></html>
