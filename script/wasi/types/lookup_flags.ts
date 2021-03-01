@@ -7,6 +7,8 @@ namespace wasi {
 
 
 
+    export const LOOKUPFLAGS_NONE = <LookupFlags>0;
+
     /** As long as the resolved path corresponds to a symbolic link, it is expanded. */
     export const LOOKUPFLAGS_SYMLINK_FOLLOW = <LookupFlags>1;
 }

@@ -200,8 +200,6 @@ namespace wasi.fs {
             }
         }
 
-        // TODO: path_link?
-
         path_open(dirflags: LookupFlags, path: string, oflags: OFlags, _fs_rights_base: Rights, _fs_rights_inheriting: Rights, fdflags: FdFlags): wasi.Handle {
             const follow_symlinks = !!(dirflags & LOOKUPFLAGS_SYMLINK_FOLLOW);
 
@@ -301,7 +299,9 @@ namespace wasi.fs {
 
         // TODO: path_readlink?
 
-        path_rename(old_path: string, new_handle: Handle, new_path: string) {
+        path_link(old_flags: LookupFlags, old_path: string, new_handle: Handle, new_path: string) { this.path_link_or_rename(old_flags, old_path, new_handle, new_path, false); }
+        path_rename(old_path: string, new_handle: Handle, new_path: string) { this.path_link_or_rename(LOOKUPFLAGS_NONE, old_path, new_handle, new_path, true); }
+        private path_link_or_rename(old_flags: LookupFlags, old_path: string, new_handle: Handle, new_path: string, rename: boolean) {
             const old_handle = this;
             if (!(new_handle instanceof MemoryDirHandle)) throw ERRNO_XDEV;
             if (old_handle.fs !== new_handle.fs) throw ERRNO_XDEV; // inodes might collide
@@ -316,9 +316,8 @@ namespace wasi.fs {
             if (!new_dir) throw ERRNO_NOTDIR;
             if (!(old_name in old_dir.children)) throw ERRNO_NOENT;
             if (  new_name in new_dir.children ) throw ERRNO_EXIST; // XXX: Should this clobber instead?
-            const n = old_dir.children[old_name];
-            delete old_dir.children[old_name];
-            new_dir.children[new_name] = n;
+            new_dir.children[new_name] = old_dir.children[old_name];
+            if (rename) delete old_dir.children[old_name];
         }
 
         // TODO: path_symlink
