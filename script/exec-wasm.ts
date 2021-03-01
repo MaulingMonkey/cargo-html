@@ -79,7 +79,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
             case "stop-signal":
                 break;
             default:
-                const trace_uncaught = wasi.TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (tty ? "dom" : "console-error"), "#F44", tty);
+                const trace_uncaught = wasi.TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (tty ? "tty" : "console-error"), "#F44", tty);
                 trace_uncaught?.io(`process terminated by uncaught JavaScript exception:\n${e}`);
                 throw e;
         }

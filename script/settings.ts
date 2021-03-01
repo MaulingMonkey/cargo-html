@@ -3,7 +3,7 @@
  */
 interface Settings {
     // Browser Environment
-    domtty?:        DomTtySettings;
+    tty?:           TtySettings;
     trap?:          "fatal" | "soft-debugger" | "debugger" | "fatal-debugger";
 
     // WASI Environment
@@ -33,58 +33,25 @@ interface Settings {
  *
  * | value      | behavior  |
  * | ---------- | --------- |
- * | undefined  | per `"dom"` if available, otheriwse per `"badfd"`
- * | `"dom"`    | Attach keyboard listeners to `domtty.listen` (requires `wasm_asyncified`)
+ * | undefined  | per `"tty"` if available, otheriwse per `"badfd"`
+ * | `"tty"`    | Attach keyboard listeners to `tty.listen` (requires `wasm_asyncified`)
  * | `"badfd"`  | No file descriptor is opened, resulting in `ERRNO_BADFD` errors if read.
  * | `"prompt"` | Use [`Window.prompt()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt) whenever stdin runs out of input.
  *
  * TODO: read from file option?
  */
-type Input = "dom" | "badfd" | "prompt";
-
-/**
- * Controls how escape codes are interpreted by WASI.
- *
- * | value              | behavior |
- * | ------------------ | -------- |
- * | undefined          | `"line-buffered"`
- * | `"raw"`            | Input becomes available to stdin immediately as it's typed.
- * | `"line-buffered"`  | Input becomes available to stdin once enter is pressed.  Before then, backspace erases part of the input buffer.
- */
-type InputMode = "raw" | "line-buffered";
+type Input = "tty" | "badfd" | "prompt";
 
 /**
  * Controls how WASI writes to outputs like `stdout` / `stderr`.
  *
  * | value              | behavior |
  * | ------------------ | -------- |
- * | `undefined`        | Per `"dom"` if available, otherwise per `"null"`
- * | `"dom"`            | Insert HTML before `domtty.input`
+ * | `undefined`        | Per `"tty"` if available, otherwise per `"null"`
+ * | `"tty"`            | Insert HTML before `tty.input`
  * | `"badfd"`          | No file descriptor is opened, resulting in `ERRNO_BADFD` errors if written.
  * | `"null"`           | Writes are ignored, as if written to `/dev/null`.
  * | `"console-log"`    | Use [`console.log(...)`](https://developer.mozilla.org/en-US/docs/Web/API/Console/log)
  * | `"console-error"`  | Use [`console.error(...)`](https://developer.mozilla.org/en-US/docs/Web/API/Console/error)
  */
-type Output = "dom" | "badfd" | "null" | "console-log" | "console-error";
-
-/**
- * Controls how escape codes are interpreted by WASI.
- *
- * | value              | behavior |
- * | ------------------ | -------- |
- * | undefined          | `"ansi"`
- * | `"none"`           | What's an escape code?
- * | `"ansi"`           | Vaguely [ANSI](https://en.wikipedia.org/wiki/ANSI_escape_code)ish
- */
-type OutputEscape = "none" | "ansi";
-
-/**
- * Controls what HTML element(s) `"dom"` inputs/outputs bind to, as well as the behavior of those elements.
- */
-interface DomTtySettings {
-    /** The HTML element to attach keyboard listeners to. */        listen:     HTMLElement | string | Document | undefined;
-    /** The HTML element to commit output to. */                    output:     HTMLElement | string;
-    /** The HTML element to preview line-buffered input in. */      input:      HTMLElement | string;
-    /** If input should be processed immediately or buffered. */    mode?:      InputMode;
-    /** Output escape processing. */                                escape?:    OutputEscape;
-}
+type Output = "tty" | "badfd" | "null" | "console-log" | "console-error";

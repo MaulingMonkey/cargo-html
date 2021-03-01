@@ -43,14 +43,14 @@ namespace wasi {
             //RIGHTS_POLL_FD_READWRITE, // TODO
         );
 
-        switch (settings.stdin || (tty ? "dom" : "prompt")) {
+        switch (settings.stdin || (tty ? "tty" : "prompt")) {
             case "badfd":   break;
             case "prompt":  break; // TODO: proper prompt device
-            case "dom":
+            case "tty":
                 const stdin = ConReader.try_create({
-                    mode:       settings.domtty?.mode   || "line-buffered",
-                    listen_to:  settings.domtty?.listen || document,
-                    input:      settings.domtty?.input  || "cargo-html-console-input",
+                    mode:       settings.tty?.mode   || "line-buffered",
+                    listen_to:  settings.tty?.listen || document,
+                    input:      settings.tty?.input  || "cargo-html-console-input",
                     echo:       (text) => tty ? tty.write(text) : undefined,
                 }, tty);
                 if (stdin) FDS[0] = { handle: stdin,rights_base: RIGHTS_CONIN, rights_inherit: RIGHTS_NONE };
@@ -69,8 +69,8 @@ namespace wasi {
             //RIGHTS_POLL_FD_READWRITE, // TODO
         );
 
-        const stdout = TextStreamWriter.from_output(settings.stdout || (tty ? "dom" : "console-log"),   "#FFF", tty);
-        const stderr = TextStreamWriter.from_output(settings.stdout || (tty ? "dom" : "console-error"), "#F44", tty);
+        const stdout = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-log"),   "#FFF", tty);
+        const stderr = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-error"), "#F44", tty);
         if (stdout) FDS[1] = { handle: stdout, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
         if (stderr) FDS[2] = { handle: stderr, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
 

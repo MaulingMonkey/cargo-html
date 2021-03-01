@@ -1,7 +1,7 @@
 class DomTty {
     public static new(settings: Settings): DomTty | undefined {
-        if (settings.domtty === undefined) return undefined;
-        return new DomTty(settings.domtty);
+        if (settings.tty === undefined) return undefined;
+        return new DomTty(settings.tty);
     }
 
     write(text: string, color_hint?: string) {
@@ -20,7 +20,7 @@ class DomTty {
     private input   : HTMLElement;
     private outbuf  : string = "";
 
-    private constructor(settings: DomTtySettings) {
+    private constructor(settings: TtySettings) {
         this.escape = settings.escape   || "ansi";
         this.mode   = settings.mode     || "line-buffered";
         this.output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;

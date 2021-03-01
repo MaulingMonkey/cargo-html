@@ -5,8 +5,8 @@ class XTermTty {
     public static new(settings: Settings): XTermTty | undefined {
         // @ts-ignore
         if (typeof Terminal === "undefined") return undefined; // not supported
-        if (settings.domtty === undefined) return undefined;
-        return new XTermTty(settings.domtty);
+        if (settings.tty === undefined) return undefined;
+        return new XTermTty(settings.tty);
     }
 
     write(text: string, color_hint?: string) {
@@ -35,7 +35,7 @@ class XTermTty {
     private terminal: Terminal;
     private alive: boolean = true;
 
-    private constructor(settings: DomTtySettings) {
+    private constructor(settings: TtySettings) {
         const output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
 
         const options : ITerminalOptions = {

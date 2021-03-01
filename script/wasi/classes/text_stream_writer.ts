@@ -11,7 +11,7 @@ namespace wasi {
                 case "null":            return new TextStreamWriter(_ => {});
                 case "console-error":   return new TextStreamWriter(text => console.error("%s", text)); // TODO: join/buffer lines?
                 case "console-log":     return new TextStreamWriter(text => console.log  ("%s", text)); // TODO: join/buffer lines?
-                case "dom":
+                case "tty":
                     if (tty === undefined) throw "output === \"dom\", but no tty was provided";
                     return new TextStreamWriter(text => tty!.write(text, color_hint));
             }
