@@ -6,7 +6,6 @@ namespace io.memory {
             type:               "dir",
             node:               1,
             children:           {},
-            created_time:       this._init,
             last_access_time:   this._init,
             last_modified_time: this._init,
             last_change_time:   this._init,
@@ -32,7 +31,6 @@ namespace io.memory {
                         type:               "dir",
                         node:               this.next_node_id++,
                         children:           {},
-                        created_time:       now,
                         last_access_time:   now,
                         last_modified_time: now,
                         last_change_time:   now,
@@ -67,7 +65,6 @@ namespace io.memory {
                 node:               this.next_node_id++,
                 data,
                 length,
-                created_time:       now,
                 last_access_time:   now,
                 last_modified_time: now,
                 last_change_time:   now,
@@ -97,7 +94,6 @@ namespace io.memory {
         length:     number;
 
         // meta data
-        created_time:       wasi.TimeStamp,
         last_access_time:   wasi.TimeStamp,
         last_modified_time: wasi.TimeStamp,
         last_change_time:   wasi.TimeStamp,
@@ -120,7 +116,6 @@ namespace io.memory {
         children: { [name: string]: Node };
 
         // meta data
-        created_time:       wasi.TimeStamp,
         last_access_time:   wasi.TimeStamp,
         last_modified_time: wasi.TimeStamp,
         last_change_time:   wasi.TimeStamp,
