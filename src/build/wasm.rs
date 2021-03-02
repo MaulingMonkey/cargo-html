@@ -17,9 +17,12 @@ fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
         cmd.arg("--manifest-path").arg(manifest_path);
     }
 
+    let mut any_packages = false;
     for pkg in metadata.selected_packages_wasi() {
         cmd.arg("--package").arg(&pkg.name);
+        any_packages = true;
     }
+    if !any_packages { return false; }
 
     if args.bins        { cmd.arg("--bins"); }
     if args.examples    { cmd.arg("--examples"); }
