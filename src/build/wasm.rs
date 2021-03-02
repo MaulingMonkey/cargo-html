@@ -3,7 +3,13 @@ use crate::*;
 
 
 
-pub(crate) fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
+pub(crate) fn targets(args: &Arguments, metadata: &Metadata) -> bool {
+    wasi_targets(args, metadata) |
+    cargo_web_targets(args, metadata) |
+    wasm_pack_targets(args, metadata)
+}
+
+fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
     header("Building wasm32-wasi targets");
 
     let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
@@ -67,7 +73,7 @@ pub(crate) fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
     any_this_header()
 }
 
-pub(crate) fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
+fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
     header("Building cargo-web targets");
 
     for config in args.configs.iter().copied() {
@@ -93,7 +99,7 @@ pub(crate) fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
     any_this_header()
 }
 
-pub(crate) fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
+fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
     header("Building wasm-pack targets");
 
     for config in args.configs.iter().copied() {
