@@ -32,15 +32,9 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             template_js.push_str(include_str!("../../template/script.js"));
             template_js.push_str("\r\n</script>");
 
-            let template_html = include_str!("../../template/console-crate.html");
-            //let template_html = include_str!("../../template/xterm-crate.html");
-            let template_html = template_html
-                .replace("{CONFIG}", config.as_str())
-                .replace("{TARGET_NAME}", &target)
-                .replace("<script src=\"script.js\"></script>", &template_js);
-
             let wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
-            generate(&target_html_dir, target, &template_html, &wasm);
+            generate(&target_html_dir, target, config, include_str!("../../template/console-crate.html"), "<script src=\"script.js\"></script>", &template_js, &wasm);
+            //generate(&target_html_dir, target, config, include_str!("../../template/xterm-crate.html"), "<script src=\"script.js\"></script>", &template_js, &wasm);
         }
 
         let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
@@ -52,13 +46,8 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             };
             let package_js = target_arch_config_dir.join(format!("{}.js", target));
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
-            let template_html = include_str!("../../template/cargo-web.html")
-                .replace("{CONFIG}", config.as_str())
-                .replace("{TARGET_NAME}", target)
-                .replace("{PACKAGE_JS}", &package_js);
-
             let wasm = target_arch_config_dir.join(format!("{}.wasm", target));
-            generate(&target_html_dir, target, &template_html, &wasm);
+            generate(&target_html_dir, target, config, include_str!("../../template/cargo-web.html"), "{PACKAGE_JS}", &package_js, &wasm);
         }
 
         let pkg_dir = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
@@ -71,13 +60,8 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let lib_name = target.replace("-", "_");
             let package_js = pkg_dir.join(format!("{}.js", lib_name));
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
-            let template_html = include_str!("../../template/wasm-pack.html")
-                .replace("{CONFIG}", config.as_str())
-                .replace("{TARGET_NAME}", target)
-                .replace("{PACKAGE_JS}", &package_js);
-
             let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
-            generate(&target_html_dir, target, &template_html, &wasm);
+            generate(&target_html_dir, target, config, include_str!("../../template/wasm-pack.html"), "{PACKAGE_JS}", &package_js, &wasm);
         }
     }
 }
@@ -85,16 +69,25 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
 fn generate(
     target_html_dir:    &Path,
     target:             &str,
+    config:             Config,
     template_html:      &str,
+    js_placeholder:     &str,
+    js_code:            &str,
     wasm:               &Path,
 ) {
-    let base64_wasm32_idx = template_html.find(BASE64_WASM32_STR).expect("template missing {BASE64_WASM32}");
+    let target_html = target_html_dir.join(format!("{}.html", target));
+    status!("Generating", "{}", target_html.display());
 
     let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
     let wasm = base64::encode(&wasm[..]);
 
-    let target_html = target_html_dir.join(format!("{}.html", target));
-    status!("Generating", "{}", target_html.display());
+    let template_html = template_html
+        .replace("{CONFIG}", config.as_str())
+        .replace("{TARGET_NAME}", target)
+        .replace(js_placeholder, js_code);
+
+    let base64_wasm32_idx = template_html.find(BASE64_WASM32_STR).expect("template missing {BASE64_WASM32}");
+
     mmrbi::fs::write_if_modified_with(target_html, |o| {
         write!(o, "{}", &template_html[..base64_wasm32_idx])?;
         write!(o, "{:?}", wasm)?;
