@@ -28,7 +28,7 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
 
 
     // Reflect WASM
-    const is_asyncified = !!!WebAssembly.Module.exports(compiled).find(exp => exp.name.startsWith("asyncify_") && exp.name === "function");
+    const is_asyncified = !WebAssembly.Module.exports(compiled).find(exp => exp.name.startsWith("asyncify_") && exp.name === "function");
     const asyncifier = is_asyncified ? new Asyncifier() : undefined;
     if (!is_asyncified) console.warn("WASM module contains no asyncify_* symbols, async I/O won't be available.");
 
