@@ -93,9 +93,6 @@ fn generate(
         writeln!(o, "<script>")?;
         writeln!(o, "        const CARGO_HTML_SETTINGS = {};", serde_json::to_string(&package.settings.wasi).unwrap())?;
         writeln!(o, "        CARGO_HTML_SETTINGS.env = CARGO_HTML_SETTINGS.env || {{}};")?;
-        for (k, v) in package.settings.env.iter() {
-            writeln!(o, "        CARGO_HTML_SETTINGS.env[{}] = {};", serde_json::to_string(k).unwrap(), serde_json::to_string(v).unwrap())?;
-        }
         writeln!(o, "        {}", js_code)?;
         writeln!(o, "        mount_wasm_base64({:?}, {:?});", target_wasm, wasm)?;
         // TODO: mount filesystem

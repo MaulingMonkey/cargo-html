@@ -16,9 +16,9 @@ libc                    = "0.2"
 wasi                    = "0.10.2"
 #wasm-bindgen            = "0.2"
 
-[package.metadata.html.env]
+[package.metadata.html.wasi]
+sleep                   = "skip"
+
+[package.metadata.html.wasi.env]
 CARGO_HTML              = "1"
 RUST_BACKTRACE          = "1"
-
-[package.metadata.html.wasi]
-#sleep                   = "skip"

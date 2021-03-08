@@ -31,7 +31,6 @@ pub(crate) struct Package {
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub(crate) struct PackageSettings {
-    pub env:            BTreeMap<String, String>,
     pub filesystem:     BTreeMap<String, String>,
     pub wasi:           BTreeMap<String, Value>,
 }
@@ -61,19 +60,6 @@ impl Package {
         }
 
         let mut settings = PackageSettings::default();
-        if let Some(env) = p.metadata.pointer("/html/env") {
-            let env = env.as_object().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.env` is not a table/object", p.name));
-            for (k, v) in env {
-                let v = v.as_str().unwrap_or_else(|| fatal!("package `{}`: [package.metadata.html.env] should only contain key/value string pairs, but value for `{}` is not a string", p.name, k));
-                if k.contains("${") {
-                    warning!("package `{}`: [package.metadata.html.env] contains an invalid key, `{}` (contains not (yet?) implemented `${{...}}` placeholders)", p.name, k);
-                }
-                if v.contains("${") {
-                    warning!("package `{}`: [package.metadata.html.env] contains an invalid value, `{}` (contains not yet implemented `${{...}}` placeholders)", p.name, v);
-                }
-                settings.env.insert(k.clone(), v.into());
-            }
-        }
         if let Some(fs) = p.metadata.pointer("/html/filesystem") {
             let fs = fs.as_object().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.fs` is not a table/object", p.name));
             let _ = fs;
