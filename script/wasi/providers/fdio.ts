@@ -69,8 +69,8 @@ namespace wasi {
             //RIGHTS_POLL_FD_READWRITE, // TODO
         );
 
-        const stdout = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-log"),   "#FFF", tty);
-        const stderr = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-error"), "#F44", tty);
+        const stdout = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-log"),   "stdout", tty);
+        const stderr = TextStreamWriter.from_output(settings.stdout || (tty ? "tty" : "console-error"), "stderr", tty);
         if (stdout) FDS[1] = { handle: stdout, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
         if (stderr) FDS[2] = { handle: stderr, rights_base: RIGHTS_CONOUT, rights_inherit: RIGHTS_NONE };
 

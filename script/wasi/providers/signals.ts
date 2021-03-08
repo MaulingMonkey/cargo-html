@@ -15,9 +15,9 @@ namespace wasi {
      * A future implementation should probably provider Asyncifier support to let execution paused by `SIGNAL_STOP` etc. to resume if so desired.
      */
     export function signals(i: Imports, _memory: MemoryLE, tty: XTermTty | DomTty | undefined, settings: Settings) {
-        const trace_exit_0 = TextStreamWriter.from_output(settings.trace_exit_0 || settings.stdout || (tty ? "tty" : "console-log"  ), "#888", tty);
-        const trace_exit_n = TextStreamWriter.from_output(settings.trace_exit_n || settings.stderr || (tty ? "tty" : "console-error"), "#F44", tty);
-        const trace_signal = TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (tty ? "tty" : "console-error"), "#F44", tty);
+        const trace_exit_0 = TextStreamWriter.from_output(settings.trace_exit_0 || settings.stdout || (tty ? "tty" : "console-log"  ), "exit-ok",    tty);
+        const trace_exit_n = TextStreamWriter.from_output(settings.trace_exit_n || settings.stderr || (tty ? "tty" : "console-error"), "exit-error", tty);
+        const trace_signal = TextStreamWriter.from_output(settings.trace_signal || settings.stderr || (tty ? "tty" : "console-error"), "exit-error", tty);
 
         function sig(sig: string, fatal: boolean): never {
             trace_signal?.io(`process ${fatal ? "killed" : "stopped"} by signal SIG${sig}`);
