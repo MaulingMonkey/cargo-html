@@ -29,10 +29,7 @@
     <div id="cargo-html-console"></div>
     <script src="script.js"></script>
     <script>
-        // TODO: replace this with a placeholder that feeds from Cargo.toml's metadata
-        main({
-            tty: { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" },
-            env: { "CARGO_HTML": "1", "RUST": "1" },
-        });
+        mount_wasm_base64("{TARGET_NAME}.wasm", "{BASE64_WASM32}");
+        launch_wasm("{TARGET_NAME}.wasm");
     </script>
 </body></html>

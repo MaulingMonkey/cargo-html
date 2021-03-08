@@ -3,9 +3,27 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 // Ref: https://github.com/WebAssembly/spec/issues/208
 
 
+declare var CARGO_HTML_SETTINGS : Settings | undefined;
 declare function __cargo_html_wasmbindgen_bundler_js(importer: (path: string) => unknown): unknown;
 
-async function exec_base64_wasm(settings: Settings, wasm: string) {
+function get_settings(): Settings {
+    return typeof CARGO_HTML_SETTINGS !== "undefined" ? CARGO_HTML_SETTINGS : {
+        tty: { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" },
+        env: { "CARGO_HTML": "1", "RUST": "1" },
+    };
+}
+
+const WASMS : {[name: string]: string | undefined} = {};
+function mount_wasm_base64(name: string, wasm: string) {
+    WASMS[name] = wasm;
+}
+
+async function launch_wasm(name: string) {
+    const wasm = WASMS[name];
+    if (wasm === undefined) throw `launch_wasm(${JSON.stringify(name)}): no such wasm module mounted`;
+
+    const settings = get_settings();
+
     // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";
     const tty = XTermTty.new(settings) || DomTty.new(settings);
@@ -86,9 +104,4 @@ async function exec_base64_wasm(settings: Settings, wasm: string) {
     } finally {
         tty?.shutdown();
     }
-}
-
-
-function main(settings: Settings) {
-    exec_base64_wasm(settings, "{BASE64_WASM32}");
 }
