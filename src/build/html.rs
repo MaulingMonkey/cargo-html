@@ -75,6 +75,7 @@ fn generate(
     js_code:            &str,
     wasm:               &Path,
 ) {
+    force_header();
     let target_html = target_html_dir.join(format!("{}.html", target));
     status!("Generating", "{}", target_html.display());
 
