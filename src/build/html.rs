@@ -47,7 +47,7 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/cargo-web.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = target_arch_config_dir.join(format!("{}.wasm", target));
-            generate(&target_html_dir, target, config, include_str!("../../template/cargo-web.html"), &package_js, &wasm);
+            generate(&target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
         }
 
         let pkg_dir = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
@@ -62,7 +62,7 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/wasm-pack.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
-            generate(&target_html_dir, target, config, include_str!("../../template/wasm-pack.html"), &package_js, &wasm);
+            generate(&target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
         }
     }
 }
