@@ -8,7 +8,6 @@ declare function __cargo_html_wasmbindgen_bundler_js(importer: (path: string) =>
 
 function get_settings(): Settings {
     return typeof CARGO_HTML_SETTINGS !== "undefined" ? CARGO_HTML_SETTINGS : {
-        tty: { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" },
         env: { "CARGO_HTML": "1", "RUST": "1" },
     };
 }
@@ -23,6 +22,7 @@ async function launch_wasm(name: string) {
     if (wasm === undefined) throw `launch_wasm(${JSON.stringify(name)}): no such wasm module mounted`;
 
     const settings = get_settings();
+    if (document.getElementById("cargo-html-console")) settings.tty = settings.tty || { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" };
 
     // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";

@@ -32,12 +32,12 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             template_js.push_str(include_str!("../../template/script.js"));
 
             let wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
-            generate(&target_html_dir, target, config, include_str!("../../template/console-crate.html"), &template_js, &wasm);
-            //generate(&target_html_dir, target, config, include_str!("../../template/xterm-crate.html"), &template_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, include_str!("../../template/console-crate.html"), &template_js, &wasm);
+            //generate(pkg, &target_html_dir, target, config, include_str!("../../template/xterm-crate.html"), &template_js, &wasm);
         }
 
         let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
-        for (ty, target, _pkg) in metadata.selected_targets_cargo_web() {
+        for (ty, target, pkg) in metadata.selected_targets_cargo_web() {
             let target_arch_config_dir = match ty {
                 TargetType::Bin     => target_arch_config_dir.clone(),
                 TargetType::Example => target_arch_config_dir.join("examples"),
@@ -47,11 +47,11 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/cargo-web.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = target_arch_config_dir.join(format!("{}.wasm", target));
-            generate(&target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
         }
 
         let pkg_dir = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
-        for (ty, target, _pkg) in metadata.selected_targets_wasm_pack() {
+        for (ty, target, pkg) in metadata.selected_targets_wasm_pack() {
             match ty {
                 TargetType::Bin     => continue,
                 TargetType::Example => continue,
@@ -62,12 +62,13 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/wasm-pack.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
-            generate(&target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
         }
     }
 }
 
 fn generate(
+    package:            &Package,
     target_html_dir:    &Path,
     target:             &str,
     config:             Config,
@@ -90,8 +91,14 @@ fn generate(
 
         write!(o, "{}", &template_html[..scripts_placeholder_idx])?;
         writeln!(o, "<script>")?;
+        writeln!(o, "        const CARGO_HTML_SETTINGS = {};", serde_json::to_string(&package.settings.wasi).unwrap())?;
+        writeln!(o, "        CARGO_HTML_SETTINGS.env = CARGO_HTML_SETTINGS.env || {{}};")?;
+        for (k, v) in package.settings.env.iter() {
+            writeln!(o, "        CARGO_HTML_SETTINGS.env[{}] = {};", serde_json::to_string(k).unwrap(), serde_json::to_string(v).unwrap())?;
+        }
         writeln!(o, "        {}", js_code)?;
         writeln!(o, "        mount_wasm_base64({:?}, {:?});", target_wasm, wasm)?;
+        // TODO: mount filesystem
         writeln!(o, "        launch_wasm({:?}, {:?});", target_wasm, wasm)?;
         writeln!(o, "    </script>")?;
         write!(o, "    {}", &template_html[(scripts_placeholder_idx + HTML_SCRIPTS_PLACEHOLDER.len())..])?;
