@@ -83,7 +83,11 @@ fn generate(
     let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
     let wasm = base64::encode(&wasm[..]);
 
-    let template_html = template_html.replace("{CONFIG}", config.as_str()).replace("{TARGET_NAME}", target);
+    let template_html = template_html
+        .replace("{CONFIG}", config.as_str())
+        .replace("{TARGET_NAME}", target)
+        .replace("<!-- STYLES -->", concat!("<style>\n", include_str!("../../template/css/style.css"), "\n</style>"))
+        ;
     let scripts_placeholder_idx = template_html.find(HTML_SCRIPTS_PLACEHOLDER).expect("template missing `<!-- SCRIPTS -->` placeholder");
 
     mmrbi::fs::write_if_modified_with(target_html, |o| {

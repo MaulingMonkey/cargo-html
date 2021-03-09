@@ -1,0 +1,70 @@
+*[data-cargo-html-palette="vga"] {
+    background-color:               var(--cargo-html-console-color-0);
+    /* Default VGA Colors: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit */
+    --cargo-html-console-color-0:   #000;
+    --cargo-html-console-color-1:   #A00;
+    --cargo-html-console-color-2:   #0A0;
+    --cargo-html-console-color-3:   #A50;
+    --cargo-html-console-color-4:   #00A;
+    --cargo-html-console-color-5:   #A0A;
+    --cargo-html-console-color-6:   #0AA;
+    --cargo-html-console-color-7:   #AAA;
+    --cargo-html-console-color-8:   #555;
+    --cargo-html-console-color-9:   #F55;
+    --cargo-html-console-color-10:  #5F5;
+    --cargo-html-console-color-11:  #FF5;
+    --cargo-html-console-color-12:  #55F;
+    --cargo-html-console-color-13:  #F5F;
+    --cargo-html-console-color-14:  #5FF;
+    --cargo-html-console-color-15:  #FFF;
+    color:                          var(--cargo-html-console-color-15);
+}
+
+:where(*[data-cargo-html-palette="vga"]) a {
+    color: inherit;
+}
+
+#cargo-html-console {
+    white-space:        pre-wrap;
+    display:            block;
+    overflow-y:         auto;
+    color:              var(--cargo-html-console-color-15);
+    background-color:   var(--cargo-html-console-color-0);
+}
+
+#cargo-html-console::-webkit-scrollbar {
+    background:         var(--cargo-html-console-color-0);
+    width:              10px;
+}
+
+#cargo-html-console::-webkit-scrollbar-thumb {
+    background:     var(--cargo-html-console-color-7);
+    border-radius:  5px;
+}
+
+@keyframes blink {
+    0%      { opacity: 60%; }
+    50%     { opacity: 40%; }
+    100%    { opacity: 60%; }
+}
+
+#cargo-html-console-input {
+    opacity:            70%;
+    text-decoration:    underline;
+}
+
+#cargo-html-console .exit-ok    { color: var(--cargo-html-console-color-8); }
+#cargo-html-console .exit-error { color: var(--cargo-html-console-color-1); }
+#cargo-html-console .stderr     { color: var(--cargo-html-console-color-9); }
+
+#cargo-html-console .cursor {
+    animation:      blink 800ms step-start infinite;
+
+    /* https://stackoverflow.com/a/4407335 */
+    -webkit-touch-callout:  none; /* iOS Safari */
+    -webkit-user-select:    none; /* Safari */
+    -khtml-user-select:     none; /* Konqueror HTML */
+    -moz-user-select:       none; /* Old versions of Firefox */
+    -ms-user-select:        none; /* Internet Explorer, Old versions of Edge */
+    user-select:            none; /* Chrome, Edge, Opera, FireFox */
+}
