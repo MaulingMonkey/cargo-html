@@ -30,7 +30,8 @@ class DomTty {
 
         const style = document.createElement("style");
         style.textContent = String.raw`
-            body {
+            *[data-cargo-html-palette="vga"] {
+                background-color:               var(--cargo-html-console-color-0);
                 /* Default VGA Colors: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit */
                 --cargo-html-console-color-0:   #000;
                 --cargo-html-console-color-1:   #A00;
@@ -48,12 +49,16 @@ class DomTty {
                 --cargo-html-console-color-13:  #F5F;
                 --cargo-html-console-color-14:  #5FF;
                 --cargo-html-console-color-15:  #FFF;
+                color:                          var(--cargo-html-console-color-15);
+            }
+
+            :where(*[data-cargo-html-palette="vga"]) a {
+                color: inherit;
             }
 
             #cargo-html-console {
                 white-space:        pre-wrap;
                 display:            block;
-                padding:            0.2em 0.5em;
                 overflow-y:         auto;
                 color:              var(--cargo-html-console-color-15);
                 background-color:   var(--cargo-html-console-color-0);

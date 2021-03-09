@@ -8,8 +8,6 @@
         body {
             padding:            0;
             margin:             0;
-            background-color:   var(--cargo-html-console-color-0);
-            color:              var(--cargo-html-console-color-15);
             overflow:           hidden;
             width:              100vw;
             height:             100vh;
@@ -20,10 +18,21 @@
 
         body > *                    { flex-grow: 0; }
         body > #cargo-html-console  { flex-grow: 1; }
-        body > h1                   { text-align: center; }
+
+        #header {
+            color:              var(--cargo-html-console-color-0);
+            background-color:   var(--cargo-html-console-color-7);
+            font-weight:        bold;
+            font-size:          large;
+            padding:            0.5ch 0.5em;
+        }
+
+        #cargo-html-console {
+            padding:            0.5ch 0.5em;
+        }
     </style>
-</head><body>
-    <h1>{TARGET_NAME}</h1>
+</head><body data-cargo-html-palette="vga">
+    <center id="header">{TARGET_NAME} • {CONFIG} • generated via <a href="https://github.com/MaulingMonkey/cargo-html">cargo html</a></center>
     <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span class="cursor">█</span></code>
     <!-- SCRIPTS -->
 </body></html>
