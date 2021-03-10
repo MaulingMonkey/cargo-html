@@ -10,3 +10,6 @@ publish                 = false
 [[bin]]
 name                    = "goodbye-world"
 path                    = "goodbye-world.rs"
+
+[package.metadata.html]
+template                = "goodbye.html"

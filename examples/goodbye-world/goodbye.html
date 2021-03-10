@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <!-- A modified version of template/html/console.html, to show off templates -->
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{TARGET_NAME}</title>
+    <!-- STYLES -->
+    <style>
+        body {
+            padding:            0;
+            margin:             0;
+            overflow:           hidden;
+            width:              100vw;
+            height:             100vh;
+            display:            flex;
+            flex-direction:     column;
+            font-family:        'Courier New', Courier, monospace;
+        }
+
+        body > *                    { flex-grow: 0; }
+        body > #cargo-html-console  { flex-grow: 1; }
+
+        #cargo-html-console {
+            padding:            0.5ch 0.5em;
+        }
+    </style>
+</head><body data-cargo-html-palette="monochrome-amber">
+    <code id="cargo-html-console"><span id="cargo-html-console-input"></span><span class="cursor">█</span></code>
+    <!-- SCRIPTS -->
+</body></html>

@@ -20,7 +20,7 @@ pub(crate) struct Package {
     pub directory:      PathBuf,
 
     pub wasm_bindgen:   Option<Version>,
-
+    pub template:       Option<String>,
     pub settings:       PackageSettings,
 
     is_html:            bool,
@@ -59,6 +59,8 @@ impl Package {
             }
         }
 
+        let template = p.metadata.pointer("/html/template").map(|t| t.as_str().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.template` is not a string", p.name)).to_owned());
+
         let mut settings = PackageSettings::default();
         if let Some(fs) = p.metadata.pointer("/html/filesystem") {
             let fs = fs.as_object().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.fs` is not a table/object", p.name));
@@ -91,6 +93,7 @@ impl Package {
             is_wasm_pack,
 
             wasm_bindgen,
+            template,
             settings,
 
             id:             p.id,

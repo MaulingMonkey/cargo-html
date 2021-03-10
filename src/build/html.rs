@@ -32,8 +32,7 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             template_js.push_str(include_str!("../../template/script.js"));
 
             let wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
-            generate(pkg, &target_html_dir, target, config, include_str!("../../template/console-crate.html"), &template_js, &wasm);
-            //generate(pkg, &target_html_dir, target, config, include_str!("../../template/xterm-crate.html"), &template_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, "console", &template_js, &wasm);
         }
 
         let target_arch_config_dir  = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
@@ -47,7 +46,7 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/cargo-web.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = target_arch_config_dir.join(format!("{}.wasm", target));
-            generate(pkg, &target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, "basic", &package_js, &wasm);
         }
 
         let pkg_dir = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str()).join("pkg");
@@ -62,7 +61,7 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             let package_js = std::fs::read_to_string(&package_js).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", package_js.display(), err));
             let package_js = include_str!("../../template/js/wasm-pack.js").replace("{PACKAGE_JS}", &package_js);
             let wasm = pkg_dir.join(format!("{}_bg.wasm", lib_name));
-            generate(pkg, &target_html_dir, target, config, include_str!("../../template/basic.html"), &package_js, &wasm);
+            generate(pkg, &target_html_dir, target, config, "basic", &package_js, &wasm);
         }
     }
 }
@@ -82,6 +81,21 @@ fn generate(
 
     let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
     let wasm = base64::encode(&wasm[..]);
+
+    let template_html_buf;
+    let template_html = match package.template.as_ref().map(|s| s.as_str()).unwrap_or(template_html) {
+        "basic"     => include_str!("../../template/html/basic.html"),
+        "console"   => include_str!("../../template/html/console.html"),
+        "xterm"     => include_str!("../../template/html/xterm.html"),
+        file_html   => {
+            let lower = file_html.to_ascii_lowercase();
+            if !(lower.ends_with(".html") || lower.ends_with(".htm")) {
+                fatal!("package `{}` specified an invalid HTML template, {:?}.  Expected \"basic\", \"console\", \"xterm\", or \"some/file.html\".", package.name, file_html);
+            }
+            template_html_buf = std::fs::read_to_string(package.directory.join(file_html)).unwrap_or_else(|err| fatal!("unable to read template `{}` for package `{}`: {}", file_html, package.name, err));
+            template_html_buf.as_str()
+        }
+    };
 
     let template_html = template_html
         .replace("{CONFIG}", config.as_str())
