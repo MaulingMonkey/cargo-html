@@ -6,8 +6,11 @@ create self-contained HTML programs
 [![crates.io](https://img.shields.io/crates/v/cargo-html.svg)](https://crates.io/crates/cargo-html)
 [![rust: stable](https://img.shields.io/badge/rust-stable-yellow.svg)](https://gist.github.com/MaulingMonkey/c81a9f18811079f19326dac4daa5a359#minimum-supported-rust-versions-msrv)
 [![License](https://img.shields.io/crates/l/cargo_html.svg)](https://github.com/MaulingMonkey/cargo-html)
+<br>
 [![Build Status](https://github.com/MaulingMonkey/cargo-html/workflows/Rust/badge.svg)](https://github.com/MaulingMonkey/cargo-html/actions?query=workflow%3Arust)
-
+[![bugs / missing functionality](https://img.shields.io/github/issues-raw/MaulingMonkey/cargo-html/bug%20/%20missing%20functionality?label=bugs%20%2F%20missing%20functionality)](https://github.com/MaulingMonkey/cargo-html/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+%2F+missing+functionality%22)
+[![polish](https://img.shields.io/github/issues-raw/MaulingMonkey/cargo-html/polish?color=blue&label=polish)](https://github.com/MaulingMonkey/cargo-html/issues?q=is%3Aopen+is%3Aissue+label%3Apolish)
+[![enhancement](https://img.shields.io/github/issues-raw/MaulingMonkey/cargo-html/enhancement?color=blue&label=enhancements)](https://github.com/MaulingMonkey/cargo-html/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
 
 Want to run basic console programs in the browser?<br>
 Too lazy to configure CORS properly to fetch/share WASM?<br>
