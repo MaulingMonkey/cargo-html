@@ -24,9 +24,20 @@ class DomTty {
         this.escape = settings.escape   || "ansi";
         this.mode   = settings.mode     || "line-buffered";
         this.output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
-        this.input  = typeof settings.input  === "string" ? requireElementById(settings.input ) : settings.input;
-        if (!this.output.contains(this.input)) throw "DomTty expects the input preview element to be contained within the output element for cursor purpouses";
-        // settings.listen
+
+        const input_buffer = document.createElement("span");
+        input_buffer.id = "cargo-html-console-input"; // for ConReader / styles
+
+        const input_cursor = document.createElement("span");
+        input_cursor.classList.add("cursor"); // for styles
+        input_cursor.textContent = "█";
+
+        const input = this.input = document.createElement("span");
+        input.appendChild(input_buffer);
+        input.appendChild(input_cursor);
+
+        this.output.textContent = "";
+        this.output.appendChild(input);
     }
 
     private process_outbuf(color_hint?: string) {
@@ -245,7 +256,6 @@ class DomTty {
 
     private erase_in_display(n: string) {
         const { input, output } = this;
-        const cursor = output.querySelector(".cursor");
         switch (n) {
             case "":
             case "0":
@@ -270,7 +280,6 @@ class DomTty {
                 break;
         }
         if (!output.contains(input)) output.appendChild(input);
-        if (cursor && !output.contains(cursor)) output.appendChild(cursor);
     }
 }
 
