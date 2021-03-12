@@ -24,11 +24,14 @@ namespace wasi {
         private readonly settings : ConReaderSettings;
         private readonly pending_io : { max: number, resolve: ((input: number[]) => void), reject: ((reason: any) => any) }[] = [];
         private readonly input : HTMLElement | null;
+        private readonly preview : HTMLElement | null;
+        private preview_fallback_buf : string = "";
         private buf : number[] = [];
         private fdflags = FDFLAGS_NONE;
 
         constructor(settings: ConReaderSettings, tty: XTermTty | DomTty) {
             this.settings = settings;
+            this.preview = document.querySelector(".cargo-html-input-preview");
 
             if (tty instanceof DomTty) {
                 if (typeof settings.listen_to === "string") {
@@ -43,6 +46,20 @@ namespace wasi {
                     settings.listen_to.addEventListener("keydown",  ev => this.keydown(ev));
                     settings.listen_to.addEventListener("keypress", ev => this.keypress(ev));
                 }
+
+                document.querySelectorAll("input.cargo-html-input-preview").forEach(input => {
+                    input.addEventListener("keypress", ev => this.inputchange(ev));
+                    input.addEventListener("keyup",    ev => this.inputchange(ev));
+                    input.addEventListener("change",   ev => this.inputchange(ev));
+                });
+                document.querySelectorAll("textarea.cargo-html-input-preview").forEach(input => {
+                    input.addEventListener("keypress", ev => this.inputchange(ev));
+                    input.addEventListener("keyup",    ev => this.inputchange(ev));
+                    input.addEventListener("change",   ev => this.inputchange(ev));
+                });
+                document.querySelectorAll(".cargo-html-input-submit").forEach(submit => {
+                    submit.addEventListener("click", _ev => this.submit_input_buffer());
+                });
 
                 if (typeof settings.input === "string") {
                     this.input = document.getElementById(settings.input);
@@ -148,7 +165,49 @@ namespace wasi {
             }
         }
 
+        private get_input_buffer(): string {
+            if (this.preview === null) return this.preview_fallback_buf;
+            switch (this.preview.tagName) {
+                case "INPUT":       return (this.preview as HTMLInputElement).value;
+                case "TEXTAREA":    return (this.preview as HTMLTextAreaElement).value;
+                default:            return this.preview.textContent || "";
+            }
+        }
+
+        private set_input_buffer(buffer: string) {
+            this.preview_fallback_buf = buffer;
+            document.querySelectorAll(".cargo-html-input-preview").forEach(preview => {
+                switch (preview.tagName) {
+                    case "INPUT":
+                        const input = preview as HTMLInputElement;
+                        input.value = buffer;
+                        break;
+                    case "TEXTAREA":
+                        const textarea = preview as HTMLTextAreaElement;
+                        textarea.value = buffer;
+                        textarea.rows  = buffer.split("\n").length;
+                        break;
+                    default:
+                        preview.textContent = buffer;
+                        break;
+                }
+            });
+        }
+
+        private append_input_buffer(text: string) {
+            this.set_input_buffer(this.get_input_buffer() + text);
+        }
+
+        private submit_input_buffer() {
+            const buffer = this.get_input_buffer() + "\n";
+            this.set_input_buffer("");
+            this.write(buffer);
+        }
+
         private keypress(ev: KeyboardEvent) {
+            if (ev.target instanceof HTMLElement && ev.target.tagName === "INPUT") return;
+            if (ev.target instanceof HTMLElement && ev.target.tagName === "TEXTAREA") return;
+
             var text = ev.char || String.fromCharCode(ev.charCode);
             if (text === "\r") { text = "\n"; }
             switch (this.settings.mode) {
@@ -171,7 +230,7 @@ namespace wasi {
                             // should've already been handled by keydown event
                             break;
                         default:
-                            this.input!.textContent += text;
+                            this.append_input_buffer(text);
                             break;
                     }
                     break;
@@ -181,6 +240,9 @@ namespace wasi {
         }
 
         private keydown(ev: KeyboardEvent) {
+            if (ev.target instanceof HTMLElement && ev.target.tagName === "INPUT") return;
+            if (ev.target instanceof HTMLElement && ev.target.tagName === "TEXTAREA") return;
+
             var key = "";
             if (ev.ctrlKey  ) key += "Ctrl+";
             if (ev.altKey   ) key += "Alt+";
@@ -203,26 +265,51 @@ namespace wasi {
                 case "line-buffered":
                     switch (key) {
                         case "Backspace":
-                            if (!!this.input!.textContent) {
-                                this.input!.textContent = this.input!.textContent.substr(0, this.input!.textContent.length-1);
-                            }
+                            const b = this.get_input_buffer();
+                            if (b.length > 0) this.set_input_buffer(b.substr(0, b.length-1));
                             // else TODO: some kind of alert?
                             break;
-                        case "Enter":
-                        case "NumpadEnter":
-                            var buffer = (this.input!.textContent || "") + "\n";
-                            this.input!.textContent = "";
-                            this.write(buffer);
-                            break;
-                        case "Tab":     this.input!.textContent = (this.input!.textContent || "") + "\t"; break;
-                        case "Esc":     this.input!.textContent = (this.input!.textContent || "") + "\x1B"; break;
-                        case "Escape":  this.input!.textContent = (this.input!.textContent || "") + "\x1B"; break;
-                        default:        return; // process no further
+                        case "Enter":       this.submit_input_buffer(); break;
+                        case "NumpadEnter": this.submit_input_buffer(); break;
+                        case "Tab":         this.append_input_buffer("\t"); break;
+                        case "Esc":         this.append_input_buffer("\x1B"); break;
+                        case "Escape":      this.append_input_buffer("\x1B"); break;
+                        default:            return; // process no further
                     }
                     break;
             }
             ev.preventDefault();
             ev.stopPropagation();
+        }
+
+        private inputchange(ev: Event) {
+            if (!(ev.target instanceof HTMLElement)) return;
+
+            if (ev instanceof KeyboardEvent && ev.type === "keypress") {
+                var key = "";
+                if (ev.ctrlKey  ) key += "Ctrl+";
+                if (ev.altKey   ) key += "Alt+";
+                if (ev.shiftKey ) key += "Shift+";
+                key += (ev.key || ev.code);
+
+                switch (key) {
+                case "Enter":
+                case "NumpadEnter":
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    this.submit_input_buffer();
+                    return;
+                }
+            }
+
+            const target = ev.target;
+            requestAnimationFrame(()=> {
+                switch (target.tagName) {
+                    case "INPUT":       this.set_input_buffer((target as HTMLInputElement).value); break;
+                    case "TEXTAREA":    this.set_input_buffer((target as HTMLTextAreaElement).value); break;
+                    default:            this.set_input_buffer((target as any).value || (target.textContent) || ""); break;
+                }
+            });
         }
     }
 }

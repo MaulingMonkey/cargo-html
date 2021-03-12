@@ -11,7 +11,7 @@ class DomTty {
     }
 
     shutdown() {
-        this.hide_cursor();
+        document.querySelectorAll(".cargo-html-remove-on-shutdown").forEach(e => e.remove());
     }
 
     private escape  : OutputEscape;
@@ -26,6 +26,7 @@ class DomTty {
         this.output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
 
         const input_buffer = document.createElement("span");
+        input_buffer.classList.add("cargo-html-input-preview");
         input_buffer.id = "cargo-html-console-input"; // for ConReader / styles
 
         const input_cursor = document.createElement("span");
@@ -33,10 +34,11 @@ class DomTty {
         input_cursor.textContent = "█";
 
         const input = this.input = document.createElement("span");
+        input.classList.add("cargo-html-remove-on-shutdown");
         input.appendChild(input_buffer);
         input.appendChild(input_cursor);
 
-        this.output.textContent = "";
+        this.output.textContent = ""; // remove any loading indicators
         this.output.appendChild(input);
     }
 
