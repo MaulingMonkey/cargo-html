@@ -56,6 +56,17 @@
 
 
 
+        // install
+        {
+            "label":            "install",
+            "command":          "cargo i",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "install", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "install", "source": "install" },
+        },
+
+
+
         // doc
         {
             "label":            "doc",

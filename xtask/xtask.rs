@@ -14,6 +14,7 @@ fn main() {
         "clean"         => clean(args),
         "d" | "doc"     => doc(args),
         "r" | "run"     => run(args),
+        "i" | "install" => install(args),
         other           => fatal!("unrecognized subcommand `{}`", other),
     }
 }
@@ -76,10 +77,15 @@ fn run(args: Args) {
     std::process::exit(cmd.status().ok().and_then(|s| s.code()).unwrap_or(1));
 }
 
+fn install(_args: Args) {
+    pre_build();
+    exec("cargo install --path .");
+}
+
 
 
 fn pre_build() {
-    exec(r"npm install --prefer-offline --audit=false");
+    exec(r"npm install --prefer-offline --audit=false --silent");
     exec(r"node_modules/.bin/tsc --build script/tsconfig.json");
 }
 
