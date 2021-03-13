@@ -9,6 +9,12 @@
             "dependsOn":        [ "build" ],
             "group":            { "kind": "build", "isDefault": true }
         },
+        {
+            "label":            "check-file",
+            "dependsOrder":     "sequence",
+            "dependsOn":        [ "check" ],
+            "group":            "build",
+        },
 
 
 
@@ -24,6 +30,17 @@
             "command":          "cargo fetch",
             "type":             "shell",
             "presentation":     { "clear": true, "group": "fetch", "reveal": "always" },
+        },
+
+
+
+        // check
+        {
+            "label":            "check",
+            "command":          "cargo c",
+            "type":             "shell",
+            "presentation":     { "clear": true, "group": "check", "reveal": "always" },
+            "problemMatcher":   { "base": "$rustc", "owner": "check", "source": "check" },
         },
 
 
