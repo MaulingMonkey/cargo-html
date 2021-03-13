@@ -1,6 +1,8 @@
 use super::util::*;
 use crate::*;
 
+use std::time::SystemTime;
+
 
 
 pub(crate) fn targets(args: &Arguments, metadata: &Metadata) -> bool {
@@ -143,6 +145,15 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
             };
 
             let async_wasm = target_arch_config.join(format!("{}.async.wasm", target));
+
+            let dst_mod_time = file_mod_time(&async_wasm).unwrap_or(SystemTime::UNIX_EPOCH);
+            let src_mod_time = [exe_mod_time(), file_mod_time(&bg_wasm).unwrap_or_else(|| SystemTime::now())].iter().copied().max().unwrap();
+            if src_mod_time < dst_mod_time {
+                force_header();
+                status!("Up-to-date", "{}", async_wasm.display());
+                continue;
+            }
+
             let mut cmd = tools::find_install_wasm_opt();
             match config {
                 Config::Debug   => {},

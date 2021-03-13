@@ -1,6 +1,8 @@
 use mmrbi::*;
 
 use std::cell::Cell;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 
 
@@ -38,3 +40,19 @@ thread_local! { static TL : TL = TL {
     header:             Cell::new(""),
     any_this_header:    Cell::new(false),
 };}
+
+
+
+
+pub(crate) fn exe_mod_time() -> SystemTime {
+    fn imp() -> Option<SystemTime> {
+        let exe = PathBuf::from(std::env::args().next()?);
+        let meta = exe.metadata().ok()?;
+        meta.modified().ok()
+    }
+    imp().unwrap_or(SystemTime::now())
+}
+
+pub(crate) fn file_mod_time(file: &Path) -> Option<SystemTime> {
+    file.metadata().ok()?.modified().ok()
+}
