@@ -146,10 +146,17 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
 
             let async_wasm = target_arch_config.join(format!("{}.async.wasm", target));
 
-            let dst_mod_time = file_mod_time(&async_wasm).unwrap_or(SystemTime::UNIX_EPOCH);
-            let src_mod_time = [exe_mod_time(), file_mod_time(&bg_wasm).unwrap_or_else(|| SystemTime::now())].iter().copied().max().unwrap();
-            if src_mod_time < dst_mod_time {
-                force_header();
+            let mut gen_reasons = Vec::new();
+            match file_mod_time(&async_wasm) {
+                None => gen_reasons.push("not yet generated"),
+                Some(dst_mod_time) => {
+                    if dst_mod_time <= exe_mod_time() { gen_reasons.push("cargo-html updated"); }
+                    if dst_mod_time <= file_mod_time(&bg_wasm).unwrap_or_else(|| SystemTime::now()) { gen_reasons.push("source wasm updated"); }
+                },
+            }
+
+            force_header();
+            if gen_reasons.is_empty() {
                 status!("Up-to-date", "{}", async_wasm.display());
                 continue;
             }
@@ -162,7 +169,10 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
             cmd.arg("--debuginfo");
             cmd.arg("--asyncify").arg(&bg_wasm);
             cmd.arg("--output").arg(&async_wasm);
-            run(cmd);
+
+            status!("Running", "{:?}", cmd);
+            for reason in gen_reasons.iter().copied() { println!("    \u{001B}[36;1mreason\u{001B}[0m: {}", reason); }
+            cmd.status0().unwrap_or_else(|err| fatal!("{} failed: {}", cmd, err));
         }
     }
 }
