@@ -1,8 +1,10 @@
 use super::util::*;
 use crate::*;
 
-use std::io::Write;
+use std::fs::File;
+use std::io::{self, BufWriter, Write};
 use std::path::*;
+use std::time::SystemTime;
 
 
 
@@ -66,6 +68,11 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
     }
 }
 
+enum TemplateHtml {
+    BuiltIn(&'static str),
+    File(PathBuf),
+}
+
 fn generate(
     package:            &Package,
     target_html_dir:    &Path,
@@ -77,22 +84,50 @@ fn generate(
 ) {
     force_header();
     let target_html = target_html_dir.join(format!("{}.html", target));
-    status!("Generating", "{}", target_html.display());
 
-    let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
-    let wasm = base64::encode(&wasm[..]);
-
-    let template_html_buf;
     let template_html = match package.template.as_ref().map(|s| s.as_str()).unwrap_or(template_html) {
-        "basic"     => include_str!("../../template/html/basic.html"),
-        "console"   => include_str!("../../template/html/console.html"),
-        "xterm"     => include_str!("../../template/html/xterm.html"),
+        "basic"     => TemplateHtml::BuiltIn(include_str!("../../template/html/basic.html")),
+        "console"   => TemplateHtml::BuiltIn(include_str!("../../template/html/console.html")),
+        "xterm"     => TemplateHtml::BuiltIn(include_str!("../../template/html/xterm.html")),
         file_html   => {
             let lower = file_html.to_ascii_lowercase();
             if !(lower.ends_with(".html") || lower.ends_with(".htm")) {
                 fatal!("package `{}` specified an invalid HTML template, {:?}.  Expected \"basic\", \"console\", \"xterm\", or \"some/file.html\".", package.name, file_html);
             }
-            template_html_buf = std::fs::read_to_string(package.directory.join(file_html)).unwrap_or_else(|err| fatal!("unable to read template `{}` for package `{}`: {}", file_html, package.name, err));
+            TemplateHtml::File(package.directory.join(file_html))
+        }
+    };
+
+    let mut gen_reasons = Vec::new();
+    match file_mod_time(&target_html) {
+        None => gen_reasons.push("not yet generated"),
+        Some(target_html_mod) => {
+            if target_html_mod <= exe_mod_time() { gen_reasons.push("cargo-html updated"); }
+            if target_html_mod <= file_mod_time(wasm).unwrap_or(SystemTime::now()) { gen_reasons.push("source or asyncified wasm updated"); }
+            if let TemplateHtml::File(file) = &template_html {
+                if target_html_mod <= file_mod_time(&file).unwrap_or(SystemTime::now()) {
+                    gen_reasons.push("template updated");
+                }
+            }
+        }
+    }
+
+    if gen_reasons.is_empty() {
+        status!("Up-to-date", "{}", target_html.display());
+        return;
+    } else {
+        status!("Generating", "{}", target_html.display());
+        for reason in gen_reasons.iter().copied() { println!("    \u{001B}[36;1mreason\u{001B}[0m: {}", reason); }
+    }
+
+    let wasm = std::fs::read(&wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", wasm.display(), err));
+    let wasm = base64::encode(&wasm[..]);
+
+    let template_html_buf;
+    let template_html = match template_html {
+        TemplateHtml::BuiltIn(s) => s,
+        TemplateHtml::File(path) => {
+            template_html_buf = std::fs::read_to_string(&path).unwrap_or_else(|err| fatal!("unable to read template `{}` for package `{}`: {}", path.display(), package.name, err));
             template_html_buf.as_str()
         }
     };
@@ -104,7 +139,7 @@ fn generate(
         ;
     let scripts_placeholder_idx = template_html.find(HTML_SCRIPTS_PLACEHOLDER).expect("template missing `<!-- SCRIPTS -->` placeholder");
 
-    mmrbi::fs::write_if_modified_with(target_html, |o| {
+    fs_write(target_html, |o| {
         let target_wasm = format!("{}.wasm", target);
 
         write!(o, "{}", &template_html[..scripts_placeholder_idx])?;
@@ -119,4 +154,9 @@ fn generate(
         write!(o, "    {}", &template_html[(scripts_placeholder_idx + HTML_SCRIPTS_PLACEHOLDER.len())..])?;
         Ok(())
     }).unwrap_or_else(|err| fatal!("unable to fully write HTML file: {}", err));
+}
+
+fn fs_write(path: impl AsRef<Path>, io: impl FnOnce(&mut BufWriter<File>) -> io::Result<()>) -> io::Result<()> {
+    let mut o = BufWriter::new(File::create(path)?);
+    io(&mut o)
 }
