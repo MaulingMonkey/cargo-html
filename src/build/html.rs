@@ -103,7 +103,10 @@ fn generate(
         None => gen_reasons.push("not yet generated"),
         Some(target_html_mod) => {
             if target_html_mod <= exe_mod_time() { gen_reasons.push("cargo-html updated"); }
-            if target_html_mod <= file_mod_time(wasm).unwrap_or(SystemTime::now()) { gen_reasons.push("source or asyncified wasm updated"); }
+            if target_html_mod <= file_mod_time(wasm).unwrap_or(SystemTime::now()) {
+                let is_async = wasm.to_string_lossy().to_ascii_lowercase().ends_with(".async.wasm");
+                gen_reasons.push(if is_async { "asyncified wasm updated" } else { "source wasm updated" });
+            }
             if let TemplateHtml::File(file) = &template_html {
                 if target_html_mod <= file_mod_time(&file).unwrap_or(SystemTime::now()) {
                     gen_reasons.push("template updated");
