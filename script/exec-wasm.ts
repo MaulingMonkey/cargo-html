@@ -46,9 +46,9 @@ async function launch_wasm(name: string) {
 
 
     // Reflect WASM
-    const is_asyncified = !WebAssembly.Module.exports(compiled).find(exp => exp.name.startsWith("asyncify_") && exp.name === "function");
+    const is_asyncified = !!WebAssembly.Module.exports(compiled).find(exp => exp.name.startsWith("asyncify_") && exp.kind === "function");
     const asyncifier = is_asyncified ? new Asyncifier() : undefined;
-    if (!is_asyncified) console.warn("WASM module contains no asyncify_* symbols, async I/O won't be available.");
+    if (!is_asyncified) console.warn("WASM module not asyncified, stdin DOM reads won't be available.");
 
 
     // Setup WASM environment
@@ -65,8 +65,7 @@ async function launch_wasm(name: string) {
     wasi.random   (imports, memory, settings.random || determinism);
     wasi.time     (imports, memory, { sleep: sleep == "nondeterministic" ? (asyncifier || "busy-wait") : sleep, clock: settings.clock || determinism });
     wasi.signals  (imports, memory, tty, settings);
-    if (asyncifier !== undefined)   wasi.fdio(imports, memory, asyncifier, tty, settings);
-    // XXX: need non-async I/O options
+    wasi.fdio     (imports, memory, asyncifier, tty, settings);
 
     if (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") {
         Object.assign(imports, __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports));
