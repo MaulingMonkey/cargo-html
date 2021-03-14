@@ -33,7 +33,13 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
             }
             template_js.push_str(include_str!("../../template/script.js"));
 
-            let wasm = target_arch_config_dir.join(format!("{}.async.wasm", target));
+            let wasm = if pkg.asyncify {
+                target_arch_config_dir.join(format!("{}.async.wasm", target))
+            } else if pkg.wasm_bindgen.is_some() {
+                target_arch_config_dir.join("js").join(format!("{}_bg.wasm", target))
+            } else {
+                target_arch_config_dir.join(format!("{}.wasm", target))
+            };
             generate(pkg, &target_html_dir, target, config, "console", &template_js, &wasm);
         }
 
@@ -107,6 +113,7 @@ fn generate(
                 let is_async = wasm.to_string_lossy().to_ascii_lowercase().ends_with(".async.wasm");
                 gen_reasons.push(if is_async { "asyncified wasm updated" } else { "source wasm updated" });
             }
+            if target_html_mod <= file_mod_time(&package.manifest_path).unwrap_or_else(|| SystemTime::now()) { gen_reasons.push("package manifest updated"); }
             if let TemplateHtml::File(file) = &template_html {
                 if target_html_mod <= file_mod_time(&file).unwrap_or(SystemTime::now()) {
                     gen_reasons.push("template updated");

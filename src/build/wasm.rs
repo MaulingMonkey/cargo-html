@@ -132,6 +132,7 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
     for config in args.configs.iter().copied() {
         let target_arch_config = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
         for (ty, target, pkg) in metadata.selected_targets_wasi() {
+            if !pkg.asyncify { continue }
             let target_arch_config = match ty {
                 TargetType::Bin     => target_arch_config.clone(),
                 TargetType::Example => target_arch_config.join("examples"),
@@ -152,6 +153,7 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
                 Some(dst_mod_time) => {
                     if dst_mod_time <= exe_mod_time() { gen_reasons.push("cargo-html updated"); }
                     if dst_mod_time <= file_mod_time(&bg_wasm).unwrap_or_else(|| SystemTime::now()) { gen_reasons.push("source wasm updated"); }
+                    if dst_mod_time <= file_mod_time(&pkg.manifest_path).unwrap_or_else(|| SystemTime::now()) { gen_reasons.push("package manifest updated"); }
                 },
             }
 

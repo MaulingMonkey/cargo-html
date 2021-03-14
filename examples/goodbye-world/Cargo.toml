@@ -12,4 +12,5 @@ name                    = "goodbye-world"
 path                    = "goodbye-world.rs"
 
 [package.metadata.html]
+asyncify                = false
 template                = "goodbye.html"

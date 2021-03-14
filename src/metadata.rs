@@ -22,6 +22,7 @@ pub(crate) struct Package {
     pub wasm_bindgen:   Option<Version>,
     pub template:       Option<String>,
     pub settings:       PackageSettings,
+    pub asyncify:       bool,
 
     is_html:            bool,
     is_cargo_web:       bool,
@@ -82,25 +83,27 @@ impl Package {
         let is_cargo_web    = is_html && has_bin_or_example && p.metadata.pointer("/html/cargo-web").map_or_else(|| has_stdweb_dependency, |cargo_web| cargo_web != false);
         let is_wasi         = is_html && has_bin_or_example && !is_cargo_web;
         let is_wasm_pack    = is_html && has_cdylib && p.metadata.pointer("/html/wasm-pack").map_or_else(|| has_wasm_bindgen_dependency, |wasm_pack| wasm_pack != false);
+        let asyncify        = is_html && p.metadata.pointer("/html/asyncify").map_or_else(|| is_wasi, |asyncify| asyncify != false);
 
         let mut directory = p.manifest_path.clone();
         directory.pop();
 
         Self {
-            is_html,
-            is_cargo_web,
-            is_wasi,
-            is_wasm_pack,
-
-            wasm_bindgen,
-            template,
-            settings,
-
             id:             p.id,
             name:           p.name,
             manifest_path:  p.manifest_path,
             targets:        p.targets,
             directory,
+
+            wasm_bindgen,
+            template,
+            settings,
+            asyncify,
+
+            is_html,
+            is_cargo_web,
+            is_wasi,
+            is_wasm_pack,
         }
     }
 }
