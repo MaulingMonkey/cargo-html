@@ -2,25 +2,21 @@ namespace wasi {
     /**
      * Provide input/output related syscall implementations.
      */
-    export function fdio(i: Imports, memory: MemoryLE, asyncifier: Asyncifier | undefined, tty: XTermTty | DomTty | undefined, settings: Settings) {
-        if (asyncifier !== undefined)   fdio_async(i, memory, asyncifier, tty, settings);
-        else                            fdio_sync (i, memory,             tty, settings);
+    export function fdio(i: Imports, memory: MemoryLE, asyncifier: Asyncifier | undefined, tty: XTermTty | DomTty | undefined, settings: Settings, mounts: io.memory.Mount[]) {
+        if (asyncifier !== undefined)   fdio_async(i, memory, asyncifier, tty, settings, mounts);
+        else                            fdio_sync (i, memory,             tty, settings, mounts);
     }
 
-    function fdio_async(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, tty: XTermTty | DomTty | undefined, settings: Settings) {
+    function fdio_async(i: Imports, memory: MemoryLE, asyncifier: Asyncifier, tty: XTermTty | DomTty | undefined, settings: Settings, mounts: io.memory.Mount[]) {
         const trace = true;
 
-        const FS = new io.memory.FileSystem();
+        const FS = new io.memory.FileSystem(mounts);
         FS.now = () => {
             if (i._cargo_html_shenannigans_do_not_use.file_time_now === undefined) return (0n as TimeStamp);
             else return i._cargo_html_shenannigans_do_not_use.file_time_now();
         };
 
         const root = FS.init_dir("/");
-        //root.writeable = false;
-        const temp = FS.init_dir("/temp/");
-        temp.listable = false;
-        const home = FS.init_dir("/home/");
 
         interface FdEntry {
             handle:         Handle | HandleAsync;

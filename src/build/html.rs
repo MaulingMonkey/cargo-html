@@ -104,6 +104,8 @@ fn generate(
         }
     };
 
+    let mounts = package.settings.mounts.iter().map(|mount| GatheredMount::from(&package.directory, mount)).collect::<Vec<_>>();
+
     let mut gen_reasons = Vec::new();
     match file_mod_time(&target_html) {
         None => gen_reasons.push("not yet generated"),
@@ -119,6 +121,7 @@ fn generate(
                     gen_reasons.push("template updated");
                 }
             }
+            if mounts.iter().any(|mount| target_html_mod <= mount.last_modified) { gen_reasons.push("mounted files updated"); }
         }
     }
 
@@ -154,11 +157,44 @@ fn generate(
 
         write!(o, "{}", &template_html[..scripts_placeholder_idx])?;
         writeln!(o, "<script>")?;
-        writeln!(o, "        const CARGO_HTML_SETTINGS = {};", serde_json::to_string(&package.settings.wasi).unwrap())?;
+        writeln!(o, "        const CARGO_HTML_SETTINGS = {};", serde_json::to_string(&package.settings.wasi).unwrap())?; // TODO: rename to CARGO_HTML_WASI_SETTINGS ?
         writeln!(o, "        CARGO_HTML_SETTINGS.env = CARGO_HTML_SETTINGS.env || {{}};")?;
         writeln!(o, "        {}", js_code)?;
         writeln!(o, "        mount_wasm_base64({:?}, {:?});", target_wasm, wasm)?;
-        // TODO: mount filesystem
+        for mount in mounts.iter() {
+            writeln!(o, "        mount_filesystem({:?}, {{", target_wasm)?;
+            writeln!(o, "            \"mount\":    {},", serde_json::to_string(&mount.mount.mount).unwrap())?;
+            writeln!(o, "            \"writable\": {},", if mount.mount.writable { "true" } else { "false" })?;
+            writeln!(o, "            \"dirs\": [")?;
+            for dir in mount.dirs.iter() {
+                writeln!(o,
+                    "                {{ \"relative\": {} }},",
+                    serde_json::to_string(&dir.relative).unwrap()
+                )?;
+            }
+            writeln!(o, "            ],")?;
+            writeln!(o, "            \"files\": [")?;
+            for file in mount.files.iter() {
+                let data    = std::fs::read(&file.src).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", file.src.display(), err));
+                let base64  = serde_json::to_string(&base64::encode(&data[..])).unwrap();
+                let text    = std::str::from_utf8(&data[..]).map(|s| serde_json::to_string(s).unwrap()).ok();
+                let (encoding, encoded) = if let Some(text) = text.as_ref().filter(|text| text.len() <= base64.len()) {
+                    ("text", text.as_str())
+                } else {
+                    ("base64", base64.as_str())
+                };
+
+                writeln!(o,
+                    "                {{ \"relative\": {}, \"encoding\": \"{}\", \"data\": {} }},",
+                    serde_json::to_string(&file.relative).unwrap(),
+                    encoding,
+                    encoded,
+                )?;
+            }
+            writeln!(o, "            ],")?;
+            writeln!(o, "            \"persist\":  {}", serde_json::to_string(&mount.mount.persist).unwrap())?;
+            writeln!(o, "        }});")?;
+        }
         writeln!(o, "        launch_wasm({:?});", target_wasm)?;
         writeln!(o, "    </script>")?;
         write!(o, "    {}", &template_html[(scripts_placeholder_idx + HTML_SCRIPTS_PLACEHOLDER.len())..])?;

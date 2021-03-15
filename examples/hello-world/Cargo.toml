@@ -16,9 +16,36 @@ libc                    = "0.2"
 wasi                    = "0.10.2"
 #wasm-bindgen            = "0.2"
 
+
+
 [package.metadata.html.wasi]
 sleep                   = "skip"
 
 [package.metadata.html.wasi.env]
 CARGO_HTML              = "1"
 RUST_BACKTRACE          = "1"
+
+
+
+[[package.metadata.html.mount]]
+mount           = "/temp/"
+
+[[package.metadata.html.mount]]
+mount           = "/home/"
+
+[[package.metadata.html.mount]]
+source          = "."
+mount           = "/crate/"
+writable        = false
+
+[[package.metadata.html.mount]]
+source          = "Cargo.toml"
+mount           = "/Cargo.toml"
+writable        = false
+
+[[package.metadata.html.mount]]
+source          = "../../.vscode/"
+mount           = "/.vscode/"
+persist.type    = "local-storage"
+persist.key     = "cargo-html/hello-world/.vscode"
+persist.overlay = false

@@ -45,19 +45,14 @@ impl Package {
 
         let template = p.metadata.pointer("/html/template").map(|t| t.as_str().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.template` is not a string", p.name)).to_owned());
 
-        let mut settings = PackageSettings::default();
-        if let Some(fs) = p.metadata.pointer("/html/filesystem") {
-            let fs = fs.as_object().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.fs` is not a table/object", p.name));
-            let _ = fs;
-            // TODO: mounting, validation, etc.
-        }
-        if let Some(wasi) = p.metadata.pointer("/html/wasi") {
-            let wasi = wasi.as_object().unwrap_or_else(|| fatal!("package `{}`: `package.metadata.html.wasi` is not a table/object", p.name));
-            for (k, v) in wasi {
-                // TODO: validation
-                settings.wasi.insert(k.clone(), v.clone());
-            }
-        }
+        let settings : PackageSettings = if let Some(html) = p.metadata.pointer("/html") {
+            serde_json::from_value(html.clone()).unwrap_or_else(|err| fatal!("package `{}`: error deserializing `package.metadata.html` to package settings: {}", p.name, err))
+        } else {
+            PackageSettings::default()
+        };
+
+        // TODO: settings.mounts: validation
+        // TODO: settings.wasi: validation
 
         let has_wasm_bindgen_dependency = wasm_bindgen.is_some();
         let has_stdweb_dependency = p.dependencies.iter().any(|d| d.name == "stdweb");

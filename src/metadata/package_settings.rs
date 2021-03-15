@@ -1,3 +1,4 @@
+use super::Mount;
 use serde::*;
 use serde_json::Value;
 use std::collections::*;
@@ -6,6 +7,8 @@ use std::collections::*;
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub(crate) struct PackageSettings {
-    pub filesystem:     BTreeMap<String, String>,
-    pub wasi:           BTreeMap<String, Value>,
+    #[serde(default, rename = "mount")]
+    pub mounts: Vec<Mount>,
+    #[serde(default)]
+    pub wasi:   BTreeMap<String, Value>,
 }

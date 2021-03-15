@@ -12,6 +12,12 @@ function get_settings(): Settings {
     };
 }
 
+const MOUNTS : {[name: string]: io.memory.Mount[] | undefined} = {};
+function mount_filesystem(name: string, mount: io.memory.Mount) {
+    const mounts = MOUNTS[name] = (MOUNTS[name] || []);
+    mounts.push(mount);
+}
+
 const WASMS : {[name: string]: string | undefined} = {};
 function mount_wasm_base64(name: string, wasm: string) {
     WASMS[name] = wasm;
@@ -19,6 +25,7 @@ function mount_wasm_base64(name: string, wasm: string) {
 
 async function launch_wasm(name: string) {
     const wasm = WASMS[name];
+    const mounts = MOUNTS[name] || [];
     if (wasm === undefined) throw `launch_wasm(${JSON.stringify(name)}): no such wasm module mounted`;
 
     const settings = get_settings();
@@ -65,7 +72,7 @@ async function launch_wasm(name: string) {
     wasi.random   (imports, memory, settings.random || determinism);
     wasi.time     (imports, memory, { sleep: sleep == "nondeterministic" ? (asyncifier || "busy-wait") : sleep, clock: settings.clock || determinism });
     wasi.signals  (imports, memory, tty, settings);
-    wasi.fdio     (imports, memory, asyncifier, tty, settings);
+    wasi.fdio     (imports, memory, asyncifier, tty, settings, mounts);
 
     if (typeof __cargo_html_wasmbindgen_bundler_js !== "undefined") {
         Object.assign(imports, __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports));

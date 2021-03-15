@@ -1,6 +1,9 @@
 const global_fetch = fetch;
 const WASMS = {};
 
+function mount_filesystem(...args) {
+}
+
 function mount_wasm_base64(name, base64) {
     WASMS[name] = base64;
 }
