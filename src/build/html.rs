@@ -159,7 +159,7 @@ fn generate(
         writeln!(o, "        {}", js_code)?;
         writeln!(o, "        mount_wasm_base64({:?}, {:?});", target_wasm, wasm)?;
         // TODO: mount filesystem
-        writeln!(o, "        launch_wasm({:?}, {:?});", target_wasm, wasm)?;
+        writeln!(o, "        launch_wasm({:?});", target_wasm)?;
         writeln!(o, "    </script>")?;
         write!(o, "    {}", &template_html[(scripts_placeholder_idx + HTML_SCRIPTS_PLACEHOLDER.len())..])?;
         Ok(())
