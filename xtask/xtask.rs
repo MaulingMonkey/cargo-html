@@ -39,7 +39,7 @@ fn build(args: Args) {
        // debug
        exec("cargo build --frozen --workspace --all-targets");
        exec("cargo test  --frozen --workspace --all-targets");
-       exec("cargo html");
+       exec("cargo run -p cargo-html -- html --manifest-path examples/Cargo.toml");
 
        // release
        exec("cargo build --frozen --workspace --all-targets --release");
