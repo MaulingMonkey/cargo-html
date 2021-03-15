@@ -88,13 +88,13 @@ impl Metadata {
 
         if args.workspace {
             metadata.selected_packages = workspace_packages.iter()
-                .filter(|(_name, pkg)| pkg.is_html())
+                .filter(|(_name, pkg)| pkg.is_html)
                 .map(|(name, pkg)| (name.clone(), pkg.clone()))
                 .collect();
         } else if args.packages.is_empty() {
             // neither --workspace nor any --package s specified
             if let Some(root) = default_package.as_ref() {
-                if root.is_html() {
+                if root.is_html {
                     metadata.selected_packages.insert(root.name.clone(), root.clone());
                 }
             }
@@ -102,7 +102,7 @@ impl Metadata {
                 // no root, or root isn't an HTML project
                 // TODO: support workspace default members?
                 metadata.selected_packages = workspace_packages.iter()
-                    .filter(|(_name, pkg)| pkg.is_html())
+                    .filter(|(_name, pkg)| pkg.is_html)
                     .map(|(name, pkg)| (name.clone(), pkg.clone()))
                     .collect();
             }
@@ -132,14 +132,14 @@ impl Metadata {
     }
 
     pub fn selected_packages(&self)             -> impl Iterator<Item = &Package> { self.selected_packages.values().map(|v| &**v) }
-    pub fn selected_packages_cargo_web(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_cargo_web()) }
-    pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi()     ) }
-    pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack()) }
+    pub fn selected_packages_cargo_web(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_cargo_web  ) }
+    pub fn selected_packages_wasi(&self)        -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasi       ) }
+    pub fn selected_packages_wasm_pack(&self)   -> impl Iterator<Item = &Package> { self.selected_packages().filter(|p| p.is_wasm_pack  ) }
 
     pub fn selected_targets(&self)              -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets.iter().map(|((tt, name), pkg)| (*tt, name.as_str(), &**pkg)) }
-    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_cargo_web()  ) }
-    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasi()       ) }
-    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasm_pack()  ) }
+    pub fn selected_targets_cargo_web(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_cargo_web   ) }
+    pub fn selected_targets_wasi(&self)         -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasi        ) }
+    pub fn selected_targets_wasm_pack(&self)    -> impl Iterator<Item = (TargetType, &str, &Package)> { self.selected_targets().filter(|(_, _, pkg)| pkg.is_wasm_pack   ) }
 
     pub fn target_directory(&self) -> &Path { self.target_directory.as_path() }
 }

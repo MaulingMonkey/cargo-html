@@ -19,18 +19,13 @@ pub(crate) struct Package {
     pub settings:       PackageSettings,
     pub asyncify:       bool,
 
-    is_html:            bool,
-    is_cargo_web:       bool,
-    is_wasi:            bool,
-    is_wasm_pack:       bool,
+    pub is_html:        bool,
+    pub is_cargo_web:   bool,
+    pub is_wasi:        bool,
+    pub is_wasm_pack:   bool,
 }
 
 impl Package {
-    pub fn is_html      (&self) -> bool { self.is_html      }
-    pub fn is_cargo_web (&self) -> bool { self.is_cargo_web }
-    pub fn is_wasi      (&self) -> bool { self.is_wasi      }
-    pub fn is_wasm_pack (&self) -> bool { self.is_wasm_pack }
-
     pub(super) fn new(p: cargo_metadata::Package, package_id_info: &BTreeMap<PackageId, (String, Version, Option<&Node>)>) -> Self {
         let has_cdylib  = p.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "cdylib"  ));
         let has_bin     = p.targets.iter().any(|t| t.crate_types.iter().any(|ct| ct == "bin"     ));
