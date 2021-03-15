@@ -1,9 +1,10 @@
 #![forbid(unsafe_code)]
 
+#[path = "build/_build.rs"]         mod build;
+#[path = "metadata/_metadata.rs"]   mod metadata;       use metadata::*;
+
 mod arguments;      use arguments::*;
-#[path = "build/_build.rs"] mod build;
 mod js;
-mod metadata;       use metadata::*;
 mod tools;
 
 use mmrbi::*;
