@@ -60,18 +60,10 @@
 
 
 
-        // doc
-        {
-            "label":            "doc",
-            "command":          "cargo d --no-deps -p cargo-html",
-        },
-
-
-
         // help
         {
             "label":            "help",
-            "command":          "cargo d --no-deps -p cargo-html --open",
+            "dependsOn":        [ "open repository (cargo-html)" ],
         },
 
 
@@ -90,12 +82,6 @@
             "windows":          { "command": "start \"\"    \"https://github.com/MaulingMonkey/cargo-html\"" },
             "linux":            { "command": "xdg-open      \"https://github.com/MaulingMonkey/cargo-html\"" },
             "osx":              { "command": "open          \"https://github.com/MaulingMonkey/cargo-html\"" },
-        },
-        {
-            "label":            "open documentation (cargo-html)",
-            "windows":          { "command": "start \"\"    \"https://docs.rs/cargo-html\"" },
-            "linux":            { "command": "xdg-open      \"https://docs.rs/cargo-html\"" },
-            "osx":              { "command": "open          \"https://docs.rs/cargo-html\"" },
         },
 
 
