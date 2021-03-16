@@ -1,19 +1,24 @@
 {
-    "version": "2.0.0",
-    "problemMatcher": "$rustc",
+    "version":          "2.0.0",
+    "problemMatcher":   "$rustc",
+    "type":             "shell",
+    "presentation":     { "clear": true, "group": "build", "reveal": "always" },
+
     "tasks": [
         // entry points
         {
             "label":            "default-build",
             "dependsOrder":     "sequence",
             "dependsOn":        [ "build" ],
-            "group":            { "kind": "build", "isDefault": true }
+            "group":            { "kind": "build", "isDefault": true },
+            "presentation":     { "reveal": "never" },
         },
         {
             "label":            "check-file",
             "dependsOrder":     "sequence",
             "dependsOn":        [ "check" ],
             "group":            "build",
+            "presentation":     { "reveal": "never" },
         },
 
 
@@ -21,15 +26,12 @@
         // fetch
         {
             "label":            "fetch",
-            "dependsOn":        [
-                "cargo fetch",
-            ]
+            "dependsOn":        [ "cargo fetch" ],
+            "presentation":     { "reveal": "never" },
         },
         {
             "label":            "cargo fetch",
             "command":          "cargo fetch",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "fetch", "reveal": "always" },
         },
 
 
@@ -38,9 +40,6 @@
         {
             "label":            "check",
             "command":          "cargo c",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "check", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "check", "source": "check" },
         },
 
 
@@ -49,9 +48,6 @@
         {
             "label":            "build",
             "command":          "cargo b",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "build", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "build", "source": "build" },
         },
 
 
@@ -60,9 +56,6 @@
         {
             "label":            "install",
             "command":          "cargo i",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "install", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "install", "source": "install" },
         },
 
 
@@ -71,9 +64,6 @@
         {
             "label":            "doc",
             "command":          "cargo d --no-deps -p cargo-html",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
         },
 
 
@@ -82,9 +72,6 @@
         {
             "label":            "help",
             "command":          "cargo d --no-deps -p cargo-html --open",
-            "type":             "shell",
-            "presentation":     { "clear": true, "group": "doc", "reveal": "always" },
-            "problemMatcher":   { "base": "$rustc", "owner": "doc", "source": "doc" },
         },
 
 
@@ -93,32 +80,22 @@
         {
             "label":            "cargo b --bin cargo-html",
             "command":          "cargo b --bin cargo-html",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo b --bin cargo-html --release",
             "command":          "cargo b --bin cargo-html --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "open repository (cargo-html)",
             "windows":          { "command": "start \"\"    \"https://github.com/MaulingMonkey/cargo-html\"" },
             "linux":            { "command": "xdg-open      \"https://github.com/MaulingMonkey/cargo-html\"" },
             "osx":              { "command": "open          \"https://github.com/MaulingMonkey/cargo-html\"" },
-            "type":             "shell",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
         },
         {
             "label":            "open documentation (cargo-html)",
             "windows":          { "command": "start \"\"    \"https://docs.rs/cargo-html\"" },
             "linux":            { "command": "xdg-open      \"https://docs.rs/cargo-html\"" },
             "osx":              { "command": "open          \"https://docs.rs/cargo-html\"" },
-            "type":             "shell",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "silent" },
         },
 
 
@@ -127,16 +104,10 @@
         {
             "label":            "cargo html -p cargo-web-world",
             "command":          "cargo +1.47.0 html -p cargo-web-world",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo html -p cargo-web-world --release",
             "command":          "cargo +1.47.0 html -p cargo-web-world --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
 
 
@@ -145,16 +116,10 @@
         {
             "label":            "cargo html -p goodbye-world",
             "command":          "cargo html -p goodbye-world",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo html -p goodbye-world --release",
             "command":          "cargo html -p goodbye-world --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
 
 
@@ -163,16 +128,10 @@
         {
             "label":            "cargo html -p hello-world",
             "command":          "cargo html -p hello-world",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo html -p hello-world --release",
             "command":          "cargo html -p hello-world --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
 
 
@@ -181,16 +140,10 @@
         {
             "label":            "cargo html -p wasm-bindgen-world",
             "command":          "cargo html -p wasm-bindgen-world",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --release",
             "command":          "cargo html -p wasm-bindgen-world --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
 
 
@@ -199,32 +152,20 @@
         {
             "label":            "cargo html -p quicksilver-demo",
             "command":          "cargo +1.47.0 html -p quicksilver-demo",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo html -p quicksilver-demo --release",
             "command":          "cargo +1.47.0 html -p quicksilver-demo --release",
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo build -p quicksilver-demo",
             "command":          "cargo build -p quicksilver-demo",
             "options":          { "cwd": "${workspaceFolder}/examples" },
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
         {
             "label":            "cargo build -p quicksilver-demo --release",
             "command":          "cargo build -p quicksilver-demo --release",
             "options":          { "cwd": "${workspaceFolder}/examples" },
-            "type":             "shell",
-            "problemMatcher":   "$rustc",
-            "presentation":     { "clear": true, "panel": "shared", "reveal": "always" },
         },
     ]
 }
