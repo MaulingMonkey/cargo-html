@@ -2,13 +2,13 @@ type ptr    = number & { _basic_type: "ptr"; }
 type u8     = number & { _basic_type: "u8";  }
 type u16    = number & { _basic_type: "u16"; }
 type u32    = number & { _basic_type: "u32"; }
-type u64    = bigint & { _basic_type: "u64"; } // XXX: number only has 52 bits of precision
+type u64    = bigint & { _basic_type: "u64"; }
 type usize  = number & { _basic_type: "usize"; }
 
 type i8     = number & { _basic_type: "i8";  }
 type i16    = number & { _basic_type: "i16"; }
 type i32    = number & { _basic_type: "i32"; }
-type i64    = bigint & { _basic_type: "i64"; } // XXX: number only has 52 bits of precision
+type i64    = bigint & { _basic_type: "i64"; }
 type isize  = number & { _basic_type: "isize"; }
 
 class MemoryLE {
