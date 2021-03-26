@@ -79,7 +79,7 @@ fn run(args: Args) {
 
 fn install(_args: Args) {
     pre_build();
-    exec("cargo install --path .");
+    exec("cargo install --locked --path .");
 }
 
 
