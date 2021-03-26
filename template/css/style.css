@@ -58,35 +58,35 @@
 }
 
 #cargo-html-console {
-    white-space:        pre-wrap;
     display:            flex;
     flex-direction:     column;
-    overflow-y:         auto;
     color:              var(--cargo-html-console-color-15);
     background-color:   var(--cargo-html-console-color-0);
 }
 
-#cargo-html-console::-webkit-scrollbar {
+#cargo-html-console .output {
+    flex:               1 1 0;
+    white-space:        pre-wrap;
+    overflow-y:         auto;
+}
+
+#cargo-html-console .output::-webkit-scrollbar {
     background:         var(--cargo-html-console-color-0);
     width:              10px;
 }
 
-#cargo-html-console::-webkit-scrollbar-thumb {
+#cargo-html-console .output::-webkit-scrollbar-thumb {
     background:     var(--cargo-html-console-color-7);
     border-radius:  5px;
 }
 
-#cargo-html-console .output {
-    flex-grow:          1;
-}
-
 #cargo-html-console .footer {
-    flex-grow:          0;
+    flex:               0 0 auto;
     display:            flex;
 }
 
 #cargo-html-console .footer :is(textarea, input[type="text"]) {
-    flex-grow:          1;
+    flex:               1 1 0;
     border:             none;
     border-radius:      0.3em;
     margin-right:       0.5ch;
@@ -94,7 +94,7 @@
 }
 
 #cargo-html-console .footer :is(button, input[type="submit"]) {
-    flex-grow:          0;
+    flex:               0 0 auto;
     border:             none;
     border-radius:      0.3em;
     outline:            none;
