@@ -15,7 +15,8 @@ namespace wasi {
     function sleep_ms_busy(ms: number) {
         var prev = undefined;
         while (ms > 0) {
-            const now = Date.now();
+            var now;
+            try { now = Date.now(); } catch (e) { return; }
             const dt = (prev === undefined) ? 0 : Math.max(0, now - prev);
             ms -= dt;
             prev = now;
@@ -108,10 +109,10 @@ namespace wasi {
                 };
                 i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_nondeterministic(id: ClockID, _precision: TimeStamp, out_time: ptr): Errno {
                     var now;
-                    try { now = Date.now(); } catch (e) { return ERRNO_INVAL; } // not supported on this thread?
                     switch (id) {
                         case CLOCKID_MONOTONIC:
-                            now = Date.now(); // supposedly monotonically increasing, but let's enforce that anyways:
+                            try { now = Date.now(); } // supposedly monotonically increasing, but let's enforce that anyways:
+                            catch (e) { return ERRNO_INVAL; } // not supported on this thread?
                             if (now > prev_mono) mono_total += now - prev_mono;
                             prev_mono = now;
                             memory.write_u64(out_time, 0, 1000000n * BigInt(mono_total) as TimeStamp);
@@ -122,7 +123,8 @@ namespace wasi {
                             //
                             // Additionally, `getTime()` is in UTC, matching what CLOCKID_REALTIME expects.
                             // The only mismatch here is that `getTime` returns *milli*seconds, and WASI expects *nano*seconds.
-                            now = new Date().getTime();
+                            try { now = new Date().getTime(); }
+                            catch (e) { return ERRNO_INVAL; } // not supported on this thread?
                             memory.write_u64(out_time, 0, 1000000n * BigInt(now) as TimeStamp);
                             return ERRNO_SUCCESS;
                         case CLOCKID_PROCESS_CPUTIME_ID:
