@@ -1,7 +1,9 @@
 class DomTty {
     public static new(settings: Settings): DomTty | undefined {
         if (settings.tty === undefined) return undefined;
-        return new DomTty(settings.tty);
+        const output = document.getElementById("cargo-html-console");
+        if (!output) return undefined;
+        return new DomTty(settings.tty, output);
     }
 
     write(text: string, color_hint?: string) {
@@ -20,10 +22,10 @@ class DomTty {
     private input   : HTMLElement;
     private outbuf  : string = "";
 
-    private constructor(settings: TtySettings) {
+    private constructor(settings: TtySettings, output: HTMLElement) {
         this.escape = settings.escape   || "ansi";
         this.mode   = settings.mode     || "line-buffered";
-        this.output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
+        this.output = output;
 
         const input_buffer = document.createElement("span");
         input_buffer.classList.add("cargo-html-input-preview");

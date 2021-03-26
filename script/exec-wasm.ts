@@ -29,7 +29,7 @@ async function launch_wasm(name: string) {
     if (wasm === undefined) throw `launch_wasm(${JSON.stringify(name)}): no such wasm module mounted`;
 
     const settings = get_settings();
-    if (document.getElementById("cargo-html-console")) settings.tty = settings.tty || { listen: document, output: "cargo-html-console", input: "cargo-html-console-input" };
+    if (document.getElementById("cargo-html-console")) settings.tty = settings.tty || {};
 
     // Inferred settings, objects, etc.
     const determinism = settings.determinism || "nondeterministic";

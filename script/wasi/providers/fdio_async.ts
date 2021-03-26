@@ -49,9 +49,9 @@ namespace wasi {
             case "prompt":  break; // TODO: proper prompt device
             case "tty":
                 const stdin = ConReader.try_create({
-                    mode:       settings.tty?.mode   || "line-buffered",
-                    listen_to:  settings.tty?.listen || document,
-                    input:      settings.tty?.input  || "cargo-html-console-input",
+                    mode:       settings.tty?.mode || "line-buffered",
+                    listen_to:  document,
+                    input:      "cargo-html-console-input",
                     echo:       (text) => tty ? tty.write(text) : undefined,
                 }, tty);
                 if (stdin) FDS[0] = { handle: stdin,rights_base: RIGHTS_CONIN, rights_inherit: RIGHTS_NONE };

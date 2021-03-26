@@ -6,7 +6,9 @@ class XTermTty {
         // @ts-ignore
         if (typeof Terminal === "undefined") return undefined; // not supported
         if (settings.tty === undefined) return undefined;
-        return new XTermTty(settings.tty);
+        const output = document.getElementById("cargo-html-console");
+        if (!output) return undefined;
+        return new XTermTty(output);
     }
 
     write(text: string, color_hint?: string) {
@@ -35,9 +37,7 @@ class XTermTty {
     private terminal: Terminal;
     private alive: boolean = true;
 
-    private constructor(settings: TtySettings) {
-        const output = typeof settings.output === "string" ? requireElementById(settings.output) : settings.output;
-
+    private constructor(output: HTMLElement) {
         const options : ITerminalOptions = {
             allowProposedApi:   true,
             allowTransparency:  false,
