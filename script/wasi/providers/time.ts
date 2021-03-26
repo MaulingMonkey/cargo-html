@@ -81,12 +81,12 @@ namespace wasi {
                 };
                 break;
             case "zero":
-                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
+                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_zero(id: ClockID, out_resolution: ptr): Errno {
                     validate_clockid(id);
                     memory.write_u64(out_resolution, 0, 0xFFFFFFFFFFFFFFFFn as TimeStamp);
                     return ERRNO_SUCCESS;
                 };
-                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_disabled(id: ClockID, precision: TimeStamp, out_time: ptr): Errno {
+                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_zero(id: ClockID, precision: TimeStamp, out_time: ptr): Errno {
                     validate_clockid(id);
                     memory.write_u64(out_time, 0, 0n as TimeStamp);
                     return ERRNO_SUCCESS;
@@ -94,7 +94,7 @@ namespace wasi {
                 i._cargo_html_shenannigans_do_not_use.file_time_now = () => 0n as TimeStamp;
                 break;
             case "nondeterministic":
-                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_disabled(id: ClockID, out_resolution: ptr): Errno {
+                i.wasi_snapshot_preview1.clock_res_get  = function clock_res_get_nondeterministic(id: ClockID, out_resolution: ptr): Errno {
                     switch (id) {
                         case CLOCKID_MONOTONIC:
                         case CLOCKID_REALTIME:
@@ -106,7 +106,7 @@ namespace wasi {
                             return ERRNO_INVAL;
                     }
                 };
-                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_disabled(id: ClockID, _precision: TimeStamp, out_time: ptr): Errno {
+                i.wasi_snapshot_preview1.clock_time_get = function clock_time_get_nondeterministic(id: ClockID, _precision: TimeStamp, out_time: ptr): Errno {
                     var now;
                     try { now = Date.now(); } catch (e) { return ERRNO_INVAL; } // not supported on this thread?
                     switch (id) {
