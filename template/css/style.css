@@ -59,7 +59,8 @@
 
 #cargo-html-console {
     white-space:        pre-wrap;
-    display:            block;
+    display:            flex;
+    flex-direction:     column;
     overflow-y:         auto;
     color:              var(--cargo-html-console-color-15);
     background-color:   var(--cargo-html-console-color-0);
@@ -73,6 +74,30 @@
 #cargo-html-console::-webkit-scrollbar-thumb {
     background:     var(--cargo-html-console-color-7);
     border-radius:  5px;
+}
+
+#cargo-html-console .output {
+    flex-grow:          1;
+}
+
+#cargo-html-console .footer {
+    flex-grow:          0;
+    display:            flex;
+}
+
+#cargo-html-console .footer :is(textarea, input[type="text"]) {
+    flex-grow:          1;
+    border:             none;
+    border-radius:      0.3em;
+    margin-right:       0.5ch;
+    outline:            none;
+}
+
+#cargo-html-console .footer :is(button, input[type="submit"]) {
+    flex-grow:          0;
+    border:             none;
+    border-radius:      0.3em;
+    outline:            none;
 }
 
 @keyframes blink {

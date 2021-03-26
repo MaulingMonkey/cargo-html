@@ -1,9 +1,9 @@
 class DomTty {
     public static new(settings: Settings): DomTty | undefined {
         if (settings.tty === undefined) return undefined;
-        const output = document.getElementById("cargo-html-console");
-        if (!output) return undefined;
-        return new DomTty(settings.tty, output);
+        const root = document.getElementById("cargo-html-console");
+        if (!root) return undefined;
+        return new DomTty(settings.tty, root);
     }
 
     write(text: string, color_hint?: string) {
@@ -22,10 +22,9 @@ class DomTty {
     private input   : HTMLElement;
     private outbuf  : string = "";
 
-    private constructor(settings: TtySettings, output: HTMLElement) {
+    private constructor(settings: TtySettings, root: HTMLElement) {
         this.escape = settings.escape   || "ansi";
         this.mode   = settings.mode     || "line-buffered";
-        this.output = output;
 
         const input_buffer = document.createElement("span");
         input_buffer.classList.add("cargo-html-input-preview");
@@ -40,8 +39,31 @@ class DomTty {
         input.appendChild(input_buffer);
         input.appendChild(input_cursor);
 
-        this.output.textContent = ""; // remove any loading indicators
-        this.output.appendChild(input);
+        const output = this.output = document.createElement("div");
+        output.setAttribute("class", "output");
+        output.appendChild(input);
+
+        const textarea = document.createElement("textarea");
+        textarea.setAttribute("class",          "fg0 bg15 cargo-html-input-preview");
+        textarea.setAttribute("autofocus",      "");
+        textarea.setAttribute("autocapitalize", "off");
+        textarea.setAttribute("autocorrect",    "off");
+        textarea.setAttribute("autocomplete",   "off");
+        textarea.setAttribute("spellcheck",     "false");
+        textarea.setAttribute("rows",           "1");
+
+        const button = document.createElement("button");
+        button.setAttribute("class", "fg0 bg7 cargo-html-input-submit");
+        button.textContent = "⏎";
+
+        const footer = document.createElement("div");
+        footer.setAttribute("class", "footer");
+        footer.appendChild(textarea);
+        footer.appendChild(button);
+
+        root.textContent = ""; // remove any loading indicators
+        root.appendChild(output);
+        root.appendChild(footer);
     }
 
     private process_outbuf(color_hint?: string) {

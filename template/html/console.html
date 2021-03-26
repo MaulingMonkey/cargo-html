@@ -28,32 +28,9 @@
             font-weight:        bold;
             font-size:          large;
         }
-
-        #footer {
-            display: flex;
-        }
-
-        #footer :is(textarea, input[type="text"]) {
-            flex-grow:          1;
-            border:             none;
-            border-radius:      0.3em;
-            margin-right:       0.5ch;
-            outline:            none;
-        }
-
-        #footer :is(button, input[type="submit"]) {
-            flex-grow:          0;
-            border:             none;
-            border-radius:      0.3em;
-            outline:            none;
-        }
     </style>
 </head><body data-cargo-html-palette="vga">
     <center id="header">{TARGET_NAME} • {CONFIG} • generated via <a href="https://github.com/MaulingMonkey/cargo-html">cargo html</a></center>
     <code id="cargo-html-console">Loading...</code>
-    <div id="footer" class="cargo-html-remove-on-shutdown">
-        <textarea class="fg0 bg15 cargo-html-input-preview" autofocus autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" rows="1"></textarea>
-        <button class="fg0 bg7 cargo-html-input-submit">⏎</button>
-    </div>
     <!-- SCRIPTS -->
 </body></html>
