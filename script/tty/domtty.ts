@@ -101,24 +101,67 @@ class DomTty {
                 // [ ] Erase commands
                 // [ ] Scroll commands
                 // [ ] HVP, AUX Port, DSR
-                var m;
-                if      (null != (m = /^\x1B\[?25h/.exec(buf)))         this.show_cursor();
-                else if (null != (m = /^\x1B\[?25l/.exec(buf)))         this.hide_cursor();
-                else if (null != (m = /^\x1B\[(\d*)J/.exec(buf)))       this.erase_in_display(m[1]);
-                // not implemented: alternative screen buffers, bracketed paste mode
-                else if (null != (m = /^\x1B\[([0-9;:]*)m/.exec(buf)))  this.out_sgr(m[1].split(/[;:]/));
-                else if (null != (m = /^\x1B\[.*?[a-zA-Z]/.exec(buf))) {
-                    console.warn("DomTty: unhandled escape sequence:", JSON.stringify(m[0]));
-                    this.out_raw(m[0], color_hint); // invalid/unhandled escape sequence
-                }
-                else                                                    break; // incomplete sequence
 
-                console.assert(m.index === 0);
-                buf = buf.substr(m[0].length);
+                //const csi = /^\x1B\[?([0-9:;<=>?]*)([- !"#$%&'()*+,./]*)([@A-Z[\\\]^_])/
+                const csi = /^\x1B\[?([\x30-\x3F]*)([\x20-\x2F]*)([\x40-\x7E])/.exec(buf);
+                if (csi != null) {
+                    const param         = csi[1];
+                    const intermediate  = csi[2];
+                    const final         = csi[3];
+                    const params        = param.split(/[;:]/g);
+
+                    switch (final) {
+                        case "h": // high / enable
+                            switch (param) {
+                                case "25":      this.show_cursor(); break;
+                                case "1049":    // TODO: enable alt screeen buffer
+                                case "2004":    // TODO: enable bracketed paste mode
+                                default:        this.unhandled_csi(csi, color_hint); break;
+                            }
+                            break;
+                        case "l": // low / disable
+                            switch (param) {
+                                case "25":      this.hide_cursor(); break;
+                                case "1049":    // TODO: disable alt screeen buffer
+                                case "2004":    // TODO: disable bracketed paste mode
+                                default:        this.unhandled_csi(csi, color_hint); break;
+                            }
+                            break;
+                        case "A": this.move_cursor_to(Math.max(0, this.current_row_idx()-parseInt(param||"1")), this.current_col_idx()); break; // CUU / Cursor Up
+                        case "B": this.move_cursor_to(Math.max(0, this.current_row_idx()+parseInt(param||"1")), this.current_col_idx()); break; // CUD / Cursor Down
+                        case "C": this.move_cursor_to(this.current_row_idx(), Math.max(0, this.current_col_idx()+parseInt(param||"1"))); break; // CUF / Cursor Forward
+                        case "D": this.move_cursor_to(this.current_row_idx(), Math.max(0, this.current_col_idx()-parseInt(param||"1"))); break; // CUB / Cursor Back
+                        case "E": this.move_cursor_to(Math.max(0, this.current_row_idx()+parseInt(param||"1")), 0); break; // CNL / Cursor Next Line
+                        case "F": this.move_cursor_to(Math.max(0, this.current_row_idx()-parseInt(param||"1")), 0); break; // CPL / Cursor Previous Line
+                        case "G": this.move_cursor_to(this.current_row_idx(), Math.max(0, parseInt(param||"1")-1)); break; // CHA / Cursor Horizontal Absolute
+                        case "H": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // CUP / Cursor Position
+                        case "J": this.erase_in_display(param); break;
+                        //case "K": this.erase_in_line(param); break;
+                        //case "S": this.scroll_up
+                        //case "T": this.scroll_down
+                        case "f": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // HVP / Horizontal Vertical Position
+                        case "m": this.out_sgr(params); break; // SGR / Select Graphics Rendition
+                        //case "i": // AUX Port On/Off and other misc?
+                        //case "n": // Device Status Report and other misc?
+                        default:
+                            this.unhandled_csi(csi, color_hint);
+                            break;
+                    }
+                } else {
+                    return; // incomplete sequence
+                }
+
+                console.assert(csi.index === 0);
+                buf = buf.substr(csi[0].length);
             }
         } finally {
             this.outbuf = buf;
         }
+    }
+
+    private unhandled_csi(csi: RegExpExecArray, color_hint?: string) {
+        console.warn("DomTty: unhandled CSI escape sequence:", JSON.stringify(csi[0]));
+        this.out_raw(csi[0], color_hint); // invalid/unhandled escape sequence
     }
 
     private out_raw(text: string, color_hint?: string) {
@@ -279,6 +322,10 @@ class DomTty {
     private hide_cursor() {
         this.output.querySelectorAll(".cursor").forEach(c => (c as HTMLElement).style.display = "none");
     }
+
+    private current_row_idx(): number { return 0; } // TODO
+    private current_col_idx(): number { return 0; } // TODO
+    private move_cursor_to(rowIdx: number, colIdx: number) {} // TODO
 
     private erase_in_display(n: string) {
         const { input, output } = this;
