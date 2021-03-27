@@ -117,6 +117,7 @@ class DomTty {
                             const final         = csi[3];
                             const params        = param.split(/[;:]/g);
 
+                            var r,c;
                             switch (final) {
                                 case "h": // high / enable
                                     switch (param) {
@@ -134,19 +135,23 @@ class DomTty {
                                         default:        this.unhandled_csi(csi, color_hint); break;
                                     }
                                     break;
-                                case "A": this.move_cursor_to(Math.max(0, this.row_idx-parseInt(param||"1")), this.col_idx); break; // CUU / Cursor Up
-                                case "B": this.move_cursor_to(Math.max(0, this.row_idx+parseInt(param||"1")), this.col_idx); break; // CUD / Cursor Down
-                                case "C": this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx+parseInt(param||"1"))); break; // CUF / Cursor Forward
-                                case "D": this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx-parseInt(param||"1"))); break; // CUB / Cursor Back
-                                case "E": this.move_cursor_to(Math.max(0, this.row_idx+parseInt(param||"1")), 0); break; // CNL / Cursor Next Line
-                                case "F": this.move_cursor_to(Math.max(0, this.row_idx-parseInt(param||"1")), 0); break; // CPL / Cursor Previous Line
-                                case "G": this.move_cursor_to(this.row_idx, Math.max(0, parseInt(param||"1")-1)); break; // CHA / Cursor Horizontal Absolute
-                                case "H": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // CUP / Cursor Position
+                                case "A": r = parseInt(param||"1"); (r === r) ? this.move_cursor_to(Math.max(0, this.row_idx-r), this.col_idx) : this.unhandled_csi(csi, color_hint); break; // CUU / Cursor Up
+                                case "B": r = parseInt(param||"1"); (r === r) ? this.move_cursor_to(Math.max(0, this.row_idx+r), this.col_idx) : this.unhandled_csi(csi, color_hint); break; // CUD / Cursor Down
+                                case "C": c = parseInt(param||"1"); (c === c) ? this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx+c)) : this.unhandled_csi(csi, color_hint); break; // CUF / Cursor Forward
+                                case "D": c = parseInt(param||"1"); (c === c) ? this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx-c)) : this.unhandled_csi(csi, color_hint); break; // CUB / Cursor Back
+                                case "E": r = parseInt(param||"1"); (r === r) ? this.move_cursor_to(Math.max(0, this.row_idx+r), 0)            : this.unhandled_csi(csi, color_hint); break; // CNL / Cursor Next Line
+                                case "F": r = parseInt(param||"1"); (r === r) ? this.move_cursor_to(Math.max(0, this.row_idx-r), 0)            : this.unhandled_csi(csi, color_hint); break; // CPL / Cursor Previous Line
+                                case "G": c = parseInt(param||"1"); (c === c) ? this.move_cursor_to(this.row_idx, Math.max(0, c-1))            : this.unhandled_csi(csi, color_hint); break; // CHA / Cursor Horizontal Absolute
+                                case "H": // CUP / Cursor Position
+                                case "f": // HVP / Horizontal Vertical Position
+                                    r = parseInt(params[0] || "1");
+                                    c = parseInt(params[1] || "1");
+                                    ((r === r) && (c === c)) ? this.move_cursor_to(r-1, c-1) : this.unhandled_csi(csi, color_hint);
+                                    break;
                                 case "J": this.erase_in_display(param); break;
                                 //case "K": this.erase_in_line(param); break;
                                 //case "S": this.scroll_up
                                 //case "T": this.scroll_down
-                                case "f": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // HVP / Horizontal Vertical Position
                                 case "m": this.out_sgr(params); break; // SGR / Select Graphics Rendition
                                 //case "i": // AUX Port On/Off and other misc?
                                 //case "n": // Device Status Report and other misc?
