@@ -80,6 +80,19 @@
     border-radius:  5px;
 }
 
+#cargo-html-console .output .line {
+    min-height:         1ch;
+}
+
+#cargo-html-console .output .input {
+    position:           absolute;
+}
+
+.cargo-html-input-preview {
+    background-color:   var(--cargo-html-console-color-0);
+    color:              var(--cargo-html-console-color-15);
+}
+
 #cargo-html-console .footer {
     flex:               0 0 auto;
     display:            flex;

@@ -21,6 +21,9 @@ class DomTty {
     private output  : HTMLElement;
     private input   : HTMLElement;
     private outbuf  : string = "";
+    private col_idx : number = 0;
+    private row_idx : number = 0;
+    private rows    : HTMLElement[] = [];
 
     private constructor(settings: TtySettings, root: HTMLElement) {
         this.escape = settings.escape   || "ansi";
@@ -35,13 +38,18 @@ class DomTty {
         input_cursor.textContent = "█";
 
         const input = this.input = document.createElement("span");
-        input.classList.add("cargo-html-remove-on-shutdown");
+        input.setAttribute("class", "input cargo-html-remove-on-shutdown");
         input.appendChild(input_buffer);
         input.appendChild(input_cursor);
 
+        const line0 = document.createElement("div");
+        line0.setAttribute("class", "line");
+        line0.appendChild(input);
+        this.rows.push(line0);
+
         const output = this.output = document.createElement("div");
         output.setAttribute("class", "output");
-        output.appendChild(input);
+        output.appendChild(line0);
 
         const textarea = document.createElement("textarea");
         textarea.setAttribute("class",          "fg0 bg15 cargo-html-input-preview");
@@ -71,88 +79,92 @@ class DomTty {
         try {
             while (buf.length > 0) {
                 // https://en.wikipedia.org/wiki/ANSI_escape_code#Control_characters
-                //
-                // XXX: not handled:
-                // [ ] Backspace reversing the cursor position
-                // [ ] Tab aligning to an 8-character position
-                // [ ] Form Feed doing anything
-                // [ ] Carriage Return doing anything
 
-                {
-                    const esc = buf.indexOf("\x1B");
-                    if (esc === -1) {
-                        this.out_raw(buf, color_hint);
-                        buf = "";
-                        return;
-                    } else if (esc > 0) {
-                        this.out_raw(buf.substr(0, esc), color_hint);
-                        buf = buf.substr(esc);
-                        // continue
-                    }
+                const cc = /[\x07-\x0D\x1B]/.exec(buf);
+                if (cc === null) {
+                    this.out_raw(buf, color_hint);
+                    buf = "";
+                    return;
+                } else if (cc.index > 0) {
+                    this.out_raw(buf.substr(0, cc.index), color_hint);
                 }
 
-                // https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
-                // XXX: not handled
+                switch (cc[0].charCodeAt(0)) {
+                    case 0x07: beep();                                                              buf = buf.substr(cc.index + 1); break; // BEL / Bell
+                    case 0x08: this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx - 1));    buf = buf.substr(cc.index + 1); break; // BS / Backspace
+                    case 0x09: this.move_cursor_to(this.row_idx, (this.col_idx|3)+1);               buf = buf.substr(cc.index + 1); break; // HT / Tab
+                    case 0x0A: this.move_cursor_to(this.row_idx + 1, 0);                            buf = buf.substr(cc.index + 1); break; // LF / Line Feed
+                    case 0x0B: this.move_cursor_to(this.row_idx + 6, this.col_idx);                 buf = buf.substr(cc.index + 1); break; // VT / Vertical Tab
+                    case 0x0C: this.erase_in_display("3");                                          buf = buf.substr(cc.index + 1); break; // FF / Form Feed
+                    case 0x0D: this.move_cursor_to(this.row_idx, 0);                                buf = buf.substr(cc.index + 1); break; // CR / Carriage Return
+                    case 0x1B: // ESC / Escape
+                        buf = buf.substr(cc.index);
 
-                // https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
-                //
-                // XXX: not handled:
-                // [ ] Cursor positioning commands
-                // [ ] Erase commands
-                // [ ] Scroll commands
-                // [ ] HVP, AUX Port, DSR
+                        // https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
+                        // XXX: not handled
 
-                //const csi = /^\x1B\[?([0-9:;<=>?]*)([- !"#$%&'()*+,./]*)([@A-Z[\\\]^_])/
-                const csi = /^\x1B\[?([\x30-\x3F]*)([\x20-\x2F]*)([\x40-\x7E])/.exec(buf);
-                if (csi != null) {
-                    const param         = csi[1];
-                    const intermediate  = csi[2];
-                    const final         = csi[3];
-                    const params        = param.split(/[;:]/g);
+                        // https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+                        //
+                        // XXX: not handled:
+                        // [ ] Erase commands
+                        // [ ] Scroll commands
+                        // [ ] HVP, AUX Port, DSR
 
-                    switch (final) {
-                        case "h": // high / enable
-                            switch (param) {
-                                case "25":      this.show_cursor(); break;
-                                case "1049":    // TODO: enable alt screeen buffer
-                                case "2004":    // TODO: enable bracketed paste mode
-                                default:        this.unhandled_csi(csi, color_hint); break;
+                        const csi = /^\x1B\[([\x30-\x3F]*)([\x20-\x2F]*)([\x40-\x7E])/.exec(buf);
+                        if (csi != null) {
+                            const param         = csi[1];
+                            const intermediate  = csi[2];
+                            const final         = csi[3];
+                            const params        = param.split(/[;:]/g);
+
+                            switch (final) {
+                                case "h": // high / enable
+                                    switch (param) {
+                                        case "?25":     this.show_cursor(); break;
+                                        case "?1049":   // TODO: enable alt screeen buffer
+                                        case "?2004":   // TODO: enable bracketed paste mode
+                                        default:        this.unhandled_csi(csi, color_hint); break;
+                                    }
+                                    break;
+                                case "l": // low / disable
+                                    switch (param) {
+                                        case "?25":     this.hide_cursor(); break;
+                                        case "?1049":   // TODO: disable alt screeen buffer
+                                        case "?2004":   // TODO: disable bracketed paste mode
+                                        default:        this.unhandled_csi(csi, color_hint); break;
+                                    }
+                                    break;
+                                case "A": this.move_cursor_to(Math.max(0, this.row_idx-parseInt(param||"1")), this.col_idx); break; // CUU / Cursor Up
+                                case "B": this.move_cursor_to(Math.max(0, this.row_idx+parseInt(param||"1")), this.col_idx); break; // CUD / Cursor Down
+                                case "C": this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx+parseInt(param||"1"))); break; // CUF / Cursor Forward
+                                case "D": this.move_cursor_to(this.row_idx, Math.max(0, this.col_idx-parseInt(param||"1"))); break; // CUB / Cursor Back
+                                case "E": this.move_cursor_to(Math.max(0, this.row_idx+parseInt(param||"1")), 0); break; // CNL / Cursor Next Line
+                                case "F": this.move_cursor_to(Math.max(0, this.row_idx-parseInt(param||"1")), 0); break; // CPL / Cursor Previous Line
+                                case "G": this.move_cursor_to(this.row_idx, Math.max(0, parseInt(param||"1")-1)); break; // CHA / Cursor Horizontal Absolute
+                                case "H": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // CUP / Cursor Position
+                                case "J": this.erase_in_display(param); break;
+                                //case "K": this.erase_in_line(param); break;
+                                //case "S": this.scroll_up
+                                //case "T": this.scroll_down
+                                case "f": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // HVP / Horizontal Vertical Position
+                                case "m": this.out_sgr(params); break; // SGR / Select Graphics Rendition
+                                //case "i": // AUX Port On/Off and other misc?
+                                //case "n": // Device Status Report and other misc?
+                                default:
+                                    this.unhandled_csi(csi, color_hint);
+                                    break;
                             }
-                            break;
-                        case "l": // low / disable
-                            switch (param) {
-                                case "25":      this.hide_cursor(); break;
-                                case "1049":    // TODO: disable alt screeen buffer
-                                case "2004":    // TODO: disable bracketed paste mode
-                                default:        this.unhandled_csi(csi, color_hint); break;
-                            }
-                            break;
-                        case "A": this.move_cursor_to(Math.max(0, this.current_row_idx()-parseInt(param||"1")), this.current_col_idx()); break; // CUU / Cursor Up
-                        case "B": this.move_cursor_to(Math.max(0, this.current_row_idx()+parseInt(param||"1")), this.current_col_idx()); break; // CUD / Cursor Down
-                        case "C": this.move_cursor_to(this.current_row_idx(), Math.max(0, this.current_col_idx()+parseInt(param||"1"))); break; // CUF / Cursor Forward
-                        case "D": this.move_cursor_to(this.current_row_idx(), Math.max(0, this.current_col_idx()-parseInt(param||"1"))); break; // CUB / Cursor Back
-                        case "E": this.move_cursor_to(Math.max(0, this.current_row_idx()+parseInt(param||"1")), 0); break; // CNL / Cursor Next Line
-                        case "F": this.move_cursor_to(Math.max(0, this.current_row_idx()-parseInt(param||"1")), 0); break; // CPL / Cursor Previous Line
-                        case "G": this.move_cursor_to(this.current_row_idx(), Math.max(0, parseInt(param||"1")-1)); break; // CHA / Cursor Horizontal Absolute
-                        case "H": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // CUP / Cursor Position
-                        case "J": this.erase_in_display(param); break;
-                        //case "K": this.erase_in_line(param); break;
-                        //case "S": this.scroll_up
-                        //case "T": this.scroll_down
-                        case "f": this.move_cursor_to(parseInt(params[0]||"1")-1, parseInt(params[1]||"1")-1); break; // HVP / Horizontal Vertical Position
-                        case "m": this.out_sgr(params); break; // SGR / Select Graphics Rendition
-                        //case "i": // AUX Port On/Off and other misc?
-                        //case "n": // Device Status Report and other misc?
-                        default:
-                            this.unhandled_csi(csi, color_hint);
-                            break;
-                    }
-                } else {
-                    return; // incomplete sequence
+                        } else {
+                            return; // incomplete sequence
+                        }
+
+                        console.assert(csi.index === 0);
+                        buf = buf.substr(csi[0].length);
+                        break;
+
+                    default:
+                        throw "bug: cc regexp shouldn't have allowed this to match";
                 }
-
-                console.assert(csi.index === 0);
-                buf = buf.substr(csi[0].length);
             }
         } finally {
             this.outbuf = buf;
@@ -167,8 +179,7 @@ class DomTty {
     private out_raw(text: string, color_hint?: string) {
         const autoscroll = this.output.scrollHeight - Math.abs(this.output.scrollTop) - 1 <= this.output.clientHeight;
 
-        if (text.indexOf("\x07") !== -1) beep();
-
+        // TODO: attempt to recombine "identical" spans for perf perhaps?
         const span = document.createElement("span");
         span.textContent = text;
 
@@ -186,7 +197,21 @@ class DomTty {
         else if (bg.startsWith("."))    span.classList.add(bg.substr(1));
         else                            span.style.background = bg; // truecolor?
 
-        this.output.insertBefore(span, this.input);
+        this.input.insertAdjacentElement("beforebegin", span);
+        this.col_idx += text.length;
+
+        for (let toRemove = text.length; toRemove > 0;) {
+            const e = this.input.nextElementSibling;
+            if (e === null) break;
+            const eText = (e.textContent || "");
+            if (toRemove <= eText.length) {
+                e.textContent = eText.substr(toRemove);
+                break;
+            } else {
+                e.remove();
+                toRemove -= eText.length;
+            }
+        }
 
         if (autoscroll) this.output.scrollTop = this.output.scrollHeight + 1 - this.output.clientHeight;
     }
@@ -323,9 +348,48 @@ class DomTty {
         this.output.querySelectorAll(".cursor").forEach(c => (c as HTMLElement).style.display = "none");
     }
 
-    private current_row_idx(): number { return 0; } // TODO
-    private current_col_idx(): number { return 0; } // TODO
-    private move_cursor_to(rowIdx: number, colIdx: number) {} // TODO
+    private move_cursor_to(rowIdx: number, colIdx: number) {
+        this.input.remove();
+        // TODO: attempt to recombine "identical" spans for perf perhaps?
+
+        this.row_idx = rowIdx;
+        this.col_idx = colIdx;
+
+        while (rowIdx >= this.rows.length) {
+            const row = document.createElement("div");
+            row.classList.add("line");
+            this.output.appendChild(row);
+            this.rows.push(row);
+        }
+
+        const row = this.rows[rowIdx];
+
+        let span = row.firstElementChild;
+        let skip = colIdx;
+        while (span !== null) {
+            const text = span.textContent || "";
+            if (skip < text.length) {
+                const left  = span;
+                const right = span.cloneNode() as HTMLElement;
+
+                left.textContent  = text.substr(0, skip);
+                right.textContent = text.substr(skip);
+
+                left.insertAdjacentElement("afterend", right);
+                left.insertAdjacentElement("afterend", this.input);
+                return;
+            } else if (text.length === skip) {
+                span.insertAdjacentElement("afterend", this.input);
+                return;
+            } else { // skip > text.length
+                skip -= text.length;
+                span = span.nextElementSibling;
+            }
+        }
+
+        row.appendChild(this.input);
+        this.out_raw("".padEnd(skip, " "), undefined);
+    }
 
     private erase_in_display(n: string) {
         const { input, output } = this;
