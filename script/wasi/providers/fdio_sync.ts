@@ -1,6 +1,6 @@
 namespace wasi {
     export function fdio_sync(i: Imports, memory: MemoryLE, tty: XTermTty | DomTty | undefined, settings: Settings, mounts: io.memory.Mount[]) {
-        const trace = true;
+        const TRACE = true;
 
         const FS = new io.memory.FileSystem(mounts);
         FS.now = () => {
@@ -82,10 +82,10 @@ namespace wasi {
         }
 
         function wrap_fd(fd: Fd, req_rights_base: Rights, op: (e: FdEntry) => Errno): Errno {
-            const name = trace ? get_io_caller_name() : undefined;
+            const name = TRACE ? get_io_caller_name() : undefined;
             const e = FDS[fd];
             if (e === undefined) {
-                if (trace) console.error("%s(fd=%d, ...) failed: ERRNO_BADF", name, fd);
+                if (TRACE) console.error("%s(fd=%d, ...) failed: ERRNO_BADF", name, fd);
                 return ERRNO_BADF; // handle does not exist
             }
             if ((e.rights_base & req_rights_base) !== req_rights_base) return _ERRNO_RIGHTS_FAILED;
@@ -99,16 +99,16 @@ namespace wasi {
                     throw errno;
                 }
             }
-            if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, entry=%s, ...) failed: ERRNO_%s", name, fd, e.handle.debug(), errno_string(ret));
+            if (TRACE && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, entry=%s, ...) failed: ERRNO_%s", name, fd, e.handle.debug(), errno_string(ret));
             return ret;
         }
 
         function wrap_path(fd: Fd, req_rights_base: Rights, _lookup: LookupFlags | undefined, path_ptr: ptr, path_len: usize, op: (e: FdEntry, path: string) => Errno): Errno {
-            const name = trace ? get_io_caller_name() : undefined;
+            const name = TRACE ? get_io_caller_name() : undefined;
             const path = memory.read_string(path_ptr, +0 as usize, path_len);
             const e = FDS[fd];
             if (e === undefined) {
-                if (trace) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_BADF", name, fd, path);
+                if (TRACE) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_BADF", name, fd, path);
                 return ERRNO_BADF; // handle does not exist
             }
             let ret : Errno;
@@ -121,7 +121,7 @@ namespace wasi {
                     throw errno;
                 }
             }
-            if (trace && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_%s", name, fd, path, errno_string(ret));
+            if (TRACE && ret !== ERRNO_SUCCESS) console.error("%s(fd=%d, path=\"%s\", ...) failed: ERRNO_%s", name, fd, path, errno_string(ret));
             return ret;
         }
 
@@ -339,7 +339,7 @@ namespace wasi {
                 const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
                 const to = FDS[new_fd];
                 if (to === undefined) {
-                    if (trace) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
+                    if (TRACE) console.error("path_link(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
                     return ERRNO_BADF; // handle does not exist
                 } else if (!(to.rights_base & RIGHTS_PATH_LINK_TARGET)) {
                     return _ERRNO_RIGHTS_FAILED;
@@ -404,7 +404,7 @@ namespace wasi {
                 const new_path = memory.read_string(new_path_ptr, +0 as usize, new_path_len);
                 const to = FDS[new_fd];
                 if (to === undefined) {
-                    if (trace) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
+                    if (TRACE) console.error("path_rename(old_fd=%d, old_path=\"%s\", new_fd=%d, new_path=\"%s\", ...) failed: ERRNO_BADF (new_fd is invalid)", old_fd, old_path, new_fd, new_path);
                     return ERRNO_BADF; // handle does not exist
                 } else if (!(to.rights_base & RIGHTS_PATH_RENAME_TARGET)) {
                     return _ERRNO_RIGHTS_FAILED;

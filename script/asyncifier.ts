@@ -1,6 +1,6 @@
 // https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html
 
-const asyncify_page_count : number = 1;
+const ASYNCIFY_PAGE_COUNT : number = 1;
 
 class Asyncifier {
     memory?:                MemoryLE;
@@ -30,7 +30,7 @@ class Asyncifier {
             if (this.exports.memory != exports.memory) throw "Asyncifier.launch cannot switch memory imports";
             // already allocated an asyncify page
         } else {
-            const asyncify_page_idx = exports.memory.grow(asyncify_page_count);
+            const asyncify_page_idx = exports.memory.grow(ASYNCIFY_PAGE_COUNT);
             console.assert(asyncify_page_idx !== -1);
             this.asyncify_byte_idx = WASM_PAGE_SIZE * asyncify_page_idx;
         }
@@ -95,7 +95,7 @@ class Asyncifier {
             this.unwinding = true;
             const ctx = new Uint32Array(this.memory!.memory.buffer, this.asyncify_byte_idx, 8);
             ctx[0] = this.asyncify_byte_idx + 8;
-            ctx[1] = this.asyncify_byte_idx + (asyncify_page_count * WASM_PAGE_SIZE);
+            ctx[1] = this.asyncify_byte_idx + (ASYNCIFY_PAGE_COUNT * WASM_PAGE_SIZE);
             exports.asyncify_start_unwind(this.asyncify_byte_idx);
 
             return waiting;
