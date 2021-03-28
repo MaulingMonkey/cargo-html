@@ -25,8 +25,13 @@ include = [
 name                    = "cargo-html"
 path                    = "src/_cargo_html.rs"
 
+[features]
+default = ["binaryen"]
+#binaryen = [] # without binaryen, prebuilt wasm-opt binaries must exist for asyncify to work
+
 [dependencies]
 mmrbi                   = { version = "0.0.17", features = ["serde", "toml", "version"] }
+binaryen                = { version = "0.12", optional = true }
 base64                  = "0.13"
 cargo_metadata          = "0.12"
 binary-install          = "0.0.2"

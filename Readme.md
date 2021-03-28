@@ -120,23 +120,21 @@ Requires:
 * [rustup](https://rustup.rs/)
 * [cargo](https://github.com/rust-lang/cargo) (typically installed via rustup)
 * Prebuilt [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen/releases/) binaries (will auto-download appropriate versions.)
-* Prebuilt [wasm-opt](https://github.com/WebAssembly/binaryen/releases) binaries (will auto-download.)
 * [wasm-pack](https://github.com/rustwasm/wasm-pack) for `wasm_bindgen` support (will be auto-installed from source.)
 * [cargo-web](https://github.com/koute/cargo-web) for `stdweb` support (will be auto-installed from source.)
 * General awesomeness.
 
 | Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
 | ------------- | --------- | --------- | --------- | --------- | ----- |
-| Windows       | ✅       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
-| Linux         | ✅       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
-| OS X          | ✔️       | ❌BO      | ❌BO     | ❌BO      | ❌BO \[...\]
+| Windows       | ✅       | ❌B       | ❌B      | ❌B       | ❌B  \[...\]
+| Linux         | ✅       | ❌B       | ❌B      | ❌B       | ❌B  \[...\]
+| OS X          | ✔️       | ❌B       | ❌B      | ❌B       | ❌B  \[...\]
 
 | ?     | Legend    |
 | ----- | --------- |
 | ✅    | Tested
 | ✔️    | Should work
 | ❌B   | Broken (`wasm-bindgen` binaries unavailable, can't bind JS for WASM)
-| ❌O   | Broken (`wasm-opt`     binaries unavailable, can't asyncify WASM)
 
 
 

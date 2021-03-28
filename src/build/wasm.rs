@@ -163,6 +163,23 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
                 continue;
             }
 
+            #[cfg(feature = "binaryen")] {
+                status!("Running", "binaryen optimizations on `{}`", bg_wasm.display());
+                let data = std::fs::read(&bg_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", bg_wasm.display(), err));
+                let mut m = binaryen::Module::read(&data[..]).unwrap_or_else(|_err| fatal!("unable to parse `{}`", bg_wasm.display()));
+                m.run_optimization_passes(&["asyncify"], &binaryen::CodegenConfig {
+                    debug_info: true,
+                    optimization_level: match config {
+                        Config::Debug   => 0,
+                        Config::Release => 4,
+                    },
+                    .. Default::default()
+                }).unwrap_or_else(|_err| fatal!("error optimizing module"));
+                let data = m.write();
+                std::fs::write(&async_wasm, &data[..]).unwrap_or_else(|err| fatal!("unable to write `{}`: {}", async_wasm.display(), err));
+                if true { continue }
+            }
+
             let mut cmd = tools::find_install_wasm_opt();
             match config {
                 Config::Debug   => {},
