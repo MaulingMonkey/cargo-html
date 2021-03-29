@@ -108,7 +108,12 @@ fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
     header("Building wasm-pack targets");
 
     for config in args.configs.iter().copied() {
-        for pkg in metadata.selected_packages_wasm_pack() {
+        for (ty, _target, pkg) in metadata.selected_targets_wasm_pack() {
+            match ty {
+                TargetType::Bin => continue,
+                TargetType::Example => continue,
+                TargetType::Cdylib => {},
+            }
             let mut cmd = tools::find_install_wasm_pack();
             cmd.current_dir(&pkg.directory);
             cmd.arg("build");
