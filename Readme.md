@@ -117,12 +117,22 @@ Requires:
 <h2 name="portability-command-line">Portability: Command Line</h2>
 
 Requires:
-* [rustup](https://rustup.rs/)
-* [cargo](https://github.com/rust-lang/cargo) (typically installed via rustup)
-* Prebuilt [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen/releases/) binaries (will auto-download appropriate versions.)
-* [wasm-pack](https://github.com/rustwasm/wasm-pack) for `wasm_bindgen` support (will be auto-installed from source.)
-* [cargo-web](https://github.com/koute/cargo-web) for `stdweb` support (will be auto-installed from source.)
+* [`rustup`] (+ [`cargo`], [`rustc`], as installed via rustup)
+* if `feature = "binaryen"` (default): [`cc`]-compatible C++ build toolchain, [`cmake`]
+* otherwise: Prebuilt [`wasm-opt`] binaries (unless `feature = "binaryen"` - will auto-download appropriate versions.)
+* for targets depending on `wasm_bindgen`: Prebuilt [`wasm-bindgen`] binaries (will auto-download appropriate versions), [`wasm-pack`] (will be auto-installed from source.)
+* for targets depending on `stdweb`: [`cargo-web`] (will be auto-installed from source.)
 * General awesomeness.
+
+[`cargo`]:          https://github.com/rust-lang/cargo
+[`cargo-web`]:      https://github.com/koute/cargo-web
+[`cc`]:             https://docs.rs/cc/1.0.67/cc/
+[`cmake`]:          https://cmake.org/
+[`rustc`]:          https://github.com/rust-lang/rust
+[`rustup`]:         https://rustup.rs/
+[`wasm-bindgen`]:   https://github.com/rustwasm/wasm-bindgen/releases/
+[`wasm-opt`]:       https://github.com/WebAssembly/binaryen
+[`wasm-pack`]:      https://github.com/rustwasm/wasm-pack
 
 | Build OS      | x86_64    | x86       | AArch64   | ARM       | Other |
 | ------------- | --------- | --------- | --------- | --------- | ----- |
