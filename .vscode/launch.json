@@ -102,29 +102,61 @@
             "name":                     "wasm-bindgen-world • chrome • debug",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html -p wasm-bindgen-world",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --cdylibs",
             "url":                      "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • chrome • release",
             "type":                     "chrome",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --cdylibs --release",
             "url":                      "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • firefox • debug",
             "type":                     "firefox",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html -p wasm-bindgen-world",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --cdylibs",
             "file":                     "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-world.html",
         },
         {
             "name":                     "wasm-bindgen-world • firefox • release",
             "type":                     "firefox",
             "request":                  "launch",
-            "preLaunchTask":            "cargo html -p wasm-bindgen-world --release",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --cdylibs --release",
             "file":                     "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-world.html",
+        },
+
+
+
+        // wasm-bindgen-bin
+        {
+            "name":                     "wasm-bindgen-bin • chrome • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-bin.html",
+        },
+        {
+            "name":                     "wasm-bindgen-bin • chrome • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-bin.html",
+        },
+        {
+            "name":                     "wasm-bindgen-bin • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/debug/wasm-bindgen-bin.html",
+        },
+        {
+            "name":                     "wasm-bindgen-bin • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/release/wasm-bindgen-bin.html",
         },
 
 

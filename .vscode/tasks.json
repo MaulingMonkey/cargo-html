@@ -124,12 +124,20 @@
 
         // wasm-bindgen-world
         {
-            "label":            "cargo html -p wasm-bindgen-world",
-            "command":          "cargo html -p wasm-bindgen-world",
+            "label":            "cargo html -p wasm-bindgen-world --cdylibs",
+            "command":          "cargo html -p wasm-bindgen-world --cdylibs",
         },
         {
-            "label":            "cargo html -p wasm-bindgen-world --release",
-            "command":          "cargo html -p wasm-bindgen-world --release",
+            "label":            "cargo html -p wasm-bindgen-world --cdylibs --release",
+            "command":          "cargo html -p wasm-bindgen-world --cdylibs --release",
+        },
+        {
+            "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+            "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+        },
+        {
+            "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
+            "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
         },
 
 
