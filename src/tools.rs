@@ -1,6 +1,7 @@
 use mmrbi::*;
 
 use std::io;
+use std::path::*;
 
 
 
@@ -13,26 +14,50 @@ pub(crate) fn install_toolchains() {
 }
 
 pub(crate) fn find_install_wasm_bindgen(version: &str) -> Command {
-    let target = if cfg!(windows) {
-        if      cfg!(target_arch = "x86_64" ) { "x86_64-pc-windows-msvc" }
-        else                                  { fatal!("pre-built Windows wasm-bindgen binaries not available for this target_arch"); }
+    let prebuilt_target = if cfg!(windows) {
+        if      cfg!(target_arch = "x86_64" ) { Some("x86_64-pc-windows-msvc") }
+        else                                  { None }
     } else if cfg!(target_os = "linux") {
-        if      cfg!(target_arch = "x86_64" ) { "x86_64-unknown-linux-musl" }
-        else                                  { fatal!("pre-built Linux wasm-bindgen binaries not available for this target_arch"); }
+        if      cfg!(target_arch = "x86_64" ) { Some("x86_64-unknown-linux-musl") }
+        else                                  { None }
     } else if cfg!(target_os = "macos") {
-        if      cfg!(target_arch = "x86_64" ) { "x86_64-apple-darwin" }
-        else                                  { fatal!("pre-built OS X wasm-bindgen binaries not available for this target_arch"); }
+        if      cfg!(target_arch = "x86_64" ) { Some("x86_64-apple-darwin") }
+        else                                  { None }
     } else {
-        fatal!("pre-built wasm-bindgen binaries not available for this target_os");
+        None
     };
 
-    // TODO: source installs / fallbacks
-
     let cache = binary_install::Cache::new("wasm-pack").unwrap_or_else(|err| fatal!("unable to get wasm-pack cache: {}", err)); // reuse wasm-pack's binary cache
-    let url = format!("https://github.com/rustwasm/wasm-bindgen/releases/download/{version}/wasm-bindgen-{version}-{target}.tar.gz", version = version, target = target);
-    let download = cache.download(true, "wasm-bindgen", &["wasm-bindgen", "wasm-bindgen-test-runner"], &url).unwrap_or_else(|err| fatal!("error downloading wasm-bindgen: {}", err)).unwrap();
-    let path = download.binary("wasm-bindgen").unwrap_or_else(|err| fatal!("error getting wasm-bindgen binary from download: {}", err));
-    Command::new(path)
+    match prebuilt_target {
+        Some(target) => {
+            let url = format!("https://github.com/rustwasm/wasm-bindgen/releases/download/{version}/wasm-bindgen-{version}-{target}.tar.gz", version = version, target = target);
+            let download = cache.download(true, "wasm-bindgen", &["wasm-bindgen", "wasm-bindgen-test-runner"], &url).unwrap_or_else(|err| fatal!("error downloading wasm-bindgen: {}", err)).unwrap();
+            let path = download.binary("wasm-bindgen").unwrap_or_else(|err| fatal!("error getting wasm-bindgen binary from download: {}", err));
+            Command::new(path)
+        },
+        None => {
+            let actual = cache.join(Path::new(&format!("wasm-bindgen-cargo-install-{}", version)));
+            if !actual.exists() {
+                // status!("Installing", "wasm-bindgen {}", version); // already logged by `cargo install ...`
+                let temp = cache.join(Path::new(&format!("wasm-bindgen-cargo-install-{}-temp", version)));
+                Command::new("cargo").arg("install")
+                    .arg("--version").arg(version)
+                    .arg("--root").arg(&temp)
+                    .arg("--bins")
+                    .arg("--locked")
+                    .arg("--offline")
+                    .arg("wasm-bindgen-cli")
+                    .status0().unwrap_or_else(|err| fatal!("error installing wasm-bindgen: {}", err));
+                let exe = if cfg!(windows) { ".exe" } else { "" };
+                for bin in "wasm-bindgen wasm-bindgen-test-runner".split(' ') {
+                    let exe = format!("{}{}", bin, exe);
+                    std::fs::rename(temp.join("bin").join(&exe), temp.join(&exe)).unwrap_or_else(|err| fatal!("error renaming `bin/{exe}` => `{exe}`: {err}", exe = exe, err = err));
+                }
+                std::fs::rename(&temp, &actual).unwrap_or_else(|err| fatal!("error renaming `wasm-bindgen-cargo-install-{version}-temp` => `wasm-bindgen-cargo-install-{version}`: {err}", version = version, err = err));
+            }
+            Command::new(actual.join(if cfg!(windows) { "wasm-bindgen.exe" } else { "wasm-bindgen" }))
+        },
+    }
 }
 
 pub(crate) fn find_install_wasm_opt() -> Command {
