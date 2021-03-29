@@ -169,7 +169,8 @@ pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
             }
 
             #[cfg(feature = "binaryen")] {
-                status!("Running", "binaryen optimizations on `{}`", bg_wasm.display());
+                status!("Running", "binaryen asyncify/optimizations on `{}`", bg_wasm.display());
+                for reason in gen_reasons.iter().copied() { println!("    \u{001B}[36;1mreason\u{001B}[0m: {}", reason); }
                 let data = std::fs::read(&bg_wasm).unwrap_or_else(|err| fatal!("unable to read `{}`: {}", bg_wasm.display(), err));
                 let mut m = binaryen::Module::read(&data[..]).unwrap_or_else(|_err| fatal!("unable to parse `{}`", bg_wasm.display()));
                 m.run_optimization_passes(&["asyncify"], &binaryen::CodegenConfig {
