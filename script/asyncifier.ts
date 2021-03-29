@@ -46,11 +46,13 @@ class Asyncifier {
     }
 
     private restart_wasm() {
+        const exports = this.exports;
+        if (!exports) throw "Asyncifier.restart_wasm: never launched, no exports set";
         try {
-            this.exports!._start();
-            // https://github.com/MaulingMonkey/cargo-html/issues/19
-            //if (this.exports!.__wbindgen_start) this.exports!.__wbindgen_start();
-            //else                                this.exports!._start();
+            if      (exports.__cargo_html_start)    exports.__cargo_html_start();
+            else if (exports._start)                exports._start();
+            else if (exports.__wbindgen_start)      exports.__wbindgen_start();
+            else                                    throw "WASM module has no entry point\nexpected one of __cargo_html_start, _start, or __wbindgen_start.";
 
             if (this.unwinding) {
                 this.unwinding = false;

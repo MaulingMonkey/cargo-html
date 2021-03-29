@@ -88,13 +88,12 @@ async function launch_wasm(name: string) {
 
     // Launch WASM
     try {
-        if (asyncifier) {
-            await asyncifier.launch(exports);
-        //} else if (exports.__wbindgen_start) { // https://github.com/MaulingMonkey/cargo-html/issues/19
-        //    exports.__wbindgen_start();
-        } else {
-            exports._start();
-        }
+        if      (asyncifier)                    await asyncifier.launch(exports);
+        else if (exports.__cargo_html_start)    exports.__cargo_html_start();
+        else if (exports._start)                exports._start();
+        else if (exports.__wbindgen_start)      exports.__wbindgen_start();
+        else                                    throw "WASM module has no entry point\nexpected one of __cargo_html_start, _start, or __wbindgen_start.";
+
         imports.wasi_snapshot_preview1.proc_exit!(0 as u32);
     } catch (e) {
         switch (e) {

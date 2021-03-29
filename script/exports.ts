@@ -1,7 +1,8 @@
 interface Exports {
     memory:                 WebAssembly.Memory,
-    _start:                 () => void,
-    __wbindgen_start?:      () => void, // https://github.com/MaulingMonkey/cargo-html/issues/19
+    __cargo_html_start?:    () => void,
+    _start?:                () => void,
+    __wbindgen_start?:      () => void,
 
     asyncify_start_rewind:  (addr: number) => void,
     asyncify_start_unwind:  (addr: number) => void,
