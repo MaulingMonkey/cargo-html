@@ -96,7 +96,8 @@ Requires:
 | Opera Mobile          | ✔️ 59+
 | Opera Mini            | ❌ None (missing WASM, Async Functions, TextEncoder, BigInt)
 | Safari                | ✔️ 14+
-| iOS Safari            | ✔️ 14.4+
+| iOS Safari            | ✔️ 14.4+ (webserver required, can't load local files)
+| iOS Files             | ❌ None? (JavaScript disabled? [#43](https://github.com/MaulingMonkey/cargo-html/issues/43))
 | Edge                  | ✅ 88+
 | IE                    | ❌ None (missing WASM, Async Functions, TextEncoder, BigInt)
 | Android Browser       | ✔️ 81+
