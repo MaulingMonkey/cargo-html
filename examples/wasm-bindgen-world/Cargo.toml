@@ -16,4 +16,4 @@ name                    = "wasm-bindgen-bin"
 path                    = "wasm-bindgen-bin.rs"
 
 [dependencies]
-wasm-bindgen            = "0.2.70"
+wasm-bindgen            = "0.2.74"
