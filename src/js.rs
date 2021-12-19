@@ -47,6 +47,16 @@ fn inline_wasm_bindgen_bundler_importer_impl(mut o: impl std::fmt::Write, functi
             // rewrite:     export const __wbindgen_throw = function(arg0, arg1) {
             // as:          __cargo_html_exports.__wbindgen_throw = function(arg0, arg1) {
             writeln!(o,"    __cargo_html_exports.{}", export.trim_start())?;
+        } else if let Some(name_args_etc) = line.strip_prefix("export function ") {
+            // rewrite:     export function __wbg_alert_e3732caa7aba2934() { ...
+            // as:          __cargo_html_exports.__wbg_alert_e3732caa7aba2934 = function __wbg_alert_e3732caa7aba2934() { ...
+            if let Some(paren) = name_args_etc.find('(') {
+                let name = &name_args_etc[..paren];
+                writeln!(o, "    __cargo_html_exports.{name} = function {name_args_etc}", name=name, name_args_etc=name_args_etc)?;
+            } else {
+                // warning?
+                writeln!(o,"    {}", line)?;
+            }
         } else if let Some(import_module) = line.strip_prefix("import * as wasm from ").and_then(|line| line.strip_suffix(";")) {
             // rewrite:     import * as wasm from './hello-world_bg.wasm';
             // as:          const wasm = __cargo_html_import('./hello-world_bg.wasm');

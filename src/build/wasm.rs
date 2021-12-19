@@ -7,6 +7,7 @@ use std::time::SystemTime;
 
 pub(crate) fn targets(args: &Arguments, metadata: &Metadata) -> bool {
     wasi_targets(args, metadata) |
+    unk2_targets(args, metadata) |
     cargo_web_targets(args, metadata) |
     wasm_pack_targets(args, metadata)
 }
@@ -49,11 +50,52 @@ fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
         run(cmd);
     }
 
+    any_this_header()
+}
+
+fn unk2_targets(args: &Arguments, metadata: &Metadata) -> bool {
+    header("Building wasm32-unknown-unknown targets");
+
+    let mut cmd = Command::parse("cargo build --target=wasm32-unknown-unknown").unwrap();
+    if let Some(manifest_path) = args.manifest_path.as_ref() {
+        cmd.arg("--manifest-path").arg(manifest_path);
+    }
+
+    let mut any_packages = false;
+    for pkg in metadata.selected_packages_unk2() {
+        cmd.arg("--package").arg(&pkg.name);
+        any_packages = true;
+    }
+    if !any_packages { return false; }
+
+    if args.bins        { cmd.arg("--bins"); }
+    if args.examples    { cmd.arg("--examples"); }
+    // args.cdylibs not supported by `cargo html`s generic wasm32-unknown-unknown builds
+
+    for (ty, target, _pkg) in metadata.selected_targets_unk2() {
+        match ty {
+            TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
+            TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
+            TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s generic wasm32-unknown-unknown builds
+        }
+    }
+
     for config in args.configs.iter().copied() {
-        let target_arch_config = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
+        let mut cmd = cmd.clone();
+
+        match config {
+            Config::Debug   => {},
+            Config::Release => drop(cmd.arg("--release")),
+        }
+
+        run(cmd);
+    }
+
+    for config in args.configs.iter().copied() {
+        let target_arch_config = metadata.target_directory().join("wasm32-unknown-unknown").join(config.as_str());
         let js_dir = target_arch_config.join("js");
 
-        for (ty, target, pkg) in metadata.selected_targets_wasi() {
+        for (ty, target, pkg) in metadata.selected_targets_unk2() {
             let target_arch_config = match ty {
                 TargetType::Bin     => target_arch_config.clone(),
                 TargetType::Example => target_arch_config.join("examples"),
@@ -81,14 +123,24 @@ fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
 fn cargo_web_targets(args: &Arguments, metadata: &Metadata) -> bool {
     header("Building cargo-web targets");
 
+    let mut force_1_47_0 = false;
+
     for config in args.configs.iter().copied() {
         for pkg in metadata.selected_packages_cargo_web() {
             if force_header() {
                 let rustc_ver = mmrbi::rustc::version().unwrap_or_else(|err| fatal!("unable to determine rustc version: {}", err));
-                if rustc_ver.is_at_least(1, 48, 0) { warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+: https://github.com/koute/stdweb/issues/411"); }
+                if rustc_ver.is_at_least(1, 48, 0) {
+                    warning!("stdweb breaks due to undefined behavior on rustc 1.48.0+, will attempt to force 1.47.0: https://github.com/koute/stdweb/issues/411");
+                    force_1_47_0 = true;
+                }
             }
 
             let mut cmd = tools::find_install_cargo_web();
+            if force_1_47_0 {
+                cmd = Command::new("cargo");
+                cmd.arg("+1.47.0");
+                cmd.arg("web");
+            }
             cmd.current_dir(&pkg.directory);
             cmd.arg("build");
             cmd.arg("--target").arg("wasm32-unknown-unknown");
@@ -132,12 +184,18 @@ fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
 }
 
 pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
-    header("Asyncify wasm32-wasi targets");
+    impl_asyncify("Asyncify wasm32-wasi targets",               "wasm32-wasi",              |pkg| pkg.is_wasi,      args, metadata);
+    impl_asyncify("Asyncify wasm32-unknown-unknown targets",    "wasm32-unknown-unknown",   |pkg| pkg.is_wasm_unk2, args, metadata);
+}
+
+fn impl_asyncify(head: &'static str, arch: &str, pkg_filter: fn(&Package) -> bool, args: &Arguments, metadata: &Metadata) {
+    header(head);
 
     for config in args.configs.iter().copied() {
-        let target_arch_config = metadata.target_directory().join("wasm32-wasi").join(config.as_str());
-        for (ty, target, pkg) in metadata.selected_targets_wasi() {
+        let target_arch_config = metadata.target_directory().join(arch).join(config.as_str());
+        for (ty, target, pkg) in metadata.selected_targets() {
             if !pkg.asyncify { continue }
+            if !pkg_filter(pkg) { continue }
             let target_arch_config = match ty {
                 TargetType::Bin     => target_arch_config.clone(),
                 TargetType::Example => target_arch_config.join("examples"),

@@ -21,6 +21,7 @@ pub(crate) struct Package {
 
     pub is_html:        bool,
     pub is_cargo_web:   bool,
+    pub is_wasm_unk2:   bool,
     pub is_wasi:        bool,
     pub is_wasm_pack:   bool,
 }
@@ -59,9 +60,10 @@ impl Package {
 
         let is_html         = p.metadata.get("html").map_or(true, |html| html != false);
         let is_cargo_web    = is_html && has_bin_or_example && p.metadata.pointer("/html/cargo-web").map_or_else(|| has_stdweb_dependency, |cargo_web| cargo_web != false);
-        let is_wasi         = is_html && has_bin_or_example && !is_cargo_web;
+        let is_wasm_unk2    = is_html && has_bin_or_example && !is_cargo_web &&  has_wasm_bindgen_dependency;
+        let is_wasi         = is_html && has_bin_or_example && !is_cargo_web && !has_wasm_bindgen_dependency;
         let is_wasm_pack    = is_html && has_cdylib && p.metadata.pointer("/html/wasm-pack").map_or_else(|| has_wasm_bindgen_dependency, |wasm_pack| wasm_pack != false);
-        let asyncify        = is_html && p.metadata.pointer("/html/asyncify").map_or_else(|| is_wasi, |asyncify| asyncify != false);
+        let asyncify        = is_html && p.metadata.pointer("/html/asyncify").map_or_else(|| is_wasi || is_wasm_unk2, |asyncify| asyncify != false);
 
         let mut directory = p.manifest_path.clone();
         directory.pop();
@@ -80,6 +82,7 @@ impl Package {
 
             is_html,
             is_cargo_web,
+            is_wasm_unk2,
             is_wasi,
             is_wasm_pack,
         }
