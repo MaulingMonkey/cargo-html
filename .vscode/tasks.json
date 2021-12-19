@@ -142,6 +142,28 @@
 
 
 
+        // macroquad-demo
+        {
+            "label":            "cargo html -p macroquad-demo",
+            "command":          "cargo html -p macroquad-demo",
+        },
+        {
+            "label":            "cargo html -p macroquad-demo --release",
+            "command":          "cargo html -p macroquad-demo --release",
+        },
+        {
+            "label":            "cargo build -p macroquad-demo",
+            "command":          "cargo build -p macroquad-demo",
+            "options":          { "cwd": "${workspaceFolder}/examples" },
+        },
+        {
+            "label":            "cargo build -p macroquad-demo --release",
+            "command":          "cargo build -p macroquad-demo --release",
+            "options":          { "cwd": "${workspaceFolder}/examples" },
+        },
+
+
+
         // quicksilver-demo
         {
             "label":            "cargo html -p quicksilver-demo",

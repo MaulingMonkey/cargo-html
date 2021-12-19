@@ -161,6 +161,68 @@
 
 
 
+        // macroquad-demo
+        {
+            "name":                     "macroquad-demo • chrome • debug",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p macroquad-demo",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/debug/macroquad-demo.html",
+        },
+        {
+            "name":                     "macroquad-demo • chrome • release",
+            "type":                     "chrome",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p macroquad-demo --release",
+            "url":                      "${workspaceFolder}/examples/target/cargo-html/release/macroquad-demo.html",
+        },
+        {
+            "name":                     "macroquad-demo • firefox • debug",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p macroquad-demo",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/debug/macroquad-demo.html",
+        },
+        {
+            "name":                     "macroquad-demo • firefox • release",
+            "type":                     "firefox",
+            "request":                  "launch",
+            "preLaunchTask":            "cargo html -p macroquad-demo --release",
+            "file":                     "${workspaceFolder}/examples/target/cargo-html/release/macroquad-demo.html",
+        },
+        {
+            "name":                     "macroquad-demo • native • debug",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build -p macroquad-demo",
+            "program":                  "${workspaceFolder}/examples/target/debug/macroquad-demo",
+            "cwd":                      "${workspaceFolder}/examples",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/examples/target/debug/macroquad-demo.exe",
+                "enableDebugHeap":          true,
+            }
+        },
+        {
+            "name":                     "macroquad-demo • native • release",
+            "type":                     "cppdbg",
+            "request":                  "launch",
+            "internalConsoleOptions":   "openOnSessionStart",
+            "preLaunchTask":            "cargo build -p macroquad-demo --release",
+            "program":                  "${workspaceFolder}/examples/target/debug/macroquad-demo",
+            "cwd":                      "${workspaceFolder}/examples",
+            "environment":              [ { "name": "RUST_BACKTRACE", "value": "1" } ],
+            "windows": {
+                "type":                     "cppvsdbg",
+                "program":                  "${workspaceFolder}/examples/target/debug/macroquad-demo.exe",
+                "enableDebugHeap":          true,
+            }
+        },
+
+
+
         // quicksilver-demo
         {
             "name":                     "quicksilver-demo • chrome • debug",
