@@ -140,6 +140,70 @@ Build Requirements (default features):
 
 
 
+<h2 name="metadata">Metadata</h2>
+
+<h4>Make <code>cargo html</code> ignore a package:</h4>
+
+```toml
+[package]
+metadata.html           = false
+```
+
+<h4>Configure build behavior</h4>
+
+```toml
+[package.metadata.html]
+cargo-web               = false             # default: true for bins/examples depending on stdweb
+wasm-pack               = false             # default: true for cdylibs depending on wasm-bindgen
+asyncify                = false             # default: true for WASI targets (bins/examples *not* depending on stdweb)
+template                = "template.html"   # default: "basic", "console", "xterm", or other built-in target
+```
+
+<h4>WASI environment variables</h4>
+
+```toml
+[package.metadata.html.wasi.env]
+CARGO_HTML      = "1"
+RUST_BACKTRACE  = "1"
+```
+
+<h4>WASI filesystem mounts</h4>
+
+```toml
+[[package.metadata.html.mount]]
+source          = "Cargo.toml"
+mount           = "/Cargo.toml"
+
+[[package.metadata.html.mount]]
+source          = "../../.vscode/"
+mount           = "/.vscode/"
+```
+
+<h4>Configure WASI behavior</h4>
+
+```toml
+[package.metadata.html.wasi]
+tty.mode    = "raw", or "line-buffered"
+tty.escape  = "none", or "ansi"
+
+trap        = "fatal", "soft-debugger", "debugger", or "fatal-debugger"
+
+determinism = "nondeterministic", or "disabled"
+clock       = "nondeterministic", "disabled", or "zero"
+sleep       = "nondeterministic", "disabled", "skip", or "busy-wait"
+random      = "nondeterministic", "disabled", or "insecure-nondeterministic"
+
+stdin           = "tty", "badfd", or "prompt"
+stdout          = "tty", "badfd", "null", "console-log", or "console-error"
+stderr          = "tty", "badfd", "null", "console-log", or "console-error"
+trace_exit_0    = "tty", "badfd", "null", "console-log", or "console-error"
+trace_exit_n    = "tty", "badfd", "null", "console-log", or "console-error"
+trace_signal    = "tty", "badfd", "null", "console-log", or "console-error"
+trace_io_error  = "tty", "badfd", "null", "console-log", or "console-error"
+```
+
+
+
 <h2 name="license">License</h2>
 
 Licensed under either of
