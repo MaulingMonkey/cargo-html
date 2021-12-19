@@ -7,6 +7,9 @@ authors                 = ["MaulingMonkey <git@maulingmonkey.com>"]
 edition                 = "2018"
 publish                 = false
 
+[package.metadata.html]
+template                = "macroquad-demo.html"
+
 [[bin]]
 name                    = "macroquad-demo"
 path                    = "macroquad-demo.rs"

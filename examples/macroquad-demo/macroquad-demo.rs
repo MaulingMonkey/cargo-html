@@ -2,7 +2,7 @@
 
 use macroquad::prelude::*;
 
-#[macroquad::main("BasicShapes")]
+#[macroquad::main("macroquad-demo")]
 async fn main() {
     loop {
         clear_background(RED);

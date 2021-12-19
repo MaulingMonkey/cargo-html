@@ -3,13 +3,21 @@ const WASM_PAGE_SIZE = (64 * 1024); // WASM pages are 64 KiB
 // Ref: https://github.com/WebAssembly/spec/issues/208
 
 
+type WasmPlugin = (imports: wasi.Imports) => (exports: Exports) => unknown;
+
 declare var CARGO_HTML_SETTINGS : Settings | undefined;
+declare var CARGO_HTML_PLUGINS : [WasmPlugin] | undefined;
 declare function __cargo_html_wasmbindgen_bundler_js(importer: (path: string) => unknown): unknown;
+
 
 function get_settings(): Settings {
     return typeof CARGO_HTML_SETTINGS !== "undefined" ? CARGO_HTML_SETTINGS : {
         env: { "CARGO_HTML": "1", "RUST": "1" },
     };
+}
+
+function get_plugins(): WasmPlugin[] {
+    return (typeof CARGO_HTML_PLUGINS !== "undefined") ? CARGO_HTML_PLUGINS : [];
 }
 
 const MOUNTS : {[name: string]: io.memory.Mount[] | undefined} = {};
@@ -78,12 +86,15 @@ async function launch_wasm(name: string) {
         Object.assign(imports, __cargo_html_wasmbindgen_bundler_js(_path => wasm_exports));
     }
 
+    const plugins = get_plugins().map(f => f(imports));
+
 
     // Instantiate and hook WASM
     const inst = await WebAssembly.instantiate(compiled, imports as any);
     const exports = <Exports><unknown>inst.exports;
     Object.assign(wasm_exports, exports);
     memory.memory = exports.memory;
+    plugins.forEach(plugin => plugin(exports));
 
 
     // Launch WASM
