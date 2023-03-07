@@ -33,18 +33,28 @@ fn build(args: Args) {
         status!("Running", "{}", cmd);
         std::process::exit(cmd.status().ok().and_then(|s| s.code()).unwrap_or(1));
     } else {
-       // common
-       exec("cargo fetch");
-       exec("cargo fetch --manifest-path examples/Cargo.toml");
+        // common
+        exec("cargo fetch");
+        exec("cargo fetch --manifest-path examples/Cargo.toml");
 
-       // debug
-       exec("cargo build --frozen --workspace --all-targets");
-       exec("cargo test  --frozen --workspace --all-targets");
-       exec("cargo run -p cargo-html -- html --manifest-path examples/Cargo.toml");
+        // debug
+        exec("cargo build --frozen --workspace --all-targets");
+        exec("cargo test  --frozen --workspace --all-targets");
+        if cfg!(windows) {
+            exec("target\\debug\\cargo-html html --manifest-path examples/Cargo.toml");
+        } else {
+            exec("target/debug/cargo-html html --manifest-path examples/Cargo.toml");
+        }
 
-       // release
-       exec("cargo build --frozen --workspace --all-targets --release");
-       exec("cargo test  --frozen --workspace --all-targets --release");
+
+        // release
+        exec("cargo build --frozen --workspace --all-targets --release");
+        exec("cargo test  --frozen --workspace --all-targets --release");
+        if cfg!(windows) {
+            exec("target\\release\\cargo-html html --manifest-path examples/Cargo.toml");
+        } else {
+            exec("target/release/cargo-html html --manifest-path examples/Cargo.toml");
+        }
     }
 }
 

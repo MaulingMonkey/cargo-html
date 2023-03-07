@@ -4,6 +4,9 @@
     "type":             "shell",
     "presentation":     { "clear": true, "group": "build", "reveal": "always" },
 
+    "windows": { "options": { "env": { "PATH": "${workspaceFolder}\\xtask\\target\\debug;${env:PATH}" }}},
+    "options": { "env": {              "PATH": "${workspaceFolder}/xtask/target/debug:${env:PATH}"    }},
+
     "tasks": [
         // entry points
         {
@@ -39,7 +42,8 @@
         // check
         {
             "label":            "check",
-            "command":          "cargo c",
+            "command":          "xtask c",
+            "dependsOn":        ["xtask"],
         },
 
 
@@ -47,7 +51,8 @@
         // build
         {
             "label":            "build",
-            "command":          "cargo b",
+            "command":          "xtask b",
+            "dependsOn":        ["xtask"],
         },
 
 
@@ -55,7 +60,8 @@
         // install
         {
             "label":            "install",
-            "command":          "cargo i",
+            "command":          "xtask i",
+            "dependsOn":        ["xtask"],
         },
 
 
@@ -70,12 +76,14 @@
 
         // cargo-html
         {
-            "label":            "cargo b --bin cargo-html",
-            "command":          "cargo b --bin cargo-html",
+            "label":            "xtask b --bin cargo-html",
+            "command":          "xtask b --bin cargo-html",
+            "dependsOn":        ["xtask"],
         },
         {
-            "label":            "cargo b --bin cargo-html --release",
-            "command":          "cargo b --bin cargo-html --release",
+            "label":            "xtask b --bin cargo-html --release",
+            "command":          "xtask b --bin cargo-html --release",
+            "dependsOn":        ["xtask"],
         },
         {
             "label":            "open repository (cargo-html)",
@@ -86,14 +94,26 @@
 
 
 
+        // xtask
+        {
+            "label":            "xtask",
+            "command":          "cargo build  --manifest-path xtask/Cargo.toml",
+            "problemMatcher":   [{ "base": "$rustc", "fileLocation": ["relative", "${workspaceFolder}/xtask"] }],
+            "presentation":     { "clear": true, "group": "xtask", "reveal": "always" },
+        },
+
+
+
         // cargo-web-world
         {
             "label":            "cargo html -p cargo-web-world",
             "command":          "cargo +1.47.0 html -p cargo-web-world",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p cargo-web-world --release",
             "command":          "cargo +1.47.0 html -p cargo-web-world --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
 
 
@@ -102,10 +122,12 @@
         {
             "label":            "cargo html -p goodbye-world",
             "command":          "cargo html -p goodbye-world",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p goodbye-world --release",
             "command":          "cargo html -p goodbye-world --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
 
 
@@ -114,10 +136,12 @@
         {
             "label":            "cargo html -p hello-world",
             "command":          "cargo html -p hello-world",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p hello-world --release",
             "command":          "cargo html -p hello-world --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
 
 
@@ -126,18 +150,22 @@
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs",
             "command":          "cargo html -p wasm-bindgen-world --cdylibs",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs --release",
             "command":          "cargo html -p wasm-bindgen-world --cdylibs --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
             "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
             "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
 
 
@@ -146,10 +174,12 @@
         {
             "label":            "cargo html -p macroquad-demo",
             "command":          "cargo html -p macroquad-demo",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p macroquad-demo --release",
             "command":          "cargo html -p macroquad-demo --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo build -p macroquad-demo",
@@ -168,10 +198,12 @@
         {
             "label":            "cargo html -p quicksilver-demo",
             "command":          "cargo +1.47.0 html -p quicksilver-demo",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo html -p quicksilver-demo --release",
             "command":          "cargo +1.47.0 html -p quicksilver-demo --release",
+            "dependsOn":        ["xtask b --bin cargo-html"],
         },
         {
             "label":            "cargo build -p quicksilver-demo",

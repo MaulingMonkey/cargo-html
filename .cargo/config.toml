@@ -1,8 +1,0 @@
-[alias]
-html    = "xtask run -p cargo-html -- html --manifest-path examples/Cargo.toml"
-b       = "xtask build"
-c       = "xtask check"
-d       = "xtask doc"
-r       = "xtask run"
-i       = "xtask install"
-xtask   = "run --manifest-path xtask/Cargo.toml -p xtask --"
