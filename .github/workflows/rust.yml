@@ -38,4 +38,6 @@ jobs:
         wasm-pack --version
         cargo web --version
     - name: Build
-      run: cargo b
+      run: |
+        cargo build --manifest-path xtask/Cargo.toml
+        xtask/target/debug/xtask b
