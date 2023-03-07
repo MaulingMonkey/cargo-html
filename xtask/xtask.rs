@@ -1,6 +1,7 @@
 use mmrbi::*;
 
 use std::env::Args;
+use std::process::Stdio;
 
 
 
@@ -85,20 +86,65 @@ fn install(_args: Args) {
 
 
 fn pre_build() {
+    if cfg!(windows) && !silent_exec_ok("cmake --version") {
+        // add default install locations of cmake.exe to %PATH%
+
+        let mut path = env::var_os("PATH").unwrap_or_else(|err| { warning!("{err} - will not extend to include cmake"); Default::default() });
+
+        let pf64 = env::var_path("ProgramW6432").or_else(|_| env::var_path("ProgramFiles"));
+        let pf32 = env::var_path("ProgramFiles(x86)");
+        for pf in [pf64, pf32] {
+            match pf {
+                Err(err) => warning!("{err}"),
+                Ok(pf) => {
+                    if !path.is_empty() { path.push(";") }
+                    path.push(pf);
+                    path.push(r"\CMake\bin");
+                }
+            }
+        }
+
+        std::env::set_var("PATH", path);
+    }
+
+    let mut missing_deps = false;
+    for (test_command,      dependency, windows_install_instructions) in [
+        ("npm --version",   "npm",      "download and install as part of node.js from https://nodejs.org/"),
+        ("cmake --version", "cmake",    "download and install from https://cmake.org/"),
+    ].iter().copied() {
+        let mut cmd = parse(test_command);
+        cmd.stdout(|| Stdio::null()).stderr(|| Stdio::null());
+        if cmd.status0().is_err() {
+            if !missing_deps {
+                error!("missing build dependencies:");
+                missing_deps = true;
+            }
+            error!("  • {dependency: <10} {windows_install_instructions}");
+        }
+    };
+    if missing_deps { std::process::exit(1) }
+
     exec(r"npm install --prefer-offline --audit=false --silent");
     exec(r"node_modules/.bin/tsc --build script/tsconfig.json");
 }
 
 
 
-fn exec(cmd: &str) {
-    status!("Running", "`{}`", cmd);
-    let mut cmd = if cfg!(windows) {
+fn parse(cmd: &str) -> Command {
+    if cfg!(windows) {
         Command::parse(format!("cmd /C call {}", cmd))
     } else {
         Command::parse(cmd)
-    }.unwrap();
-    cmd.status0().unwrap_or_else(|err| fatal!("{:?} failed: {}", cmd, err));
+    }.unwrap()
+}
+
+fn exec(cmd: &str) {
+    status!("Running", "`{}`", cmd);
+    parse(cmd).status0().unwrap_or_else(|err| fatal!("`{}` failed: {}", cmd, err));
+}
+
+fn silent_exec_ok(cmd: &str) -> bool {
+    parse(cmd).stdout(Stdio::null).stderr(Stdio::null).status0().is_ok()
 }
 
 fn has_nightly() -> bool {
