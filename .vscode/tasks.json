@@ -28,11 +28,6 @@
 
         // fetch
         {
-            "label":            "fetch",
-            "dependsOn":        [ "cargo fetch" ],
-            "presentation":     { "reveal": "never" },
-        },
-        {
             "label":            "cargo fetch",
             "command":          "cargo fetch",
         },
@@ -42,8 +37,7 @@
         // check
         {
             "label":            "check",
-            "command":          "xtask c",
-            "dependsOn":        ["xtask"],
+            "command":          "build\\check.cmd",
         },
 
 
@@ -51,8 +45,7 @@
         // build
         {
             "label":            "build",
-            "command":          "xtask b",
-            "dependsOn":        ["xtask"],
+            "command":          "build\\build.cmd",
         },
 
 
@@ -60,8 +53,7 @@
         // install
         {
             "label":            "install",
-            "command":          "xtask i",
-            "dependsOn":        ["xtask"],
+            "command":          "build\\install.cmd",
         },
 
 
@@ -76,14 +68,12 @@
 
         // cargo-html
         {
-            "label":            "xtask b --bin cargo-html",
-            "command":          "xtask b --bin cargo-html",
-            "dependsOn":        ["xtask"],
+            "label":            "cargo build --bin cargo-html",
+            "command":          "cargo build --bin cargo-html",
         },
         {
-            "label":            "xtask b --bin cargo-html --release",
-            "command":          "xtask b --bin cargo-html --release",
-            "dependsOn":        ["xtask"],
+            "label":            "cargo build --bin cargo-html --release",
+            "command":          "cargo build --bin cargo-html --release",
         },
         {
             "label":            "open repository (cargo-html)",
@@ -94,26 +84,16 @@
 
 
 
-        // xtask
-        {
-            "label":            "xtask",
-            "command":          "cargo build  --manifest-path xtask/Cargo.toml",
-            "problemMatcher":   [{ "base": "$rustc", "fileLocation": ["relative", "${workspaceFolder}/xtask"] }],
-            "presentation":     { "clear": true, "group": "xtask", "reveal": "always" },
-        },
-
-
-
         // cargo-web-world
         {
             "label":            "cargo html -p cargo-web-world",
             "command":          "cargo +1.47.0 html -p cargo-web-world",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p cargo-web-world --release",
             "command":          "cargo +1.47.0 html -p cargo-web-world --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
 
 
@@ -122,12 +102,12 @@
         {
             "label":            "cargo html -p goodbye-world",
             "command":          "cargo html -p goodbye-world",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p goodbye-world --release",
             "command":          "cargo html -p goodbye-world --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
 
 
@@ -136,12 +116,12 @@
         {
             "label":            "cargo html -p hello-world",
             "command":          "cargo html -p hello-world",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p hello-world --release",
             "command":          "cargo html -p hello-world --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
 
 
@@ -150,22 +130,22 @@
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs",
             "command":          "cargo html -p wasm-bindgen-world --cdylibs",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs --release",
             "command":          "cargo html -p wasm-bindgen-world --cdylibs --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
             "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
             "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
 
 
@@ -174,12 +154,12 @@
         {
             "label":            "cargo html -p macroquad-demo",
             "command":          "cargo html -p macroquad-demo",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p macroquad-demo --release",
             "command":          "cargo html -p macroquad-demo --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo build -p macroquad-demo",
@@ -198,12 +178,12 @@
         {
             "label":            "cargo html -p quicksilver-demo",
             "command":          "cargo +1.47.0 html -p quicksilver-demo",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo html -p quicksilver-demo --release",
             "command":          "cargo +1.47.0 html -p quicksilver-demo --release",
-            "dependsOn":        ["xtask b --bin cargo-html"],
+            "dependsOn":        ["cargo build --bin cargo-html"],
         },
         {
             "label":            "cargo build -p quicksilver-demo",
