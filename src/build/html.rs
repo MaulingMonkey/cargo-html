@@ -16,9 +16,10 @@ pub(crate) fn pages(args: &Arguments, metadata: &Metadata) {
     for config in args.configs.iter().copied() {
         let target_html_dir = metadata.target_directory().join("cargo-html").join(config.as_str());
         std::fs::create_dir_all(&target_html_dir).unwrap_or_else(|err| fatal!("unable to create `{}`: {}", target_html_dir.display(), err));
+        let wasm32_wasip1 = crate::tools::wasm32_wasip1_target().unwrap_or("wasm32-wasip1");
 
         for (arch, filter) in [
-            ("wasm32-wasi",             (|pkg: &Package| pkg.is_wasi) as fn(&Package) -> bool),
+            (wasm32_wasip1,             (|pkg: &Package| pkg.is_wasi) as fn(&Package) -> bool),
             ("wasm32-unknown-unknown",  |pkg: &Package| pkg.is_wasm_unk2),
         ].iter().copied() {
             let target_arch_config_dir = metadata.target_directory().join(arch).join(config.as_str());

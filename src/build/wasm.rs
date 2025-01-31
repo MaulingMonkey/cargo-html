@@ -6,16 +6,19 @@ use std::time::SystemTime;
 
 
 pub(crate) fn targets(args: &Arguments, metadata: &Metadata) -> bool {
-    wasi_targets(args, metadata) |
+    wasip1_targets(args, metadata) |
     unk2_targets(args, metadata) |
     cargo_web_targets(args, metadata) |
     wasm_pack_targets(args, metadata)
 }
 
-fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
-    header("Building wasm32-wasi targets");
+fn wasip1_targets(args: &Arguments, metadata: &Metadata) -> bool {
+    let wasm32_wasip1 = crate::tools::wasm32_wasip1_target().unwrap_or("wasm32-wasip1");
+    header(format!("Building {wasm32_wasip1} targets"));
 
-    let mut cmd = Command::parse("cargo build --target=wasm32-wasi").unwrap();
+    let mut cmd = Command::new("cargo");
+    cmd.arg("build");
+    cmd.arg(format!("--target={wasm32_wasip1}"));
     if let Some(manifest_path) = args.manifest_path.as_ref() {
         cmd.arg("--manifest-path").arg(manifest_path);
     }
@@ -29,13 +32,13 @@ fn wasi_targets(args: &Arguments, metadata: &Metadata) -> bool {
 
     if args.bins        { cmd.arg("--bins"); }
     if args.examples    { cmd.arg("--examples"); }
-    // args.cdylibs not supported by `cargo html`s wasm32-wasi builds
+    // args.cdylibs not supported by `cargo html`s wasm32-wasip1 builds
 
     for (ty, target, _pkg) in metadata.selected_targets_wasi() {
         match ty {
             TargetType::Bin     => { if !args.bins      { cmd.arg("--bin")      .arg(target); } },
             TargetType::Example => { if !args.examples  { cmd.arg("--example")  .arg(target); } },
-            TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s wasm32-wasi builds
+            TargetType::Cdylib  => {}, // cdylibs not supported by `cargo html`s wasm32-wasip1 builds
         }
     }
 
@@ -184,11 +187,12 @@ fn wasm_pack_targets(args: &Arguments, metadata: &Metadata) -> bool {
 }
 
 pub(crate) fn asyncify(args: &Arguments, metadata: &Metadata) {
-    impl_asyncify("Asyncify wasm32-wasi targets",               "wasm32-wasi",              |pkg| pkg.is_wasi,      args, metadata);
-    impl_asyncify("Asyncify wasm32-unknown-unknown targets",    "wasm32-unknown-unknown",   |pkg| pkg.is_wasm_unk2, args, metadata);
+    let wasm32_wasip1_target = crate::tools::wasm32_wasip1_target().unwrap_or("wasm32-wasip1");
+    impl_asyncify(format!("Asyncify {wasm32_wasip1_target} targets"),   &wasm32_wasip1_target,      |pkg| pkg.is_wasi,      args, metadata);
+    impl_asyncify("Asyncify wasm32-unknown-unknown targets",            "wasm32-unknown-unknown",   |pkg| pkg.is_wasm_unk2, args, metadata);
 }
 
-fn impl_asyncify(head: &'static str, arch: &str, pkg_filter: fn(&Package) -> bool, args: &Arguments, metadata: &Metadata) {
+fn impl_asyncify(head: impl Into<String>, arch: &str, pkg_filter: fn(&Package) -> bool, args: &Arguments, metadata: &Metadata) {
     header(head);
 
     for config in args.configs.iter().copied() {

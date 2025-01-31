@@ -1,14 +1,14 @@
 use mmrbi::*;
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 
 
 /// Header to display any [`run`] commands under
-pub fn header(title: &'static str) { TL.with(|tl| {
-    tl.header.set(title);
+pub fn header(title: impl Into<String>) { TL.with(|tl| {
+    *tl.header.borrow_mut() = title.into();
     tl.any_this_header.set(false);
 })}
 
@@ -21,7 +21,7 @@ pub fn run(mut cmd: Command) {
 /// Force the last [`header`] to be displayed
 pub fn force_header() -> bool { TL.with(|tl| {
     if !tl.any_this_header.get() {
-        println!("\u{001B}[30;102m{:^1$}\u{001B}[0m", tl.header.get(), crate::HEADER_W);
+        println!("\u{001B}[30;102m{:^1$}\u{001B}[0m", tl.header.borrow(), crate::HEADER_W);
         tl.any_this_header.set(true);
         true
     } else {
@@ -35,12 +35,12 @@ pub fn any_this_header() -> bool { TL.with(|tl| tl.any_this_header.get()) }
 
 
 struct TL {
-    header:             Cell<&'static str>,
+    header:             RefCell<String>,
     any_this_header:    Cell<bool>,
 }
 
 thread_local! { static TL : TL = TL {
-    header:             Cell::new(""),
+    header:             RefCell::new(String::new()),
     any_this_header:    Cell::new(false),
 };}
 

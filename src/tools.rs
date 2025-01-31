@@ -2,13 +2,35 @@ use mmrbi::*;
 
 use std::io;
 use std::path::*;
+use std::sync::OnceLock;
 
 
+
+pub(crate) fn rustc_target_list() -> impl Iterator<Item = &'static str> {
+    static TARGETS : OnceLock<&'static str> = OnceLock::new();
+
+    let targets = TARGETS.get_or_init(||{
+        let mut rustc = Command::new("rustc");
+        rustc.arg("--print").arg("target-list");
+        let output = rustc.output0().unwrap_or_else(|err| fatal!("error querying `rustc --print target-list`: {err}", err = err));
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        Box::leak(Box::<str>::from(stdout))
+    });
+
+    targets.split("\n").map(|t| t.trim())
+}
+
+pub(crate) fn wasm32_wasip1_target() -> Option<&'static str> {
+    static WASM32_WASIP1_TARGET : OnceLock<Option<&'static str>> = OnceLock::new();
+    *WASM32_WASIP1_TARGET.get_or_init(|| ["wasm32-wasip1", "wasm32-wasi"].iter().copied().filter(|&expected| rustc_target_list().any(|t| t == expected)).next())
+}
 
 pub(crate) fn install_toolchains() {
     let rustup = Rustup::default().or_die();
     if let Some(toolchain) = rustup.toolchains().active() {
-        toolchain.targets().add("wasm32-wasi").or_die();
+        if let Some(wasm32_wasip1_target) = wasm32_wasip1_target() {
+            toolchain.targets().add(wasm32_wasip1_target).or_die();
+        }
         toolchain.targets().add("wasm32-unknown-unknown").or_die();
     }
 }
