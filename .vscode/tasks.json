@@ -107,13 +107,15 @@
         // cargo-web-world
         {
             "label":            "cargo html -p cargo-web-world",
-            "command":          "cargo +1.47.0 html -p cargo-web-world",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p cargo-web-world",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples", "env": { "RUSTUP_TOOLCHAIN": "1.47.0" } },
         },
         {
             "label":            "cargo html -p cargo-web-world --release",
-            "command":          "cargo +1.47.0 html -p cargo-web-world --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p cargo-web-world --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples", "env": { "RUSTUP_TOOLCHAIN": "1.47.0" } },
         },
 
 
@@ -121,13 +123,15 @@
         // goodbye-world
         {
             "label":            "cargo html -p goodbye-world",
-            "command":          "cargo html -p goodbye-world",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p goodbye-world",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p goodbye-world --release",
-            "command":          "cargo html -p goodbye-world --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p goodbye-world --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
 
 
@@ -135,13 +139,15 @@
         // hello-world
         {
             "label":            "cargo html -p hello-world",
-            "command":          "cargo html -p hello-world",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p hello-world",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p hello-world --release",
-            "command":          "cargo html -p hello-world --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p hello-world --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
 
 
@@ -149,23 +155,27 @@
         // wasm-bindgen-world
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs",
-            "command":          "cargo html -p wasm-bindgen-world --cdylibs",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p wasm-bindgen-world --cdylibs",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --cdylibs --release",
-            "command":          "cargo html -p wasm-bindgen-world --cdylibs --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p wasm-bindgen-world --cdylibs --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
-            "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p wasm-bindgen-world --bin wasm-bindgen-bin",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
-            "command":          "cargo html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p wasm-bindgen-world --bin wasm-bindgen-bin --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
 
 
@@ -173,13 +183,15 @@
         // macroquad-demo
         {
             "label":            "cargo html -p macroquad-demo",
-            "command":          "cargo html -p macroquad-demo",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p macroquad-demo",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo html -p macroquad-demo --release",
-            "command":          "cargo html -p macroquad-demo --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p macroquad-demo --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples" },
         },
         {
             "label":            "cargo build -p macroquad-demo",
@@ -197,13 +209,15 @@
         // quicksilver-demo
         {
             "label":            "cargo html -p quicksilver-demo",
-            "command":          "cargo +1.47.0 html -p quicksilver-demo",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p quicksilver-demo",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples", "env": { "RUSTUP_TOOLCHAIN": "1.47.0" } },
         },
         {
             "label":            "cargo html -p quicksilver-demo --release",
-            "command":          "cargo +1.47.0 html -p quicksilver-demo --release",
+            "command":          "${workspaceFolder}/target/debug/cargo-html html -p quicksilver-demo --release",
             "dependsOn":        ["xtask b --bin cargo-html"],
+            "options":          { "cwd": "${workspaceFolder}/examples", "env": { "RUSTUP_TOOLCHAIN": "1.47.0" } },
         },
         {
             "label":            "cargo build -p quicksilver-demo",
